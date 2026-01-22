@@ -1,0 +1,190 @@
+{
+  "subcomponentId": "league-history",
+  "componentId": "transactions-history",
+  "tracesTo": [
+    "SOW: Transactions & League History",
+    "UserFlow: Weekly Member Engagement, Feed Interaction, Pick'ems & History Browsing"
+  ],
+  "stories": [
+    {
+      "id": "LH-001",
+      "title": "View League Season Archive List",
+      "user": "League Member",
+      "goal": "see a list of all completed and current seasons for my league",
+      "benefit": "I can explore the league's history and access past seasons to review previous results",
+      "acceptanceCriteria": [
+        "System displays all seasons in reverse chronological order (most recent first)",
+        "Each season entry shows season year, final champion, runner-up, and completion status",
+        "Current season is clearly marked and distinguished from historical seasons",
+        "Dynasty leagues show continuous season history with year-over-year progression",
+        "Redraft leagues show independent seasons with roster reset indicators",
+        "Season list is accessible from league navigation menu or dedicated history page"
+      ]
+    },
+    {
+      "id": "LH-002",
+      "title": "View Season Summary Page",
+      "user": "League Member",
+      "goal": "see comprehensive summary of a specific season including key stats and outcomes",
+      "benefit": "I can review complete season results, final standings, and significant moments from any past season",
+      "acceptanceCriteria": [
+        "Season summary page displays season year, league format, and number of teams",
+        "Page shows final standings table with all teams ranked by playoff outcome and record",
+        "Summary includes champion and runner-up with team names, managers, and final scores",
+        "Page displays regular season winner/top seed if different from playoff champion",
+        "Key season statistics are shown (total points scored, highest scoring week, etc.)",
+        "Summary includes links to detailed views for matchups, power rankings, and rosters from that season"
+      ]
+    },
+    {
+      "id": "LH-003",
+      "title": "Display Championship Game Results",
+      "user": "League Member",
+      "goal": "see detailed results of the championship matchup for any season",
+      "benefit": "I can review how championships were won and see the final game details",
+      "acceptanceCriteria": [
+        "Championship section shows both finalist teams with logos, managers, and final scores",
+        "System displays score breakdown by player if data is available from fantasy platform",
+        "Championship week number and date are clearly indicated",
+        "System shows margin of victory and whether game was close or blowout",
+        "Links to full matchup detail and playoff bracket context are provided",
+        "Historical championships preserve data even if teams no longer exist in current season"
+      ]
+    },
+    {
+      "id": "LH-004",
+      "title": "Display Runner-Up and Playoff Finishers",
+      "user": "League Member",
+      "goal": "see who finished second, third, and other playoff positions for a season",
+      "benefit": "I can understand the complete playoff results and see who made deep runs",
+      "acceptanceCriteria": [
+        "Season summary clearly identifies runner-up (championship game loser)",
+        "System displays third place finisher if consolation/third place game exists",
+        "All playoff participants are shown with their final ranking/finish position",
+        "Non-playoff teams are displayed separately with regular season rankings",
+        "Playoff structure diagram or summary explains how finishing positions were determined",
+        "Historical playoff results are preserved regardless of current league roster changes"
+      ]
+    },
+    {
+      "id": "LH-005",
+      "title": "Access Historical Week Links from Season Archive",
+      "user": "League Member",
+      "goal": "navigate to specific weeks within archived seasons to review matchups and content",
+      "benefit": "I can explore detailed week-by-week history and see what happened during specific periods",
+      "acceptanceCriteria": [
+        "Season summary page includes week-by-week navigation or timeline",
+        "Clicking a historical week loads that week's matchups, scores, and published content",
+        "Historical weeks show power rankings, matchup features, and predictions from that time",
+        "System preserves links even if current league interface has changed",
+        "Week links clearly indicate which weeks had commissioner content published vs basic matchups",
+        "Navigation allows browsing through weeks sequentially within archived seasons"
+      ]
+    },
+    {
+      "id": "LH-006",
+      "title": "View Dynasty League Continuity Across Seasons",
+      "user": "Dynasty League Member",
+      "goal": "see how my dynasty team and league evolved across multiple seasons",
+      "benefit": "I can track long-term team building, roster evolution, and sustained success or struggles",
+      "acceptanceCriteria": [
+        "Dynasty season archives show clear season-to-season connections and transitions",
+        "System displays roster carryover and how teams changed between seasons",
+        "Manager tenure and team ownership history is tracked across seasons",
+        "Championship recaps highlight repeat winners and dynasty building success",
+        "System shows franchise records and multi-season statistics for dynasty context",
+        "Historical views indicate when managers joined, left, or took over teams"
+      ]
+    },
+    {
+      "id": "LH-007",
+      "title": "View Redraft League Season Independence",
+      "user": "Redraft League Member",
+      "goal": "see each redraft season as independent with clear roster resets",
+      "benefit": "I understand that each season is a fresh start without confusion about roster continuity",
+      "acceptanceCriteria": [
+        "Redraft season archives clearly indicate 'Fresh Draft' or 'New Season' status",
+        "System does not imply roster continuity between redraft seasons",
+        "Each season summary shows draft order and draft results as starting point",
+        "Manager participation history is tracked even though rosters reset",
+        "System displays which managers returned vs new managers for each season",
+        "Season summaries emphasize yearly champion rather than franchise continuity"
+      ]
+    },
+    {
+      "id": "LH-008",
+      "title": "View Historical Power Rankings by Season",
+      "user": "League Member",
+      "goal": "see all published power rankings from a specific past season",
+      "benefit": "I can review commissioner commentary and see how team rankings evolved throughout a season",
+      "acceptanceCriteria": [
+        "Season archive links to dedicated historical power rankings view for that season",
+        "All weeks with published power rankings are accessible with week-by-week navigation",
+        "Historical rankings display exactly as they appeared when originally published",
+        "Commissioner commentary is preserved and displayed with each ranking",
+        "System shows trajectory chart for historical season if data is available",
+        "Links to contemporary matchups and feed moments from ranking publication are maintained"
+      ]
+    },
+    {
+      "id": "LH-009",
+      "title": "View Historical Pick'ems Results by Season",
+      "user": "League Member",
+      "goal": "see pick'ems participation and results from past seasons",
+      "benefit": "I can review who performed best at predictions and see historical accuracy",
+      "acceptanceCriteria": [
+        "Season archive includes pick'ems history section with weekly results",
+        "System displays season-long pick'ems leaderboard for that historical season",
+        "Individual weekly pick'ems results are accessible for all participants",
+        "Historical pick'ems data shows who participated each week and their accuracy",
+        "System preserves pick'ems stats even if participants are no longer in league",
+        "Links to specific weeks allow viewing exact picks and outcomes from the past"
+      ]
+    },
+    {
+      "id": "LH-010",
+      "title": "View All-Time League Records and Milestones",
+      "user": "League Member",
+      "goal": "see cumulative records across all seasons such as most championships, best record, highest score",
+      "benefit": "I can understand league history and see who has achieved the most success over time",
+      "acceptanceCriteria": [
+        "League history page includes 'All-Time Records' section aggregating across seasons",
+        "System displays records for most championships, best regular season record, most wins, etc.",
+        "Highest single-game score and highest season total points are shown with context",
+        "Manager-level cumulative stats are displayed (most playoff appearances, win percentage)",
+        "Records indicate which season(s) the achievement occurred in with clickable links",
+        "System handles manager changes and team ownership transitions appropriately"
+      ]
+    },
+    {
+      "id": "LH-011",
+      "title": "Search and Filter Historical Seasons",
+      "user": "League Member",
+      "goal": "filter season archives by criteria like championship winner, year range, or format",
+      "benefit": "I can quickly find specific historical seasons without scrolling through entire history",
+      "acceptanceCriteria": [
+        "Season archive list includes search/filter controls",
+        "User can filter by champion name or manager to find their winning seasons",
+        "Year range filter allows selecting specific time periods",
+        "Dynasty vs redraft filter if league has changed formats over time",
+        "Filter results update immediately and show matching seasons only",
+        "System indicates how many seasons match current filter criteria"
+      ]
+    },
+    {
+      "id": "LH-012",
+      "title": "View Manager Historical Performance Profile",
+      "user": "League Member",
+      "goal": "see a specific manager's performance across all seasons they participated in",
+      "benefit": "I can understand individual manager's legacy and long-term success patterns",
+      "acceptanceCriteria": [
+        "Clicking a manager name in league history opens their historical profile",
+        "Profile shows all seasons manager participated in with win-loss records",
+        "Championships, runner-up finishes, and playoff appearances are highlighted",
+        "Profile displays manager's cumulative stats (total wins, winning percentage, etc.)",
+        "Season-by-season breakdown shows progression and performance trends",
+        "Profile links back to specific season summaries for detailed exploration"
+      ]
+    }
+  ]
+}

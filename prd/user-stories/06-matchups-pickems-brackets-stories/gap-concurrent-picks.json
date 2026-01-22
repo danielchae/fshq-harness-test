@@ -1,0 +1,303 @@
+{
+  "story_id": "US-MPB-GAP-002",
+  "epic": "Matchups, Pick'ems & Brackets",
+  "title": "Nanosecond-Precision Pick Submission Lock Time Validation",
+  "priority": "P1 - Critical",
+  "story_type": "Quality/Edge Case",
+  "gap_category": "Concurrent Operations Safety",
+  "as_a": "User",
+  "i_want": "Clear and fair handling when submitting picks at the exact lock time with nanosecond precision",
+  "so_that": "I understand whether my pick was accepted or rejected based on precise timing rules, with grace periods for network latency",
+
+  "acceptance_criteria": [
+    {
+      "scenario": "Pick submitted exactly at lock time with grace period",
+      "given": [
+        "Game locks at 2025-09-08 13:00:00.000000000 UTC (nanosecond precision)",
+        "System configured with 2-second grace period for network latency",
+        "User submits pick at 13:00:01.500000000 UTC (1.5s after lock)"
+      ],
+      "when": [
+        "Server receives request with client timestamp",
+        "Server timestamp is 13:00:01.600000000 UTC (100ms server delay)",
+        "System compares both timestamps against lock time + grace period"
+      ],
+      "then": [
+        "Pick is accepted because within 2-second grace period",
+        "Response includes: 'Pick accepted (grace period applied due to network delay)'",
+        "Database stores: submission_timestamp, server_timestamp, lock_timestamp, grace_applied=true",
+        "Audit log records: latency=600ms, grace_remaining=400ms",
+        "User sees success message with timestamp details"
+      ]
+    },
+    {
+      "scenario": "Pick submitted after grace period expires",
+      "given": [
+        "Game locks at 13:00:00.000000000 UTC",
+        "Grace period is 2 seconds (ends at 13:00:02.000000000 UTC)",
+        "User submits pick at 13:00:02.100000000 UTC"
+      ],
+      "when": [
+        "Server validates timestamp against lock + grace period",
+        "Submission is 100ms after grace period expiration"
+      ],
+      "then": [
+        "Pick is rejected with HTTP 422 Unprocessable Entity",
+        "Error code: 'PICK_SUBMITTED_AFTER_LOCK'",
+        "Message: 'Pick rejected: Game locked at 1:00 PM. Your submission arrived 2.1 seconds after lock time (grace period: 2.0s).'",
+        "Response includes: lock_time, submission_time, grace_period, time_difference",
+        "UI shows clear countdown timer next time to prevent repeat",
+        "No partial data is stored in database"
+      ]
+    },
+    {
+      "scenario": "Concurrent picks for same game by same user",
+      "given": [
+        "User submits pick for Cowboys at 12:59:58 UTC",
+        "Due to network issue, client retries at 12:59:59 UTC",
+        "Both requests arrive at server within 200ms"
+      ],
+      "when": [
+        "First request (Cowboys) starts processing",
+        "Second request (Cowboys retry) arrives before first commits",
+        "System detects duplicate submission via idempotency key"
+      ],
+      "then": [
+        "First request completes successfully",
+        "Second request returns HTTP 200 with cached response from first request",
+        "Message: 'Pick already submitted successfully for this game'",
+        "Database contains exactly one pick record",
+        "Both requests have same idempotency_key in logs",
+        "No 'duplicate pick' error shown to user"
+      ]
+    },
+    {
+      "scenario": "Clock skew between client and server",
+      "given": [
+        "Client clock is 5 seconds ahead of server (misconfigured device)",
+        "Game locks at 13:00:00 UTC (server time)",
+        "User submits at 12:59:57 UTC (server time) but client shows 13:00:02"
+      ],
+      "when": [
+        "Server uses server timestamp as authoritative",
+        "Client timestamp included for logging only",
+        "System detects 5-second clock skew"
+      ],
+      "then": [
+        "Pick is accepted based on server timestamp (within grace period)",
+        "Warning logged: 'Client clock skew detected: +5.0 seconds'",
+        "Response includes: server_time, client_time, skew_detected=true",
+        "Metrics track clock skew distribution for monitoring",
+        "UI potentially warns user about clock synchronization"
+      ]
+    },
+    {
+      "scenario": "High-load scenario with 1000 picks in final second",
+      "given": [
+        "Game locks at 13:00:00 UTC",
+        "1000 users submit picks between 12:59:59.000 and 13:00:00.999 UTC",
+        "Server must process all requests fairly"
+      ],
+      "when": [
+        "Picks arrive with timestamps distributed across final second",
+        "Queue processes requests in timestamp order (not arrival order)",
+        "Some requests delayed by up to 500ms due to load"
+      ],
+      "then": [
+        "All picks with (server_timestamp - latency) < lock_time + grace_period are accepted",
+        "Picks are processed in submission timestamp order",
+        "Queue processing time < 100ms per pick at p99",
+        "Total processing time for 1000 picks < 5 minutes",
+        "No picks lost or corrupted",
+        "Real-time progress updates sent to users via WebSocket",
+        "Metrics show: queue_depth, processing_rate, latency_distribution"
+      ]
+    },
+    {
+      "scenario": "Grace period configuration by league commissioner",
+      "given": [
+        "League commissioner can configure grace period (0-30 seconds)",
+        "Default is 2 seconds for standard leagues",
+        "High-stakes leagues may use 0 seconds (strict enforcement)"
+      ],
+      "when": [
+        "Commissioner sets grace period to 5 seconds",
+        "Setting takes effect for all future game locks",
+        "Existing scheduled locks updated with new grace period"
+      ],
+      "then": [
+        "All pick validations use 5-second grace period",
+        "UI shows grace period on game lock countdown",
+        "Email notifications mention grace period policy",
+        "Audit log records grace period changes with timestamp",
+        "Users notified of grace period policy changes"
+      ]
+    }
+  ],
+
+  "technical_requirements": {
+    "timestamp_precision": {
+      "storage": "TIMESTAMP(9) or BIGINT nanoseconds since epoch",
+      "timezone": "All timestamps stored in UTC",
+      "client_timestamp": "ISO8601 with nanosecond precision",
+      "server_timestamp": "Generated using monotonic clock",
+      "comparison": "Nanosecond-precision arithmetic for lock validation"
+    },
+    "grace_period_handling": {
+      "default_grace_period": "2 seconds",
+      "configurable_range": "0-30 seconds",
+      "application": "Added to lock_timestamp for validation",
+      "formula": "is_valid = (server_timestamp <= lock_timestamp + grace_period)",
+      "latency_estimation": "Use (server_timestamp - client_timestamp) for network latency"
+    },
+    "idempotency": {
+      "key_format": "pick:{user_id}:{game_id}:{submission_nanos}",
+      "storage": "Redis with TTL = lock_time + grace_period + 5 minutes",
+      "duplicate_detection": "Check idempotency key before database write",
+      "response_caching": "Cache successful response for 5 minutes",
+      "concurrent_handling": "Return cached response for duplicate requests"
+    },
+    "clock_skew_handling": {
+      "authoritative_source": "Server timestamp always used for validation",
+      "client_timestamp_use": "Logging and skew detection only",
+      "skew_threshold": "Alert if |server_time - client_time| > 10 seconds",
+      "ntp_recommendation": "Suggest NTP sync to clients with large skew",
+      "monitoring": "Track skew distribution across users"
+    },
+    "queue_processing": {
+      "priority_queue": "Sort by submission timestamp (not arrival time)",
+      "concurrency": "Process up to 100 picks simultaneously",
+      "timeout": "30 seconds per pick processing",
+      "retry": "3 attempts with exponential backoff for transient failures",
+      "dead_letter_queue": "Failed picks after retries for manual review"
+    }
+  },
+
+  "error_handling": {
+    "late_submission": {
+      "http_status": 422,
+      "error_code": "PICK_SUBMITTED_AFTER_LOCK",
+      "message": "Pick rejected: Game locked at {lock_time}. Your submission arrived {delay} after lock time (grace period: {grace_period}).",
+      "response_fields": {
+        "lock_timestamp": "2025-09-08T13:00:00.000000000Z",
+        "submission_timestamp": "2025-09-08T13:00:02.100000000Z",
+        "server_timestamp": "2025-09-08T13:00:02.150000000Z",
+        "grace_period_seconds": 2.0,
+        "time_difference_seconds": 2.1,
+        "grace_applied": false
+      },
+      "user_action": "No retry allowed for this game"
+    },
+    "grace_period_accepted": {
+      "http_status": 200,
+      "message": "Pick accepted (grace period applied due to network delay)",
+      "response_fields": {
+        "lock_timestamp": "2025-09-08T13:00:00.000000000Z",
+        "submission_timestamp": "2025-09-08T13:00:01.500000000Z",
+        "server_timestamp": "2025-09-08T13:00:01.600000000Z",
+        "grace_period_seconds": 2.0,
+        "grace_remaining_seconds": 0.4,
+        "network_latency_ms": 600,
+        "grace_applied": true
+      }
+    },
+    "clock_skew_warning": {
+      "http_status": 200,
+      "warning": "Your device clock is {skew} seconds ahead/behind server time. This may affect submission timing.",
+      "skew_seconds": 5.2,
+      "recommendation": "Please synchronize your device clock with NTP."
+    }
+  },
+
+  "performance_requirements": {
+    "timestamp_comparison": "< 1ms at p99",
+    "idempotency_check": "< 5ms at p99",
+    "database_write": "< 50ms at p99",
+    "total_submission_time": "< 200ms at p99 under normal load",
+    "queue_processing_under_load": "< 500ms at p99 with 1000 concurrent submissions",
+    "throughput": "Handle 10,000 picks per minute during peak times"
+  },
+
+  "monitoring": {
+    "metrics": [
+      "pick_submissions_total",
+      "pick_rejections_by_reason",
+      "grace_period_applications",
+      "clock_skew_distribution",
+      "submission_latency_seconds",
+      "queue_depth",
+      "processing_rate_per_second"
+    ],
+    "alerts": [
+      "Pick rejection rate > 5% (potential timing issues)",
+      "Clock skew > 10 seconds for > 1% of users",
+      "Queue depth > 500 (scale up workers)",
+      "Processing latency p99 > 1 second"
+    ],
+    "dashboards": [
+      "Real-time pick submission timeline (last 60 seconds before lock)",
+      "Grace period application rate by game",
+      "Clock skew heatmap by user geography",
+      "Queue processing performance"
+    ]
+  },
+
+  "testing_requirements": {
+    "load_testing": [
+      "Simulate 10,000 users submitting picks in final 10 seconds before lock",
+      "Test grace period edge cases: exactly at boundary, 1ns before/after",
+      "Verify queue ordering with shuffled arrival times",
+      "Measure latency distribution under peak load"
+    ],
+    "time_testing": [
+      "Mock clock to test nanosecond-precision comparisons",
+      "Test all clock skew scenarios: +/- 1s, +/- 10s, +/- 1 hour",
+      "Verify leap second handling (if applicable)",
+      "Test daylight saving time transitions"
+    ],
+    "edge_cases": [
+      "Pick submitted at exactly lock_time + grace_period (boundary)",
+      "Concurrent picks with same idempotency key",
+      "Network timeout during submission (retry scenario)",
+      "Database failure during pick processing (rollback verification)"
+    ],
+    "integration_tests": [
+      "End-to-end pick submission with real timestamps",
+      "Redis idempotency key expiration and cleanup",
+      "Queue processing with real database",
+      "WebSocket real-time update delivery"
+    ]
+  },
+
+  "ui_requirements": {
+    "countdown_timer": {
+      "precision": "Display seconds with 1-decimal precision (e.g., 12.3s)",
+      "grace_period_indicator": "Show grace period in yellow zone on timer",
+      "warnings": [
+        "Yellow alert at 30 seconds before lock",
+        "Red alert at 10 seconds before lock",
+        "Disable submit button at lock + grace period"
+      ]
+    },
+    "submission_feedback": {
+      "success": "✓ Pick submitted successfully at 12:59:58 PM (2 seconds before lock)",
+      "grace_period": "✓ Pick accepted with 0.4s grace period remaining",
+      "rejection": "✗ Pick rejected: Submitted 2.1s after lock time (grace period: 2.0s)"
+    },
+    "clock_sync_warning": "⚠️ Your device clock appears to be off by 5 seconds. Synchronize for accurate timing."
+  },
+
+  "related_stories": [
+    "US-MPB-002 (Pick Submission)",
+    "US-MPB-003 (Pick Deadlines)",
+    "US-OAC-GAP-001 (Concurrent Claims)"
+  ],
+
+  "dependencies": [
+    "PostgreSQL with TIMESTAMP(9) or equivalent nanosecond precision",
+    "Redis for idempotency key storage",
+    "Queue system (e.g., BullMQ, RabbitMQ) for high-load processing",
+    "WebSocket infrastructure for real-time updates",
+    "NTP-synchronized server clocks"
+  ]
+}

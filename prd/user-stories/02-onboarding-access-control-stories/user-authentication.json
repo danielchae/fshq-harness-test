@@ -1,0 +1,161 @@
+{
+  "subcomponentId": "user-authentication",
+  "componentId": "onboarding-access-control",
+  "tracesTo": [
+    "SOW: Onboarding, Roles & Access Control",
+    "UserFlow: Manager / Fan Onboarding, Claiming & Role Assignment"
+  ],
+  "stories": [
+    {
+      "id": "UA-001",
+      "title": "Register New Account with Email and Password",
+      "user": "New User",
+      "goal": "create an FSHQ account using my email and password",
+      "benefit": "I can establish my identity and access league spaces",
+      "acceptanceCriteria": [
+        "User can enter email address and password in registration form",
+        "System validates email format and password strength (minimum 8 characters)",
+        "System creates new user account via Supabase Auth signup",
+        "System sends verification email to provided email address",
+        "User receives confirmation message with instructions to verify email",
+        "System prevents duplicate accounts with same email address"
+      ]
+    },
+    {
+      "id": "UA-002",
+      "title": "Verify Email Address After Registration",
+      "user": "New User",
+      "goal": "verify my email address to activate my account",
+      "benefit": "I can confirm my identity and gain full access to FSHQ features",
+      "acceptanceCriteria": [
+        "User receives verification email with secure token link",
+        "User can click verification link to confirm email address",
+        "System validates verification token via Supabase Auth",
+        "System updates user account status to verified upon successful validation",
+        "User is redirected to login page or automatically logged in after verification",
+        "System provides option to resend verification email if not received"
+      ]
+    },
+    {
+      "id": "UA-003",
+      "title": "Login with Email and Password",
+      "user": "Registered User",
+      "goal": "sign in to my FSHQ account using my email and password",
+      "benefit": "I can access my leagues and participate in league activities",
+      "acceptanceCriteria": [
+        "User can enter email and password in login form",
+        "System authenticates credentials via Supabase Auth signIn",
+        "System creates secure session with JWT token upon successful authentication",
+        "User is redirected to appropriate landing page based on league membership status",
+        "System displays clear error messages for invalid credentials",
+        "System prevents login if email is not verified with option to resend verification"
+      ]
+    },
+    {
+      "id": "UA-004",
+      "title": "Maintain Authenticated Session",
+      "user": "Logged-in User",
+      "goal": "stay signed in across browser sessions without repeated login",
+      "benefit": "I have convenient access to FSHQ without logging in each time I visit",
+      "acceptanceCriteria": [
+        "System maintains user session using Supabase Auth session management",
+        "Session persists across browser tabs and page refreshes",
+        "System validates session token on each protected route access",
+        "Session automatically refreshes before expiration to maintain continuity",
+        "System provides option to 'Remember Me' for extended session duration",
+        "Session expires after configurable inactivity period for security"
+      ]
+    },
+    {
+      "id": "UA-005",
+      "title": "Logout and End Session",
+      "user": "Logged-in User",
+      "goal": "securely sign out of my FSHQ account",
+      "benefit": "I can protect my account when using shared devices or ending my session",
+      "acceptanceCriteria": [
+        "User can access logout option from navigation menu or user profile",
+        "System clears authentication session via Supabase Auth signOut",
+        "System removes session tokens and cookies from browser",
+        "User is redirected to login page or public homepage after logout",
+        "System prevents access to protected routes after logout",
+        "Logout action is immediate and does not require page refresh"
+      ]
+    },
+    {
+      "id": "UA-006",
+      "title": "Request Password Reset",
+      "user": "User who Forgot Password",
+      "goal": "reset my password when I cannot remember it",
+      "benefit": "I can regain access to my account without contacting support",
+      "acceptanceCriteria": [
+        "User can access 'Forgot Password' link from login page",
+        "User can enter their email address to request password reset",
+        "System sends password reset email via Supabase Auth resetPasswordForEmail",
+        "System provides confirmation that reset email was sent (without revealing if account exists)",
+        "Reset email contains secure token link valid for limited time period",
+        "System prevents brute force attempts with rate limiting on reset requests"
+      ]
+    },
+    {
+      "id": "UA-007",
+      "title": "Complete Password Reset Process",
+      "user": "User Resetting Password",
+      "goal": "set a new password using the reset link from my email",
+      "benefit": "I can choose a new password and regain access to my account",
+      "acceptanceCriteria": [
+        "User can click reset link from email and be directed to secure password reset form",
+        "System validates reset token for authenticity and expiration",
+        "User can enter and confirm new password meeting strength requirements",
+        "System updates password via Supabase Auth updateUser",
+        "User is logged in automatically after successful password reset",
+        "System invalidates reset token after use to prevent reuse",
+        "System displays error if reset token is expired or invalid with option to request new one"
+      ]
+    },
+    {
+      "id": "UA-008",
+      "title": "Handle Authentication Errors Gracefully",
+      "user": "User Attempting Authentication",
+      "goal": "understand authentication issues and how to resolve them",
+      "benefit": "I can troubleshoot login problems without frustration or confusion",
+      "acceptanceCriteria": [
+        "System displays user-friendly error messages for common auth failures (wrong password, account not found, unverified email)",
+        "Error messages do not expose sensitive security information",
+        "System provides actionable guidance for each error type (e.g., 'Try password reset' for wrong password)",
+        "System logs authentication errors for security monitoring without blocking user",
+        "System implements rate limiting on failed login attempts to prevent brute force attacks",
+        "System provides contact support option for persistent authentication issues"
+      ]
+    },
+    {
+      "id": "UA-009",
+      "title": "Protect Routes Based on Authentication Status",
+      "user": "System",
+      "goal": "enforce access control based on user authentication and verification status",
+      "benefit": "protected resources are only accessible to authenticated users",
+      "acceptanceCriteria": [
+        "System checks authentication status before allowing access to protected routes",
+        "Unauthenticated users are redirected to login page when accessing protected routes",
+        "System preserves intended destination URL to redirect after successful login",
+        "Public routes (login, register, forgot password) remain accessible without authentication",
+        "System validates session on server-side for API routes to prevent token manipulation",
+        "System handles expired sessions gracefully with automatic redirect to login"
+      ]
+    },
+    {
+      "id": "UA-010",
+      "title": "Display User Account Information",
+      "user": "Logged-in User",
+      "goal": "view my account details and authentication status",
+      "benefit": "I can verify my account information and manage my profile",
+      "acceptanceCriteria": [
+        "User can access account settings or profile page",
+        "System displays email address associated with account",
+        "System shows email verification status clearly",
+        "System displays account creation date and last login time",
+        "User can initiate password change from account settings",
+        "System masks or securely displays sensitive information"
+      ]
+    }
+  ]
+}

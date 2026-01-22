@@ -1,0 +1,310 @@
+{
+  "subcomponentId": "visualization-components",
+  "componentId": "ui-components",
+  "tracesTo": [
+    "SOW: Power Rankings View & History",
+    "SOW: Matchups, Playoff Brackets & Pick'ems"
+  ],
+  "stories": [
+    {
+      "id": "VIS-001",
+      "title": "Integrate Charting Library for Data Visualizations",
+      "user": "Frontend Developer",
+      "goal": "integrate a robust charting library (Recharts, Chart.js, or D3.js) for creating interactive data visualizations",
+      "benefit": "the application can render professional, performant charts and graphs without building visualization logic from scratch",
+      "acceptanceCriteria": [
+        "Library is installed and configured in Next.js application with TypeScript support",
+        "Library supports responsive design and adapts to different viewport sizes",
+        "Library provides accessibility features (ARIA labels, keyboard navigation)",
+        "Library handles data updates efficiently without unnecessary re-renders",
+        "Library integrates with Tailwind CSS theming for consistent styling",
+        "Documentation and examples are available for team reference"
+      ]
+    },
+    {
+      "id": "VIS-002",
+      "title": "Build Reusable Line Chart Component",
+      "user": "Frontend Developer",
+      "goal": "create a reusable line chart component for displaying time-series data like rankings progression",
+      "benefit": "consistent chart implementation across application with configurable options",
+      "acceptanceCriteria": [
+        "Component accepts data prop with time-series array structure",
+        "Component supports multiple data series with distinct visual styling",
+        "Component includes configurable axis labels, legends, and tooltips",
+        "Component handles missing or incomplete data gracefully",
+        "Component provides callback props for interaction events (hover, click)",
+        "Component is responsive and adapts to parent container dimensions"
+      ]
+    },
+    {
+      "id": "VIS-003",
+      "title": "Create Interactive Bracket Visualization Component",
+      "user": "Frontend Developer",
+      "goal": "build a flexible bracket visualization component for playoff structures",
+      "benefit": "playoff brackets display correctly regardless of league configuration or screen size",
+      "acceptanceCriteria": [
+        "Component accepts bracket data structure defining rounds, matchups, and teams",
+        "Component dynamically generates bracket layout based on number of teams and rounds",
+        "Component displays connection lines between rounds with proper visual hierarchy",
+        "Component handles first-round byes and irregular bracket structures",
+        "Component supports both winners and losers brackets with visual distinction",
+        "Component is responsive with mobile-optimized layout (vertical or collapsible)"
+      ]
+    },
+    {
+      "id": "VIS-004",
+      "title": "Implement Calendar View Component for Schedule Display",
+      "user": "Frontend Developer",
+      "goal": "create a calendar view component for displaying weekly matchups across a season",
+      "benefit": "users can see season schedule in familiar calendar format with easy week navigation",
+      "acceptanceCriteria": [
+        "Component displays weeks in calendar grid or continuous horizontal layout",
+        "Component highlights current week and allows navigation to past/future weeks",
+        "Component shows matchups, scores, and key events within each week cell",
+        "Component supports season selector to switch between different years",
+        "Component handles regular season and playoff weeks with visual distinction",
+        "Component is responsive and adapts to mobile viewports effectively"
+      ]
+    },
+    {
+      "id": "VIS-005",
+      "title": "Build Data Tooltip System for Charts",
+      "user": "League Member",
+      "goal": "see detailed information when hovering over or tapping chart elements",
+      "benefit": "I can explore data points without cluttering the chart with constant labels",
+      "acceptanceCriteria": [
+        "Tooltips appear on hover (desktop) or tap (mobile) of data points",
+        "Tooltips display relevant data values, labels, and contextual information",
+        "Tooltips position intelligently to avoid viewport edges and chart overlaps",
+        "Tooltips use consistent styling matching application theme",
+        "Tooltips include smooth fade-in/fade-out animations",
+        "Tooltips are accessible to screen readers with appropriate ARIA attributes"
+      ]
+    },
+    {
+      "id": "VIS-006",
+      "title": "Create Chart Legend Component with Toggle Functionality",
+      "user": "League Member",
+      "goal": "interact with chart legends to show/hide specific data series",
+      "benefit": "I can focus on specific teams or data series without visual clutter",
+      "acceptanceCriteria": [
+        "Legend displays all data series with team names, colors, and icons/logos",
+        "Clicking legend item toggles visibility of corresponding data series",
+        "Legend provides visual feedback for enabled/disabled state (opacity, strikethrough)",
+        "Legend includes 'Show All' and 'Hide All' quick actions",
+        "Legend position is configurable (top, bottom, left, right, or floating)",
+        "Legend is responsive and scrollable if team count exceeds available space"
+      ]
+    },
+    {
+      "id": "VIS-007",
+      "title": "Implement Color Scheme System for Visualizations",
+      "user": "Frontend Developer",
+      "goal": "establish consistent color scheme for charts using team colors or predefined palettes",
+      "benefit": "visualizations maintain consistent, accessible color usage across all components",
+      "acceptanceCriteria": [
+        "System uses team primary colors when available from league settings",
+        "System provides fallback color palette for teams without defined colors",
+        "Color palette ensures sufficient contrast for accessibility (WCAG AA)",
+        "System supports distinguishing 12+ teams with distinct colors",
+        "System provides color utilities for generating tints, shades, and gradients",
+        "System integrates with Tailwind CSS theme configuration"
+      ]
+    },
+    {
+      "id": "VIS-008",
+      "title": "Build Loading States for Visualization Components",
+      "user": "League Member",
+      "goal": "see appropriate loading indicators while chart data is being fetched",
+      "benefit": "I understand the application is working and know when visualization is ready",
+      "acceptanceCriteria": [
+        "Components display skeleton loaders or placeholder charts during data fetch",
+        "Loading states match the approximate dimensions of final visualization",
+        "Loading states use consistent animation style (pulse, shimmer, spinner)",
+        "Components transition smoothly from loading to data display without layout shift",
+        "Error states display informative messages if data fetch fails",
+        "Loading indicators are accessible with ARIA live region announcements"
+      ]
+    },
+    {
+      "id": "VIS-009",
+      "title": "Create Empty State Displays for Visualizations",
+      "user": "League Member",
+      "goal": "see helpful empty state messages when no data is available for visualization",
+      "benefit": "I understand why a chart is empty and what actions I can take",
+      "acceptanceCriteria": [
+        "Empty states display when no data exists for selected time period or filters",
+        "Empty states include descriptive text explaining why data is unavailable",
+        "Empty states provide actionable suggestions (e.g., 'Select different time range')",
+        "Empty states use consistent visual design with illustration or icon",
+        "Empty states handle different scenarios (no published rankings, future weeks, new leagues)",
+        "Empty states maintain chart container dimensions to prevent layout shift"
+      ]
+    },
+    {
+      "id": "VIS-010",
+      "title": "Implement Chart Export and Download Features",
+      "user": "League Member",
+      "goal": "export or download charts as images for sharing outside the application",
+      "benefit": "I can easily share visualizations on social media or save for records",
+      "acceptanceCriteria": [
+        "Export button available on chart components triggers download action",
+        "Charts export as high-quality PNG or SVG format",
+        "Exported images include chart title, legend, and data attribution",
+        "Export preserves current chart state including filters and visibility toggles",
+        "Export works on both desktop and mobile devices",
+        "Export functionality handles different chart types consistently"
+      ]
+    },
+    {
+      "id": "VIS-011",
+      "title": "Build Responsive Chart Sizing and Scaling",
+      "user": "League Member on Various Devices",
+      "goal": "view charts that automatically adjust to my screen size and orientation",
+      "benefit": "I have optimal viewing experience regardless of device or window size",
+      "acceptanceCriteria": [
+        "Charts use responsive container queries or viewport-relative sizing",
+        "Charts maintain aspect ratio while scaling to fit available space",
+        "Charts adjust label density, font sizes, and spacing based on container size",
+        "Charts provide horizontal scrolling only when necessary (avoid unnecessary overflow)",
+        "Charts respond to window resize events with smooth transitions",
+        "Charts optimize layout for both portrait and landscape mobile orientations"
+      ]
+    },
+    {
+      "id": "VIS-012",
+      "title": "Implement Zoom and Pan Interactions for Complex Charts",
+      "user": "League Member Viewing Dense Data",
+      "goal": "zoom into specific areas of charts and pan to explore data in detail",
+      "benefit": "I can examine crowded chart sections without losing context of full dataset",
+      "acceptanceCriteria": [
+        "Charts support pinch-to-zoom gesture on touch devices",
+        "Charts support mouse wheel zoom on desktop with modifier key (Shift or Ctrl)",
+        "Charts support click-and-drag panning when zoomed in",
+        "Charts display zoom controls (+ / - buttons, reset button) on interface",
+        "Charts maintain data point positions accurately during zoom/pan operations",
+        "Charts reset to default view when user clicks reset button"
+      ]
+    },
+    {
+      "id": "VIS-013",
+      "title": "Create Animated Transitions for Chart Updates",
+      "user": "League Member",
+      "goal": "see smooth animated transitions when chart data changes",
+      "benefit": "I can visually track changes in data and understand updates more intuitively",
+      "acceptanceCriteria": [
+        "Charts animate when switching between time periods or filters",
+        "Data points smoothly transition between positions with appropriate easing",
+        "New data series fade in, removed series fade out",
+        "Animation duration is short enough to feel responsive (200-500ms)",
+        "Animations respect user's reduced motion preferences (prefers-reduced-motion)",
+        "Animations can be disabled via application settings if needed"
+      ]
+    },
+    {
+      "id": "VIS-014",
+      "title": "Build Accessible Chart Components with ARIA Support",
+      "user": "User with Assistive Technology",
+      "goal": "access chart data and navigation using screen readers or keyboard",
+      "benefit": "I can understand visualizations even if I cannot see them",
+      "acceptanceCriteria": [
+        "Charts include descriptive ARIA labels and roles for all interactive elements",
+        "Charts provide alternative text descriptions summarizing data trends",
+        "Charts support keyboard navigation through data points via Tab and arrow keys",
+        "Charts announce data values to screen readers when focused or hovered",
+        "Charts include skip-to-content links for bypassing complex visualizations",
+        "Charts meet WCAG 2.1 Level AA accessibility standards"
+      ]
+    },
+    {
+      "id": "VIS-015",
+      "title": "Implement Data Table Alternative for Charts",
+      "user": "User Preferring Tabular Data",
+      "goal": "toggle between chart visualization and data table view",
+      "benefit": "I can consume the same information in my preferred format",
+      "acceptanceCriteria": [
+        "Charts include toggle button to switch between visualization and table views",
+        "Data table displays same data shown in chart in structured table format",
+        "Table includes sorting capabilities on relevant columns",
+        "Table is responsive and scrollable on smaller screens",
+        "Table is accessible and navigable with keyboard",
+        "View preference persists during session or across time range changes"
+      ]
+    },
+    {
+      "id": "VIS-016",
+      "title": "Create Team Logo and Avatar Display in Charts",
+      "user": "League Member",
+      "goal": "see team logos and avatars within chart visualizations for quick identification",
+      "benefit": "I can instantly recognize teams without reading labels",
+      "acceptanceCriteria": [
+        "Charts display team logos at key positions (line endpoints, data points, legend)",
+        "Logos scale appropriately based on chart size without distortion",
+        "System provides fallback icons or initials if team logo is unavailable",
+        "Logos maintain visibility and clarity even when chart is zoomed or scaled",
+        "Logos are clickable to trigger relevant actions (highlight team, view details)",
+        "Logo rendering performs efficiently with multiple teams displayed simultaneously"
+      ]
+    },
+    {
+      "id": "VIS-017",
+      "title": "Build Comparison Mode for Visualizations",
+      "user": "League Member",
+      "goal": "compare multiple teams or time periods side-by-side in same visualization",
+      "benefit": "I can analyze differences and trends more effectively",
+      "acceptanceCriteria": [
+        "Charts support selecting multiple teams for comparison via checkboxes or multi-select",
+        "Comparison mode highlights selected teams while dimming non-selected teams",
+        "Charts provide comparison statistics (difference, percentage change) in tooltips",
+        "Comparison mode persists when changing time ranges or filters",
+        "System allows comparing up to 4-6 teams simultaneously without cluttering chart",
+        "Comparison mode includes clear controls for adding/removing teams from comparison"
+      ]
+    },
+    {
+      "id": "VIS-018",
+      "title": "Implement Real-Time Chart Updates for Live Scoring",
+      "user": "League Member During Active Game Week",
+      "goal": "see charts update in real-time as scores change during live games",
+      "benefit": "I have current information without manually refreshing the page",
+      "acceptanceCriteria": [
+        "Charts poll for data updates at appropriate intervals during live scoring periods",
+        "Updated data smoothly animates into chart without jarring jumps",
+        "System indicates when chart data was last updated with timestamp",
+        "User can manually trigger immediate refresh with pull-to-refresh or button",
+        "Real-time updates pause when user is interacting with chart to prevent disruption",
+        "System optimizes API calls to avoid excessive server load during high-traffic periods"
+      ]
+    },
+    {
+      "id": "VIS-019",
+      "title": "Create Annotation System for Charts",
+      "user": "Commissioner or League Member",
+      "goal": "add contextual annotations or notes to specific points on charts",
+      "benefit": "I can highlight important events or provide context for data trends",
+      "acceptanceCriteria": [
+        "Charts support displaying annotation markers at specific data points or time periods",
+        "Annotations include text content, optional icons, and timestamp information",
+        "System allows commissioners to create public annotations visible to all members",
+        "Annotations display on hover/click with detailed information in tooltip or modal",
+        "Annotations persist and remain associated with specific weeks/data points",
+        "Annotation system integrates with content moderation tools for admins"
+      ]
+    },
+    {
+      "id": "VIS-020",
+      "title": "Build Print-Optimized Chart Styles",
+      "user": "League Member Wanting Physical Records",
+      "goal": "print charts that render clearly on paper with appropriate sizing",
+      "benefit": "I can create physical copies of charts for offline viewing or archiving",
+      "acceptanceCriteria": [
+        "Charts use print-specific CSS media queries for print layout",
+        "Printed charts adjust colors for optimal visibility on paper (avoid light colors on white)",
+        "Charts scale appropriately to fit standard paper sizes (A4, Letter)",
+        "Print view removes interactive elements and shows full data table if helpful",
+        "Charts maintain legends and labels for context in printed format",
+        "Print preview shows accurate representation of final printed output"
+      ]
+    }
+  ]
+}

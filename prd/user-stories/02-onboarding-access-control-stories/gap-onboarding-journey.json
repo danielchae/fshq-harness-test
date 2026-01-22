@@ -1,0 +1,113 @@
+{
+  "subcomponentId": "gap-onboarding-journey",
+  "componentId": "onboarding-access-control",
+  "tracesTo": [
+    "SOW: Onboarding, Roles & Access Control",
+    "UserFlow: Manager / Fan Onboarding, Claiming & Role Assignment",
+    "Gap Analysis: Multi-step coordination stories"
+  ],
+  "dependencies": [
+    "user-authentication",
+    "role-claiming",
+    "membership-approval",
+    "league-navigation"
+  ],
+  "stories": [
+    {
+      "id": "OJ-001",
+      "title": "Complete First-Time User Onboarding Journey with Contextual Guidance",
+      "user": "First-Time User",
+      "goal": "complete the entire onboarding process from account creation to active league participation with clear guidance at each step",
+      "benefit": "I understand FSHQ's features and successfully join my league without confusion or getting stuck",
+      "acceptanceCriteria": [
+        "System guides user through sequential onboarding flow: Register → Verify Email → Link League → Claim Role → Join League",
+        "Each step displays contextual help explaining what to do and why it matters with progress indicator showing completion percentage",
+        "User receives welcome email after registration with verification link and overview of next steps",
+        "After email verification, system automatically redirects to league linking page with clear instructions",
+        "System provides inline examples for finding Sleeper League ID (URL format, where to look in Sleeper app)",
+        "After successful league link, system explains role types (Manager vs Fan) with visual cards showing permissions for each",
+        "System displays pending approval status with expected wait time and notification preferences",
+        "Upon approval, system sends notification email and displays celebration modal with 'Getting Started' tips",
+        "First login after approval shows guided tour of main pages: Newsfeed, Power Rankings, Matchups, Transactions",
+        "System tracks onboarding completion metrics: time to complete each step, abandonment points, successful completion rate",
+        "User can access 'Onboarding Guide' from help menu to review steps or restart tour at any time"
+      ]
+    },
+    {
+      "id": "OJ-002",
+      "title": "Detect and Assist Stuck Onboarding Users",
+      "user": "Partially Onboarded User",
+      "goal": "receive proactive assistance when I'm stuck or delayed in the onboarding process",
+      "benefit": "I can overcome obstacles and complete onboarding without needing to contact support",
+      "acceptanceCriteria": [
+        "System detects when user has been in same onboarding step for more than 48 hours",
+        "System sends reminder email with step-specific help content and FAQ links for common issues",
+        "If user doesn't verify email within 24 hours, system displays resend verification option on login page",
+        "If user fails to link league after 3 attempts, system offers troubleshooting guide with common error solutions",
+        "System tracks failed league linking attempts and suggests alternative approaches (contact league commissioner)",
+        "If role approval is pending for more than 7 days, system prompts user to contact commissioner with pre-filled message template",
+        "System displays progress-based encouragement messages: 'You're almost there! Just one more step'",
+        "Abandoned onboarding can be resumed from last completed step with no data loss",
+        "System provides 'Skip for now' option for non-critical steps with reminders to complete later",
+        "Analytics dashboard tracks common abandonment points and reasons for incomplete onboarding"
+      ]
+    },
+    {
+      "id": "OJ-003",
+      "title": "Personalize Post-Onboarding Experience Based on Role",
+      "user": "Newly Onboarded User",
+      "goal": "see personalized content and features relevant to my role immediately after completing onboarding",
+      "benefit": "I can start engaging with league content that matters to me without learning irrelevant features",
+      "acceptanceCriteria": [
+        "System customizes homepage based on claimed role showing role-specific quick actions and content",
+        "Manager role users see Commissioner Desk prominently in navigation with call-to-action to create first power rankings",
+        "Fan role users see emphasized Newsfeed and Matchups pages with prompt to make first pick'em predictions",
+        "System generates personalized first post suggestions based on role: Managers encouraged to introduce themselves as commissioner, Fans prompted to share team support",
+        "First-time dashboard displays 'Recommended Actions' widget with role-appropriate tasks: 'Publish your first power rankings' or 'Make your first prediction'",
+        "System sends week-appropriate onboarding tips via email: Sunday morning prediction reminders for Fans, Monday power rankings prompts for Managers",
+        "Navigation menu highlights newly available features with 'New' badges based on role permissions",
+        "System tracks first engagement metrics by role: time to first post, first commissioner publish, first pick'em submission",
+        "Users can switch roles if permissions change with seamless UI adaptation (Fan promoted to Manager)",
+        "Personalization settings allow users to customize which features are highlighted in their experience"
+      ]
+    },
+    {
+      "id": "OJ-004",
+      "title": "Track and Display Onboarding Success Metrics",
+      "user": "Product Team / System Administrator",
+      "goal": "monitor onboarding funnel performance and identify improvement opportunities",
+      "benefit": "we can optimize the onboarding experience to increase successful completions and reduce abandonment",
+      "acceptanceCriteria": [
+        "System tracks funnel metrics for each onboarding step: started, completed, abandoned, average time",
+        "Dashboard displays conversion rates between steps: registration to verification (%), verification to league linking (%), league linking to approval (%)",
+        "System segments metrics by acquisition channel, league type, and device type (mobile vs desktop)",
+        "Analytics identify common failure points with detailed error logs and user feedback",
+        "System generates weekly onboarding report with trends, improvements, and recommended actions",
+        "Cohort analysis tracks long-term engagement of users by onboarding completion status",
+        "A/B testing framework allows testing different onboarding flows and measuring impact on completion rates",
+        "System correlates onboarding experience with long-term retention and engagement metrics",
+        "Heatmaps and session recordings available for analyzing user behavior during onboarding",
+        "Admin dashboard provides ability to manually assist stuck users or approve pending memberships in bulk"
+      ]
+    },
+    {
+      "id": "OJ-005",
+      "title": "Handle Multi-League Onboarding for Users in Multiple Leagues",
+      "user": "Multi-League User",
+      "goal": "efficiently link and manage multiple fantasy leagues without repeating entire onboarding",
+      "benefit": "I can quickly add additional leagues using my existing account and switch between them seamlessly",
+      "acceptanceCriteria": [
+        "System allows adding additional leagues via 'Link New League' option in league selector",
+        "User completes streamlined onboarding for additional leagues: Link League → Claim Role → Await Approval (skips registration and email verification)",
+        "System displays all linked leagues in dropdown selector with visual indicators for active/selected league",
+        "Each league maintains separate role assignments allowing user to be Manager in one league and Fan in another",
+        "Navigation and content automatically update based on currently selected league context",
+        "System persists league selection preference across sessions with last-used league as default",
+        "User profile shows all linked leagues with join dates and role badges",
+        "Notifications are league-specific with clear indication of which league triggered the notification",
+        "System supports quick league switching via keyboard shortcut or mobile gesture",
+        "Analytics track multi-league usage patterns: number of leagues per user, cross-league engagement, league switching frequency"
+      ]
+    }
+  ]
+}

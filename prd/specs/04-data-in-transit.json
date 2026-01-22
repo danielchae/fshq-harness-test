@@ -1,0 +1,1439 @@
+{
+  "overview": "FSHQ.gg Data-in-Transit Specification defines comprehensive API contracts, event streams, message formats, and external integration patterns for all data movement within the Fantasy Sports Clubhouse platform. This specification covers RESTful API endpoints for Next.js server actions and API routes, real-time event streams for live updates, standardized message formats for system communication, and integration contracts for external systems (primarily Sleeper API). The architecture supports authentication via Supabase Auth, implements Row-Level Security (RLS) at the database layer, and ensures data integrity through comprehensive validation and error handling. All endpoints follow REST principles, use JSON for request/response payloads, and include proper HTTP status codes, authorization requirements, rate limiting, and caching strategies.",
+  "api_endpoints": {
+    "POST /api/auth/register": {
+      "method": "POST",
+      "path": "/api/auth/register",
+      "purpose": "Register new user account with email and password",
+      "request_schema": {
+        "type": "object",
+        "required": ["email", "password"],
+        "properties": {
+          "email": {"type": "string", "format": "email", "maxLength": 255},
+          "password": {"type": "string", "minLength": 8, "maxLength": 128},
+          "displayName": {"type": "string", "minLength": 1, "maxLength": 50}
+        }
+      },
+      "response_schema": {
+        "type": "object",
+        "properties": {
+          "user": {
+            "type": "object",
+            "properties": {
+              "id": {"type": "string", "format": "uuid"},
+              "email": {"type": "string"},
+              "displayName": {"type": "string"},
+              "createdAt": {"type": "string", "format": "date-time"}
+            }
+          },
+          "session": {
+            "type": "object",
+            "properties": {
+              "accessToken": {"type": "string"},
+              "refreshToken": {"type": "string"},
+              "expiresAt": {"type": "string", "format": "date-time"}
+            }
+          }
+        }
+      },
+      "error_responses": [
+        {"status": 400, "code": "INVALID_EMAIL", "message": "Email format is invalid"},
+        {"status": 400, "code": "WEAK_PASSWORD", "message": "Password must be at least 8 characters"},
+        {"status": 409, "code": "EMAIL_EXISTS", "message": "Account with this email already exists"},
+        {"status": 500, "code": "REGISTRATION_FAILED", "message": "Account creation failed"}
+      ],
+      "authorization": "None - public endpoint",
+      "rate_limiting": {"limit": 5, "window": "15 minutes", "scope": "ip_address"},
+      "caching": {"strategy": "no-cache"}
+    },
+    "POST /api/auth/login": {
+      "method": "POST",
+      "path": "/api/auth/login",
+      "purpose": "Authenticate user and create session",
+      "request_schema": {
+        "type": "object",
+        "required": ["email", "password"],
+        "properties": {
+          "email": {"type": "string", "format": "email"},
+          "password": {"type": "string"},
+          "rememberMe": {"type": "boolean", "default": false}
+        }
+      },
+      "response_schema": {
+        "type": "object",
+        "properties": {
+          "user": {
+            "type": "object",
+            "properties": {
+              "id": {"type": "string", "format": "uuid"},
+              "email": {"type": "string"},
+              "displayName": {"type": "string"},
+              "emailVerified": {"type": "boolean"}
+            }
+          },
+          "session": {
+            "type": "object",
+            "properties": {
+              "accessToken": {"type": "string"},
+              "refreshToken": {"type": "string"},
+              "expiresAt": {"type": "string", "format": "date-time"}
+            }
+          }
+        }
+      },
+      "error_responses": [
+        {"status": 401, "code": "INVALID_CREDENTIALS", "message": "Email or password is incorrect"},
+        {"status": 403, "code": "EMAIL_NOT_VERIFIED", "message": "Please verify your email before logging in"},
+        {"status": 429, "code": "TOO_MANY_ATTEMPTS", "message": "Too many login attempts, please try again later"}
+      ],
+      "authorization": "None - public endpoint",
+      "rate_limiting": {"limit": 10, "window": "15 minutes", "scope": "ip_address"},
+      "caching": {"strategy": "no-cache"}
+    },
+    "POST /api/auth/logout": {
+      "method": "POST",
+      "path": "/api/auth/logout",
+      "purpose": "End user session and invalidate tokens",
+      "request_schema": {"type": "object", "properties": {}},
+      "response_schema": {
+        "type": "object",
+        "properties": {
+          "success": {"type": "boolean"},
+          "message": {"type": "string"}
+        }
+      },
+      "error_responses": [
+        {"status": 401, "code": "NOT_AUTHENTICATED", "message": "No active session found"}
+      ],
+      "authorization": "Bearer token required",
+      "rate_limiting": {"limit": 20, "window": "5 minutes", "scope": "user_id"},
+      "caching": {"strategy": "no-cache"}
+    },
+    "POST /api/auth/password-reset": {
+      "method": "POST",
+      "path": "/api/auth/password-reset",
+      "purpose": "Request password reset email",
+      "request_schema": {
+        "type": "object",
+        "required": ["email"],
+        "properties": {
+          "email": {"type": "string", "format": "email"}
+        }
+      },
+      "response_schema": {
+        "type": "object",
+        "properties": {
+          "success": {"type": "boolean"},
+          "message": {"type": "string"}
+        }
+      },
+      "error_responses": [
+        {"status": 429, "code": "TOO_MANY_REQUESTS", "message": "Please wait before requesting another reset"}
+      ],
+      "authorization": "None - public endpoint",
+      "rate_limiting": {"limit": 3, "window": "1 hour", "scope": "ip_address"},
+      "caching": {"strategy": "no-cache"}
+    },
+    "POST /api/leagues": {
+      "method": "POST",
+      "path": "/api/leagues",
+      "purpose": "Create new league by connecting external fantasy league",
+      "request_schema": {
+        "type": "object",
+        "required": ["externalPlatform", "externalLeagueId"],
+        "properties": {
+          "externalPlatform": {"type": "string", "enum": ["sleeper"]},
+          "externalLeagueId": {"type": "string"},
+          "isDynasty": {"type": "boolean", "default": false}
+        }
+      },
+      "response_schema": {
+        "type": "object",
+        "properties": {
+          "league": {
+            "type": "object",
+            "properties": {
+              "id": {"type": "string", "format": "uuid"},
+              "name": {"type": "string"},
+              "slug": {"type": "string"},
+              "externalPlatform": {"type": "string"},
+              "externalLeagueId": {"type": "string"},
+              "teamCount": {"type": "integer"},
+              "season": {"type": "integer"},
+              "createdAt": {"type": "string", "format": "date-time"}
+            }
+          }
+        }
+      },
+      "error_responses": [
+        {"status": 400, "code": "INVALID_LEAGUE_ID", "message": "External league ID is invalid or not found"},
+        {"status": 409, "code": "LEAGUE_EXISTS", "message": "This league is already connected to FSHQ"},
+        {"status": 401, "code": "UNAUTHORIZED", "message": "Authentication required"},
+        {"status": 500, "code": "SYNC_FAILED", "message": "Failed to fetch league data from external platform"}
+      ],
+      "authorization": "Bearer token required, user becomes admin",
+      "rate_limiting": {"limit": 10, "window": "1 hour", "scope": "user_id"},
+      "caching": {"strategy": "no-cache"}
+    },
+    "GET /api/leagues/:leagueId": {
+      "method": "GET",
+      "path": "/api/leagues/:leagueId",
+      "purpose": "Get league details and configuration",
+      "request_schema": {
+        "type": "object",
+        "properties": {
+          "leagueId": {"type": "string", "format": "uuid", "in": "path"}
+        }
+      },
+      "response_schema": {
+        "type": "object",
+        "properties": {
+          "id": {"type": "string", "format": "uuid"},
+          "name": {"type": "string"},
+          "slug": {"type": "string"},
+          "externalPlatform": {"type": "string"},
+          "externalLeagueId": {"type": "string"},
+          "teamCount": {"type": "integer"},
+          "season": {"type": "integer"},
+          "scoringFormat": {"type": "string"},
+          "playoffStructure": {"type": "string"},
+          "isDynasty": {"type": "boolean"},
+          "settings": {
+            "type": "object",
+            "properties": {
+              "visibility": {"type": "string", "enum": ["public", "private"]},
+              "joinRule": {"type": "string", "enum": ["auto_join", "approval_required"]},
+              "fanAccessEnabled": {"type": "boolean"}
+            }
+          },
+          "createdAt": {"type": "string", "format": "date-time"}
+        }
+      },
+      "error_responses": [
+        {"status": 404, "code": "LEAGUE_NOT_FOUND", "message": "League does not exist"},
+        {"status": 403, "code": "ACCESS_DENIED", "message": "You don't have access to this private league"}
+      ],
+      "authorization": "Bearer token required for private leagues, optional for public",
+      "rate_limiting": {"limit": 100, "window": "1 minute", "scope": "user_id"},
+      "caching": {"strategy": "stale-while-revalidate", "maxAge": 300}
+    },
+    "PATCH /api/leagues/:leagueId": {
+      "method": "PATCH",
+      "path": "/api/leagues/:leagueId",
+      "purpose": "Update league settings (admin only)",
+      "request_schema": {
+        "type": "object",
+        "properties": {
+          "leagueId": {"type": "string", "format": "uuid", "in": "path"},
+          "name": {"type": "string", "maxLength": 100},
+          "settings": {
+            "type": "object",
+            "properties": {
+              "visibility": {"type": "string", "enum": ["public", "private"]},
+              "joinRule": {"type": "string", "enum": ["auto_join", "approval_required"]},
+              "fanAccessEnabled": {"type": "boolean"}
+            }
+          }
+        }
+      },
+      "response_schema": {
+        "type": "object",
+        "properties": {
+          "league": {"$ref": "#/api_endpoints/GET /api/leagues/:leagueId/response_schema"}
+        }
+      },
+      "error_responses": [
+        {"status": 403, "code": "ADMIN_REQUIRED", "message": "Only admins can update league settings"},
+        {"status": 404, "code": "LEAGUE_NOT_FOUND", "message": "League does not exist"}
+      ],
+      "authorization": "Bearer token required, admin role verified via RLS",
+      "rate_limiting": {"limit": 20, "window": "5 minutes", "scope": "user_id"},
+      "caching": {"strategy": "no-cache"}
+    },
+    "GET /api/leagues/:leagueId/members": {
+      "method": "GET",
+      "path": "/api/leagues/:leagueId/members",
+      "purpose": "List all league members with roles and status",
+      "request_schema": {
+        "type": "object",
+        "properties": {
+          "leagueId": {"type": "string", "format": "uuid", "in": "path"},
+          "status": {"type": "string", "enum": ["approved", "pending", "rejected"], "in": "query"}
+        }
+      },
+      "response_schema": {
+        "type": "object",
+        "properties": {
+          "members": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {"type": "string", "format": "uuid"},
+                "userId": {"type": "string", "format": "uuid"},
+                "displayName": {"type": "string"},
+                "role": {"type": "string", "enum": ["admin", "manager", "fan"]},
+                "status": {"type": "string", "enum": ["pending", "approved", "rejected"]},
+                "teamId": {"type": "string", "format": "uuid"},
+                "teamName": {"type": "string"},
+                "joinedAt": {"type": "string", "format": "date-time"}
+              }
+            }
+          }
+        }
+      },
+      "error_responses": [
+        {"status": 403, "code": "ACCESS_DENIED", "message": "You must be a league member to view this"},
+        {"status": 404, "code": "LEAGUE_NOT_FOUND", "message": "League does not exist"}
+      ],
+      "authorization": "Bearer token required, league membership verified",
+      "rate_limiting": {"limit": 100, "window": "1 minute", "scope": "user_id"},
+      "caching": {"strategy": "stale-while-revalidate", "maxAge": 60}
+    },
+    "POST /api/leagues/:leagueId/join": {
+      "method": "POST",
+      "path": "/api/leagues/:leagueId/join",
+      "purpose": "Request to join league with role and team claim",
+      "request_schema": {
+        "type": "object",
+        "required": ["role"],
+        "properties": {
+          "leagueId": {"type": "string", "format": "uuid", "in": "path"},
+          "role": {"type": "string", "enum": ["manager", "fan"]},
+          "teamId": {"type": "string", "format": "uuid"},
+          "sleeperUserId": {"type": "string"}
+        }
+      },
+      "response_schema": {
+        "type": "object",
+        "properties": {
+          "membership": {
+            "type": "object",
+            "properties": {
+              "id": {"type": "string", "format": "uuid"},
+              "status": {"type": "string", "enum": ["pending", "approved"]},
+              "role": {"type": "string"},
+              "message": {"type": "string"}
+            }
+          }
+        }
+      },
+      "error_responses": [
+        {"status": 400, "code": "INVALID_TEAM_CLAIM", "message": "Team does not exist or Sleeper ID doesn't match"},
+        {"status": 409, "code": "ALREADY_MEMBER", "message": "You are already a member of this league"},
+        {"status": 403, "code": "LEAGUE_PRIVATE", "message": "This league requires invitation"}
+      ],
+      "authorization": "Bearer token required",
+      "rate_limiting": {"limit": 10, "window": "5 minutes", "scope": "user_id"},
+      "caching": {"strategy": "no-cache"}
+    },
+    "PATCH /api/leagues/:leagueId/members/:membershipId": {
+      "method": "PATCH",
+      "path": "/api/leagues/:leagueId/members/:membershipId",
+      "purpose": "Approve/reject membership request (admin only)",
+      "request_schema": {
+        "type": "object",
+        "required": ["status"],
+        "properties": {
+          "leagueId": {"type": "string", "format": "uuid", "in": "path"},
+          "membershipId": {"type": "string", "format": "uuid", "in": "path"},
+          "status": {"type": "string", "enum": ["approved", "rejected"]}
+        }
+      },
+      "response_schema": {
+        "type": "object",
+        "properties": {
+          "membership": {"$ref": "#/api_endpoints/POST /api/leagues/:leagueId/join/response_schema/properties/membership"}
+        }
+      },
+      "error_responses": [
+        {"status": 403, "code": "ADMIN_REQUIRED", "message": "Only admins can approve memberships"},
+        {"status": 404, "code": "MEMBERSHIP_NOT_FOUND", "message": "Membership request does not exist"}
+      ],
+      "authorization": "Bearer token required, admin role verified",
+      "rate_limiting": {"limit": 50, "window": "5 minutes", "scope": "user_id"},
+      "caching": {"strategy": "no-cache"}
+    },
+    "GET /api/leagues/:leagueId/feed": {
+      "method": "GET",
+      "path": "/api/leagues/:leagueId/feed",
+      "purpose": "Get paginated league newsfeed moments",
+      "request_schema": {
+        "type": "object",
+        "properties": {
+          "leagueId": {"type": "string", "format": "uuid", "in": "path"},
+          "cursor": {"type": "string", "in": "query"},
+          "limit": {"type": "integer", "minimum": 1, "maximum": 50, "default": 20, "in": "query"},
+          "sortBy": {"type": "string", "enum": ["recent", "chronological"], "default": "recent", "in": "query"}
+        }
+      },
+      "response_schema": {
+        "type": "object",
+        "properties": {
+          "moments": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {"type": "string", "format": "uuid"},
+                "momentType": {"type": "string"},
+                "referenceId": {"type": "string", "format": "uuid"},
+                "content": {"type": "object"},
+                "isPinned": {"type": "boolean"},
+                "engagementMetrics": {
+                  "type": "object",
+                  "properties": {
+                    "commentCount": {"type": "integer"},
+                    "reactionCount": {"type": "integer"}
+                  }
+                },
+                "createdAt": {"type": "string", "format": "date-time"},
+                "lastActivityAt": {"type": "string", "format": "date-time"}
+              }
+            }
+          },
+          "nextCursor": {"type": "string"},
+          "hasMore": {"type": "boolean"}
+        }
+      },
+      "error_responses": [
+        {"status": 403, "code": "ACCESS_DENIED", "message": "You don't have access to this league"},
+        {"status": 404, "code": "LEAGUE_NOT_FOUND", "message": "League does not exist"}
+      ],
+      "authorization": "Bearer token required for private leagues",
+      "rate_limiting": {"limit": 100, "window": "1 minute", "scope": "user_id"},
+      "caching": {"strategy": "stale-while-revalidate", "maxAge": 30}
+    },
+    "POST /api/leagues/:leagueId/posts": {
+      "method": "POST",
+      "path": "/api/leagues/:leagueId/posts",
+      "purpose": "Create user-generated post in league feed",
+      "request_schema": {
+        "type": "object",
+        "required": ["content"],
+        "properties": {
+          "leagueId": {"type": "string", "format": "uuid", "in": "path"},
+          "content": {"type": "string", "minLength": 1, "maxLength": 5000},
+          "postType": {"type": "string", "enum": ["user_post", "commissioner_post"], "default": "user_post"}
+        }
+      },
+      "response_schema": {
+        "type": "object",
+        "properties": {
+          "post": {
+            "type": "object",
+            "properties": {
+              "id": {"type": "string", "format": "uuid"},
+              "content": {"type": "string"},
+              "authorUserId": {"type": "string", "format": "uuid"},
+              "authorName": {"type": "string"},
+              "momentId": {"type": "string", "format": "uuid"},
+              "createdAt": {"type": "string", "format": "date-time"}
+            }
+          }
+        }
+      },
+      "error_responses": [
+        {"status": 403, "code": "NOT_MEMBER", "message": "You must be a league member to post"},
+        {"status": 400, "code": "CONTENT_EMPTY", "message": "Post content cannot be empty"}
+      ],
+      "authorization": "Bearer token required, league membership verified",
+      "rate_limiting": {"limit": 20, "window": "5 minutes", "scope": "user_id"},
+      "caching": {"strategy": "no-cache"}
+    },
+    "POST /api/moments/:momentId/comments": {
+      "method": "POST",
+      "path": "/api/moments/:momentId/comments",
+      "purpose": "Add comment to moment or reply to comment",
+      "request_schema": {
+        "type": "object",
+        "required": ["commentText"],
+        "properties": {
+          "momentId": {"type": "string", "format": "uuid", "in": "path"},
+          "commentText": {"type": "string", "minLength": 1, "maxLength": 2000},
+          "parentCommentId": {"type": "string", "format": "uuid"}
+        }
+      },
+      "response_schema": {
+        "type": "object",
+        "properties": {
+          "comment": {
+            "type": "object",
+            "properties": {
+              "id": {"type": "string", "format": "uuid"},
+              "momentId": {"type": "string", "format": "uuid"},
+              "commentText": {"type": "string"},
+              "authorUserId": {"type": "string", "format": "uuid"},
+              "authorName": {"type": "string"},
+              "parentCommentId": {"type": "string", "format": "uuid"},
+              "createdAt": {"type": "string", "format": "date-time"}
+            }
+          }
+        }
+      },
+      "error_responses": [
+        {"status": 403, "code": "NOT_MEMBER", "message": "You must be a league member to comment"},
+        {"status": 404, "code": "MOMENT_NOT_FOUND", "message": "Moment does not exist"}
+      ],
+      "authorization": "Bearer token required, league membership verified",
+      "rate_limiting": {"limit": 50, "window": "5 minutes", "scope": "user_id"},
+      "caching": {"strategy": "no-cache"}
+    },
+    "POST /api/moments/:momentId/reactions": {
+      "method": "POST",
+      "path": "/api/moments/:momentId/reactions",
+      "purpose": "Add emoji reaction to moment",
+      "request_schema": {
+        "type": "object",
+        "required": ["emoji"],
+        "properties": {
+          "momentId": {"type": "string", "format": "uuid", "in": "path"},
+          "emoji": {"type": "string", "pattern": "^[\\p{Emoji}]+$"}
+        }
+      },
+      "response_schema": {
+        "type": "object",
+        "properties": {
+          "reaction": {
+            "type": "object",
+            "properties": {
+              "id": {"type": "string", "format": "uuid"},
+              "momentId": {"type": "string", "format": "uuid"},
+              "emoji": {"type": "string"},
+              "userId": {"type": "string", "format": "uuid"},
+              "createdAt": {"type": "string", "format": "date-time"}
+            }
+          }
+        }
+      },
+      "error_responses": [
+        {"status": 409, "code": "REACTION_EXISTS", "message": "You already reacted with this emoji"},
+        {"status": 403, "code": "NOT_MEMBER", "message": "You must be a league member to react"}
+      ],
+      "authorization": "Bearer token required, league membership verified",
+      "rate_limiting": {"limit": 100, "window": "1 minute", "scope": "user_id"},
+      "caching": {"strategy": "no-cache"}
+    },
+    "GET /api/leagues/:leagueId/power-rankings": {
+      "method": "GET",
+      "path": "/api/leagues/:leagueId/power-rankings",
+      "purpose": "Get power rankings for specific week",
+      "request_schema": {
+        "type": "object",
+        "properties": {
+          "leagueId": {"type": "string", "format": "uuid", "in": "path"},
+          "season": {"type": "integer", "in": "query"},
+          "week": {"type": "integer", "in": "query"}
+        }
+      },
+      "response_schema": {
+        "type": "object",
+        "properties": {
+          "powerRanking": {
+            "type": "object",
+            "properties": {
+              "id": {"type": "string", "format": "uuid"},
+              "season": {"type": "integer"},
+              "weekNumber": {"type": "integer"},
+              "status": {"type": "string", "enum": ["draft", "published"]},
+              "entries": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "rank": {"type": "integer"},
+                    "teamId": {"type": "string", "format": "uuid"},
+                    "teamName": {"type": "string"},
+                    "commentary": {"type": "string"}
+                  }
+                }
+              },
+              "publishedAt": {"type": "string", "format": "date-time"}
+            }
+          }
+        }
+      },
+      "error_responses": [
+        {"status": 404, "code": "RANKINGS_NOT_FOUND", "message": "Power rankings not found for this week"},
+        {"status": 403, "code": "ACCESS_DENIED", "message": "Draft rankings are only visible to commissioners"}
+      ],
+      "authorization": "Bearer token required for draft rankings",
+      "rate_limiting": {"limit": 100, "window": "1 minute", "scope": "user_id"},
+      "caching": {"strategy": "stale-while-revalidate", "maxAge": 300}
+    },
+    "PUT /api/leagues/:leagueId/commissioner-desk": {
+      "method": "PUT",
+      "path": "/api/leagues/:leagueId/commissioner-desk",
+      "purpose": "Save or publish weekly commissioner content",
+      "request_schema": {
+        "type": "object",
+        "required": ["season", "weekNumber"],
+        "properties": {
+          "leagueId": {"type": "string", "format": "uuid", "in": "path"},
+          "season": {"type": "integer"},
+          "weekNumber": {"type": "integer"},
+          "powerRankings": {
+            "type": "object",
+            "properties": {
+              "skip": {"type": "boolean", "default": false},
+              "entries": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": ["teamId", "rank"],
+                  "properties": {
+                    "teamId": {"type": "string", "format": "uuid"},
+                    "rank": {"type": "integer"},
+                    "commentary": {"type": "string", "maxLength": 500}
+                  }
+                }
+              }
+            }
+          },
+          "matchupPredictions": {
+            "type": "object",
+            "properties": {
+              "skip": {"type": "boolean", "default": false},
+              "predictions": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": ["matchupId", "predictedWinnerTeamId"],
+                  "properties": {
+                    "matchupId": {"type": "string", "format": "uuid"},
+                    "predictedWinnerTeamId": {"type": "string", "format": "uuid"},
+                    "predictionCommentary": {"type": "string", "maxLength": 500},
+                    "isFeatured": {"type": "boolean", "default": false}
+                  }
+                }
+              }
+            }
+          },
+          "publish": {"type": "boolean", "default": false}
+        }
+      },
+      "response_schema": {
+        "type": "object",
+        "properties": {
+          "success": {"type": "boolean"},
+          "status": {"type": "string", "enum": ["draft_saved", "published"]},
+          "momentsCreated": {"type": "array", "items": {"type": "string"}},
+          "message": {"type": "string"}
+        }
+      },
+      "error_responses": [
+        {"status": 403, "code": "COMMISSIONER_REQUIRED", "message": "Only commissioners can manage content"},
+        {"status": 400, "code": "INCOMPLETE_CONTENT", "message": "Power rankings or predictions incomplete for publishing"}
+      ],
+      "authorization": "Bearer token required, commissioner/admin role verified",
+      "rate_limiting": {"limit": 30, "window": "5 minutes", "scope": "user_id"},
+      "caching": {"strategy": "no-cache"}
+    },
+    "GET /api/leagues/:leagueId/matchups": {
+      "method": "GET",
+      "path": "/api/leagues/:leagueId/matchups",
+      "purpose": "Get matchups for specific week with scores and predictions",
+      "request_schema": {
+        "type": "object",
+        "properties": {
+          "leagueId": {"type": "string", "format": "uuid", "in": "path"},
+          "season": {"type": "integer", "in": "query"},
+          "week": {"type": "integer", "in": "query"}
+        }
+      },
+      "response_schema": {
+        "type": "object",
+        "properties": {
+          "matchups": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {"type": "string", "format": "uuid"},
+                "team1": {"type": "object", "properties": {"id": {"type": "string"}, "name": {"type": "string"}, "score": {"type": "number"}}},
+                "team2": {"type": "object", "properties": {"id": {"type": "string"}, "name": {"type": "string"}, "score": {"type": "number"}}},
+                "winnerTeamId": {"type": "string", "format": "uuid"},
+                "matchupType": {"type": "string", "enum": ["regular_season", "playoff", "toilet_bowl"]},
+                "prediction": {
+                  "type": "object",
+                  "properties": {
+                    "predictedWinnerTeamId": {"type": "string", "format": "uuid"},
+                    "predictionCommentary": {"type": "string"},
+                    "isFeatured": {"type": "boolean"},
+                    "isCorrect": {"type": "boolean"}
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "error_responses": [
+        {"status": 404, "code": "WEEK_NOT_FOUND", "message": "No matchups found for this week"}
+      ],
+      "authorization": "Bearer token required for private leagues",
+      "rate_limiting": {"limit": 100, "window": "1 minute", "scope": "user_id"},
+      "caching": {"strategy": "stale-while-revalidate", "maxAge": 60}
+    },
+    "POST /api/leagues/:leagueId/pickems": {
+      "method": "POST",
+      "path": "/api/leagues/:leagueId/pickems",
+      "purpose": "Submit or update pick'ems predictions for week",
+      "request_schema": {
+        "type": "object",
+        "required": ["picks"],
+        "properties": {
+          "leagueId": {"type": "string", "format": "uuid", "in": "path"},
+          "picks": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["matchupId", "predictedWinnerTeamId"],
+              "properties": {
+                "matchupId": {"type": "string", "format": "uuid"},
+                "predictedWinnerTeamId": {"type": "string", "format": "uuid"}
+              }
+            }
+          }
+        }
+      },
+      "response_schema": {
+        "type": "object",
+        "properties": {
+          "entries": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {"type": "string", "format": "uuid"},
+                "matchupId": {"type": "string", "format": "uuid"},
+                "predictedWinnerTeamId": {"type": "string", "format": "uuid"},
+                "lockedAt": {"type": "string", "format": "date-time"}
+              }
+            }
+          },
+          "message": {"type": "string"}
+        }
+      },
+      "error_responses": [
+        {"status": 400, "code": "MATCHUP_LOCKED", "message": "One or more matchups have already locked"},
+        {"status": 403, "code": "NOT_MEMBER", "message": "You must be a league member to submit picks"}
+      ],
+      "authorization": "Bearer token required, league membership verified",
+      "rate_limiting": {"limit": 50, "window": "5 minutes", "scope": "user_id"},
+      "caching": {"strategy": "no-cache"}
+    },
+    "GET /api/leagues/:leagueId/pickems/leaderboard": {
+      "method": "GET",
+      "path": "/api/leagues/:leagueId/pickems/leaderboard",
+      "purpose": "Get pick'ems leaderboard with role-based filtering",
+      "request_schema": {
+        "type": "object",
+        "properties": {
+          "leagueId": {"type": "string", "format": "uuid", "in": "path"},
+          "season": {"type": "integer", "in": "query"},
+          "week": {"type": "integer", "in": "query"},
+          "scope": {"type": "string", "enum": ["weekly", "season", "alltime"], "default": "season", "in": "query"},
+          "role": {"type": "string", "enum": ["all", "manager", "fan"], "default": "all", "in": "query"}
+        }
+      },
+      "response_schema": {
+        "type": "object",
+        "properties": {
+          "leaderboard": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "rank": {"type": "integer"},
+                "userId": {"type": "string", "format": "uuid"},
+                "displayName": {"type": "string"},
+                "role": {"type": "string"},
+                "correctPicks": {"type": "integer"},
+                "totalPicks": {"type": "integer"},
+                "accuracyPercentage": {"type": "number"}
+              }
+            }
+          }
+        }
+      },
+      "error_responses": [
+        {"status": 404, "code": "NO_DATA", "message": "No pick'ems data available for this scope"}
+      ],
+      "authorization": "Bearer token required for private leagues",
+      "rate_limiting": {"limit": 100, "window": "1 minute", "scope": "user_id"},
+      "caching": {"strategy": "stale-while-revalidate", "maxAge": 120}
+    },
+    "GET /api/leagues/:leagueId/transactions": {
+      "method": "GET",
+      "path": "/api/leagues/:leagueId/transactions",
+      "purpose": "Get league transactions with filtering and pagination",
+      "request_schema": {
+        "type": "object",
+        "properties": {
+          "leagueId": {"type": "string", "format": "uuid", "in": "path"},
+          "transactionType": {"type": "string", "enum": ["trade", "waiver_claim", "free_agent_add", "free_agent_drop"], "in": "query"},
+          "cursor": {"type": "string", "in": "query"},
+          "limit": {"type": "integer", "minimum": 1, "maximum": 50, "default": 20, "in": "query"}
+        }
+      },
+      "response_schema": {
+        "type": "object",
+        "properties": {
+          "transactions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {"type": "string", "format": "uuid"},
+                "transactionType": {"type": "string"},
+                "involvedTeams": {"type": "array", "items": {"type": "string"}},
+                "transactionDetails": {"type": "object"},
+                "engagementCount": {"type": "integer"},
+                "promotedToFeed": {"type": "boolean"},
+                "createdAt": {"type": "string", "format": "date-time"}
+              }
+            }
+          },
+          "nextCursor": {"type": "string"},
+          "hasMore": {"type": "boolean"}
+        }
+      },
+      "error_responses": [
+        {"status": 403, "code": "ACCESS_DENIED", "message": "You don't have access to this league"}
+      ],
+      "authorization": "Bearer token required for private leagues",
+      "rate_limiting": {"limit": 100, "window": "1 minute", "scope": "user_id"},
+      "caching": {"strategy": "stale-while-revalidate", "maxAge": 300}
+    },
+    "POST /api/sync/league/:leagueId": {
+      "method": "POST",
+      "path": "/api/sync/league/:leagueId",
+      "purpose": "Trigger manual sync of league data from external platform",
+      "request_schema": {
+        "type": "object",
+        "properties": {
+          "leagueId": {"type": "string", "format": "uuid", "in": "path"},
+          "fullSync": {"type": "boolean", "default": false}
+        }
+      },
+      "response_schema": {
+        "type": "object",
+        "properties": {
+          "syncJobId": {"type": "string", "format": "uuid"},
+          "status": {"type": "string", "enum": ["queued", "in_progress"]},
+          "message": {"type": "string"}
+        }
+      },
+      "error_responses": [
+        {"status": 403, "code": "ADMIN_REQUIRED", "message": "Only admins can trigger sync"},
+        {"status": 429, "code": "SYNC_IN_PROGRESS", "message": "A sync is already in progress"}
+      ],
+      "authorization": "Bearer token required, admin role verified",
+      "rate_limiting": {"limit": 5, "window": "15 minutes", "scope": "league_id"},
+      "caching": {"strategy": "no-cache"}
+    }
+  },
+  "event_streams": {
+    "moment_created": {
+      "event_type": "moment.created",
+      "payload_schema": {
+        "type": "object",
+        "required": ["momentId", "leagueId", "momentType"],
+        "properties": {
+          "momentId": {"type": "string", "format": "uuid"},
+          "leagueId": {"type": "string", "format": "uuid"},
+          "momentType": {"type": "string", "enum": ["trade", "match_result", "power_rankings", "matchup_prediction", "commissioner_post", "user_post", "transaction"]},
+          "referenceId": {"type": "string", "format": "uuid"},
+          "isPinned": {"type": "boolean"},
+          "createdAt": {"type": "string", "format": "date-time"}
+        }
+      },
+      "triggers": [
+        "Trade detected in Sleeper sync",
+        "Match results finalized",
+        "Power rankings published",
+        "Commissioner predictions published",
+        "User creates post",
+        "Transaction promoted to feed"
+      ],
+      "subscribers": [
+        "Feed display components",
+        "Real-time notification service",
+        "Engagement metrics aggregator",
+        "Email notification service"
+      ],
+      "delivery_guarantees": "at-least-once",
+      "retention_policy": "7 days"
+    },
+    "comment_added": {
+      "event_type": "comment.added",
+      "payload_schema": {
+        "type": "object",
+        "required": ["commentId", "momentId", "authorUserId"],
+        "properties": {
+          "commentId": {"type": "string", "format": "uuid"},
+          "momentId": {"type": "string", "format": "uuid"},
+          "authorUserId": {"type": "string", "format": "uuid"},
+          "authorName": {"type": "string"},
+          "commentText": {"type": "string"},
+          "parentCommentId": {"type": "string", "format": "uuid"},
+          "createdAt": {"type": "string", "format": "date-time"}
+        }
+      },
+      "triggers": [
+        "User posts comment on moment",
+        "User replies to comment"
+      ],
+      "subscribers": [
+        "Moment engagement bumping service",
+        "Notification service for moment author",
+        "Real-time feed updater",
+        "Engagement metrics aggregator"
+      ],
+      "delivery_guarantees": "at-least-once",
+      "retention_policy": "3 days"
+    },
+    "reaction_added": {
+      "event_type": "reaction.added",
+      "payload_schema": {
+        "type": "object",
+        "required": ["reactionId", "reactableType", "reactableId", "userId", "emoji"],
+        "properties": {
+          "reactionId": {"type": "string", "format": "uuid"},
+          "reactableType": {"type": "string", "enum": ["moment", "comment", "transaction"]},
+          "reactableId": {"type": "string", "format": "uuid"},
+          "userId": {"type": "string", "format": "uuid"},
+          "emoji": {"type": "string"},
+          "createdAt": {"type": "string", "format": "date-time"}
+        }
+      },
+      "triggers": [
+        "User adds emoji reaction to moment",
+        "User adds emoji reaction to comment",
+        "User adds emoji reaction to transaction"
+      ],
+      "subscribers": [
+        "Engagement bumping service",
+        "Real-time UI updater",
+        "Engagement metrics aggregator"
+      ],
+      "delivery_guarantees": "at-least-once",
+      "retention_policy": "1 day"
+    },
+    "membership_status_changed": {
+      "event_type": "membership.status_changed",
+      "payload_schema": {
+        "type": "object",
+        "required": ["membershipId", "leagueId", "userId", "status"],
+        "properties": {
+          "membershipId": {"type": "string", "format": "uuid"},
+          "leagueId": {"type": "string", "format": "uuid"},
+          "userId": {"type": "string", "format": "uuid"},
+          "previousStatus": {"type": "string", "enum": ["pending", "approved", "rejected"]},
+          "status": {"type": "string", "enum": ["pending", "approved", "rejected"]},
+          "approvedByUserId": {"type": "string", "format": "uuid"},
+          "timestamp": {"type": "string", "format": "date-time"}
+        }
+      },
+      "triggers": [
+        "Admin approves membership request",
+        "Admin rejects membership request",
+        "User submits join request"
+      ],
+      "subscribers": [
+        "Email notification service",
+        "In-app notification service",
+        "League member list updater",
+        "Analytics tracker"
+      ],
+      "delivery_guarantees": "exactly-once",
+      "retention_policy": "30 days"
+    },
+    "content_published": {
+      "event_type": "content.published",
+      "payload_schema": {
+        "type": "object",
+        "required": ["leagueId", "season", "weekNumber", "contentType"],
+        "properties": {
+          "leagueId": {"type": "string", "format": "uuid"},
+          "season": {"type": "integer"},
+          "weekNumber": {"type": "integer"},
+          "contentType": {"type": "string", "enum": ["power_rankings", "matchup_predictions"]},
+          "contentId": {"type": "string", "format": "uuid"},
+          "publishedByUserId": {"type": "string", "format": "uuid"},
+          "momentIds": {"type": "array", "items": {"type": "string"}},
+          "publishedAt": {"type": "string", "format": "date-time"}
+        }
+      },
+      "triggers": [
+        "Commissioner publishes power rankings",
+        "Commissioner publishes matchup predictions"
+      ],
+      "subscribers": [
+        "Feed moment creator",
+        "League member notification service",
+        "Content indexer",
+        "Analytics tracker"
+      ],
+      "delivery_guarantees": "exactly-once",
+      "retention_policy": "30 days"
+    },
+    "pickems_submitted": {
+      "event_type": "pickems.submitted",
+      "payload_schema": {
+        "type": "object",
+        "required": ["userId", "leagueId", "weekNumber", "picks"],
+        "properties": {
+          "userId": {"type": "string", "format": "uuid"},
+          "leagueId": {"type": "string", "format": "uuid"},
+          "season": {"type": "integer"},
+          "weekNumber": {"type": "integer"},
+          "picks": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "matchupId": {"type": "string", "format": "uuid"},
+                "predictedWinnerTeamId": {"type": "string", "format": "uuid"}
+              }
+            }
+          },
+          "submittedAt": {"type": "string", "format": "date-time"}
+        }
+      },
+      "triggers": [
+        "User submits pick'ems predictions",
+        "User updates existing picks before lock"
+      ],
+      "subscribers": [
+        "Pick'ems stats tracker",
+        "Leaderboard updater (after grading)",
+        "Analytics service"
+      ],
+      "delivery_guarantees": "exactly-once",
+      "retention_policy": "90 days"
+    },
+    "matchup_completed": {
+      "event_type": "matchup.completed",
+      "payload_schema": {
+        "type": "object",
+        "required": ["matchupId", "leagueId", "season", "weekNumber", "winnerTeamId"],
+        "properties": {
+          "matchupId": {"type": "string", "format": "uuid"},
+          "leagueId": {"type": "string", "format": "uuid"},
+          "season": {"type": "integer"},
+          "weekNumber": {"type": "integer"},
+          "team1Id": {"type": "string", "format": "uuid"},
+          "team2Id": {"type": "string", "format": "uuid"},
+          "team1Score": {"type": "number"},
+          "team2Score": {"type": "number"},
+          "winnerTeamId": {"type": "string", "format": "uuid"},
+          "statCorrectionApplied": {"type": "boolean"},
+          "completedAt": {"type": "string", "format": "date-time"}
+        }
+      },
+      "triggers": [
+        "Matchup results finalized after stat corrections",
+        "Stat correction changes match outcome"
+      ],
+      "subscribers": [
+        "Pick'ems grading service",
+        "Commissioner prediction grading service",
+        "Match result moment creator",
+        "Leaderboard updater"
+      ],
+      "delivery_guarantees": "exactly-once",
+      "retention_policy": "365 days"
+    },
+    "sync_completed": {
+      "event_type": "sync.completed",
+      "payload_schema": {
+        "type": "object",
+        "required": ["syncJobId", "leagueId", "status"],
+        "properties": {
+          "syncJobId": {"type": "string", "format": "uuid"},
+          "leagueId": {"type": "string", "format": "uuid"},
+          "externalPlatform": {"type": "string"},
+          "status": {"type": "string", "enum": ["success", "partial_failure", "failure"]},
+          "syncType": {"type": "string", "enum": ["full", "differential"]},
+          "entitiesSynced": {
+            "type": "object",
+            "properties": {
+              "teams": {"type": "integer"},
+              "matchups": {"type": "integer"},
+              "transactions": {"type": "integer"},
+              "rosters": {"type": "integer"}
+            }
+          },
+          "errors": {"type": "array", "items": {"type": "string"}},
+          "completedAt": {"type": "string", "format": "date-time"}
+        }
+      },
+      "triggers": [
+        "Scheduled sync job completes",
+        "Manual sync job completes"
+      ],
+      "subscribers": [
+        "Admin notification service",
+        "Sync status dashboard",
+        "Error monitoring service",
+        "Analytics tracker"
+      ],
+      "delivery_guarantees": "at-least-once",
+      "retention_policy": "90 days"
+    }
+  },
+  "message_formats": {
+    "api_error_response": {
+      "format_name": "Standard API Error Response",
+      "schema": {
+        "type": "object",
+        "required": ["error", "message", "statusCode"],
+        "properties": {
+          "error": {"type": "string", "description": "Machine-readable error code"},
+          "message": {"type": "string", "description": "Human-readable error message"},
+          "statusCode": {"type": "integer", "description": "HTTP status code"},
+          "details": {"type": "object", "description": "Additional error context"},
+          "timestamp": {"type": "string", "format": "date-time"}
+        }
+      },
+      "use_cases": [
+        "All API endpoint error responses",
+        "Validation failures",
+        "Authorization errors",
+        "Resource not found errors"
+      ],
+      "validation_rules": [
+        "statusCode must match HTTP response status",
+        "error code must be uppercase snake_case",
+        "message must be actionable for end users"
+      ]
+    },
+    "pagination_response": {
+      "format_name": "Cursor-Based Pagination Envelope",
+      "schema": {
+        "type": "object",
+        "required": ["data", "hasMore"],
+        "properties": {
+          "data": {"type": "array", "description": "Array of result items"},
+          "nextCursor": {"type": "string", "description": "Cursor for next page"},
+          "hasMore": {"type": "boolean", "description": "Whether more results exist"},
+          "totalCount": {"type": "integer", "description": "Total items (optional)"}
+        }
+      },
+      "use_cases": [
+        "Feed moment pagination",
+        "Transaction list pagination",
+        "Comment thread pagination",
+        "Leaderboard pagination"
+      ],
+      "validation_rules": [
+        "nextCursor only present when hasMore is true",
+        "data array never null, empty array when no results",
+        "Cursors are opaque strings, not sequential integers"
+      ]
+    },
+    "webhook_payload": {
+      "format_name": "Webhook Event Payload",
+      "schema": {
+        "type": "object",
+        "required": ["eventType", "eventId", "timestamp", "data"],
+        "properties": {
+          "eventType": {"type": "string", "description": "Event type identifier"},
+          "eventId": {"type": "string", "format": "uuid", "description": "Unique event ID"},
+          "timestamp": {"type": "string", "format": "date-time"},
+          "data": {"type": "object", "description": "Event-specific payload"},
+          "signature": {"type": "string", "description": "HMAC signature for verification"}
+        }
+      },
+      "use_cases": [
+        "External webhook integrations",
+        "Third-party event notifications",
+        "Custom automation triggers"
+      ],
+      "validation_rules": [
+        "eventId must be globally unique",
+        "signature must verify with shared secret",
+        "timestamp within 5 minutes of current time for replay protection"
+      ]
+    },
+    "batch_operation_result": {
+      "format_name": "Batch Operation Result",
+      "schema": {
+        "type": "object",
+        "required": ["totalRequested", "successCount", "failureCount", "results"],
+        "properties": {
+          "totalRequested": {"type": "integer"},
+          "successCount": {"type": "integer"},
+          "failureCount": {"type": "integer"},
+          "results": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "index": {"type": "integer"},
+                "success": {"type": "boolean"},
+                "data": {"type": "object"},
+                "error": {"type": "object"}
+              }
+            }
+          }
+        }
+      },
+      "use_cases": [
+        "Bulk pick'ems submission",
+        "Batch member approval",
+        "Multiple reaction additions",
+        "Bulk content publishing"
+      ],
+      "validation_rules": [
+        "successCount + failureCount must equal totalRequested",
+        "results array length must equal totalRequested",
+        "Each result must have either data or error, not both"
+      ]
+    },
+    "real_time_update": {
+      "format_name": "Real-Time WebSocket Update",
+      "schema": {
+        "type": "object",
+        "required": ["type", "channel", "payload"],
+        "properties": {
+          "type": {"type": "string", "enum": ["insert", "update", "delete", "broadcast"]},
+          "channel": {"type": "string", "description": "Subscription channel identifier"},
+          "payload": {"type": "object", "description": "Update data"},
+          "old": {"type": "object", "description": "Previous state for updates"},
+          "eventId": {"type": "string", "format": "uuid"}
+        }
+      },
+      "use_cases": [
+        "Live feed updates",
+        "Real-time comment additions",
+        "Live leaderboard updates",
+        "Matchup score updates"
+      ],
+      "validation_rules": [
+        "type 'insert' must not include 'old' field",
+        "type 'update' should include 'old' field for comparison",
+        "type 'delete' includes only ID in payload"
+      ]
+    }
+  },
+  "integration_contracts": {
+    "sleeper_api": {
+      "system_name": "Sleeper Fantasy Football API",
+      "integration_type": "polling",
+      "data_flow": "inbound",
+      "message_format": "JSON over HTTP",
+      "authorization": {
+        "type": "none",
+        "description": "Sleeper API is public with rate limiting"
+      },
+      "endpoints": {
+        "get_league": {
+          "url": "https://api.sleeper.app/v1/league/{league_id}",
+          "method": "GET",
+          "rate_limit": "1000 requests per minute",
+          "response_format": "JSON",
+          "critical": true
+        },
+        "get_rosters": {
+          "url": "https://api.sleeper.app/v1/league/{league_id}/rosters",
+          "method": "GET",
+          "rate_limit": "1000 requests per minute",
+          "response_format": "JSON",
+          "critical": true
+        },
+        "get_users": {
+          "url": "https://api.sleeper.app/v1/league/{league_id}/users",
+          "method": "GET",
+          "rate_limit": "1000 requests per minute",
+          "response_format": "JSON",
+          "critical": true
+        },
+        "get_matchups": {
+          "url": "https://api.sleeper.app/v1/league/{league_id}/matchups/{week}",
+          "method": "GET",
+          "rate_limit": "1000 requests per minute",
+          "response_format": "JSON",
+          "critical": true
+        },
+        "get_transactions": {
+          "url": "https://api.sleeper.app/v1/league/{league_id}/transactions/{round}",
+          "method": "GET",
+          "rate_limit": "1000 requests per minute",
+          "response_format": "JSON",
+          "critical": false
+        },
+        "get_nfl_state": {
+          "url": "https://api.sleeper.app/v1/state/nfl",
+          "method": "GET",
+          "rate_limit": "1000 requests per minute",
+          "response_format": "JSON",
+          "critical": true
+        }
+      },
+      "error_handling": {
+        "strategy": "exponential_backoff",
+        "max_retries": 3,
+        "backoff_multiplier": 2,
+        "circuit_breaker_threshold": 5
+      },
+      "retry_policies": {
+        "transient_errors": {
+          "http_codes": [408, 429, 500, 502, 503, 504],
+          "retry_count": 3,
+          "delay_seconds": [1, 2, 4]
+        },
+        "rate_limit_exceeded": {
+          "http_code": 429,
+          "retry_count": 2,
+          "delay_seconds": [60, 120]
+        }
+      },
+      "sync_schedule": {
+        "active_season": "Every 15 minutes during game days, hourly on non-game days",
+        "offseason": "Daily at 2am UTC",
+        "manual_trigger": "Admin-initiated with 15-minute cooldown"
+      }
+    },
+    "supabase_realtime": {
+      "system_name": "Supabase Real-Time Subscriptions",
+      "integration_type": "real_time",
+      "data_flow": "bidirectional",
+      "message_format": "WebSocket with JSON payload",
+      "authorization": {
+        "type": "bearer_token",
+        "description": "JWT token from Supabase Auth",
+        "token_expiry": "3600 seconds"
+      },
+      "channels": {
+        "league_feed": {
+          "pattern": "league:{leagueId}:feed",
+          "events": ["moment.created", "comment.added", "reaction.added"],
+          "rls_enforced": true
+        },
+        "league_members": {
+          "pattern": "league:{leagueId}:members",
+          "events": ["membership.status_changed"],
+          "rls_enforced": true
+        },
+        "matchup_scores": {
+          "pattern": "league:{leagueId}:matchups:week:{week}",
+          "events": ["matchup.updated", "matchup.completed"],
+          "rls_enforced": true
+        }
+      },
+      "error_handling": {
+        "strategy": "automatic_reconnect",
+        "max_reconnect_attempts": 10,
+        "reconnect_delay_ms": [1000, 2000, 5000, 10000, 30000]
+      },
+      "retry_policies": {
+        "connection_lost": {
+          "retry_count": 10,
+          "exponential_backoff": true
+        },
+        "subscription_failed": {
+          "retry_count": 3,
+          "resubscribe_delay_ms": 5000
+        }
+      }
+    },
+    "sendgrid_email": {
+      "system_name": "SendGrid Email Service",
+      "integration_type": "webhook",
+      "data_flow": "outbound",
+      "message_format": "JSON over HTTPS",
+      "authorization": {
+        "type": "api_key",
+        "description": "SendGrid API key in Authorization header",
+        "header_name": "Authorization",
+        "header_value_format": "Bearer {api_key}"
+      },
+      "endpoints": {
+        "send_email": {
+          "url": "https://api.sendgrid.com/v3/mail/send",
+          "method": "POST",
+          "rate_limit": "Per plan tier",
+          "critical": false
+        }
+      },
+      "templates": {
+        "email_verification": {
+          "template_id": "d-verification",
+          "dynamic_fields": ["verificationUrl", "username"]
+        },
+        "password_reset": {
+          "template_id": "d-password-reset",
+          "dynamic_fields": ["resetUrl", "username", "expiryTime"]
+        },
+        "membership_approved": {
+          "template_id": "d-membership-approved",
+          "dynamic_fields": ["leagueName", "leagueUrl", "role"]
+        },
+        "weekly_digest": {
+          "template_id": "d-weekly-digest",
+          "dynamic_fields": ["leagueName", "weekNumber", "highlights"]
+        }
+      },
+      "error_handling": {
+        "strategy": "queue_with_retry",
+        "max_retries": 5,
+        "dead_letter_queue": true
+      },
+      "retry_policies": {
+        "transient_errors": {
+          "http_codes": [429, 500, 502, 503],
+          "retry_count": 5,
+          "delay_seconds": [10, 30, 60, 300, 600]
+        }
+      }
+    },
+    "vercel_cron": {
+      "system_name": "Vercel Cron Jobs",
+      "integration_type": "polling",
+      "data_flow": "inbound",
+      "message_format": "HTTP POST to Next.js API routes",
+      "authorization": {
+        "type": "bearer_token",
+        "description": "Vercel Cron secret in Authorization header",
+        "header_name": "Authorization",
+        "header_value_format": "Bearer {CRON_SECRET}"
+      },
+      "schedules": {
+        "sync_active_leagues": {
+          "endpoint": "/api/cron/sync-leagues",
+          "schedule": "*/15 * * * *",
+          "description": "Sync all active leagues every 15 minutes"
+        },
+        "grade_pickems": {
+          "endpoint": "/api/cron/grade-pickems",
+          "schedule": "0 */2 * * *",
+          "description": "Grade completed matchups every 2 hours"
+        },
+        "send_weekly_digest": {
+          "endpoint": "/api/cron/weekly-digest",
+          "schedule": "0 10 * * 1",
+          "description": "Send weekly digest emails Monday 10am UTC"
+        },
+        "cleanup_stale_drafts": {
+          "endpoint": "/api/cron/cleanup-drafts",
+          "schedule": "0 3 * * *",
+          "description": "Delete drafts older than 90 days at 3am UTC daily"
+        }
+      },
+      "error_handling": {
+        "strategy": "log_and_alert",
+        "timeout_seconds": 60,
+        "alert_on_failure": true
+      },
+      "retry_policies": {
+        "job_failure": {
+          "retry_count": 0,
+          "description": "Cron jobs do not retry, next scheduled execution will run"
+        }
+      }
+    }
+  }
+}

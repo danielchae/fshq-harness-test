@@ -1,0 +1,34 @@
+{
+  "integrations": [
+    {
+      "id": "cloudflare",
+      "name": "Cloudflare Domain & DNS Management"
+    },
+    {
+      "id": "sendgrid",
+      "name": "SendGrid Transactional Email"
+    },
+    {
+      "id": "sleeper",
+      "name": "Sleeper Fantasy Sports API"
+    }
+  ],
+  "comparisons": [
+    {
+      "id": "discord-communities",
+      "name": "Discord Communities"
+    },
+    {
+      "id": "espn-fantasy",
+      "name": "ESPN Fantasy Platform"
+    },
+    {
+      "id": "yahoo-fantasy",
+      "name": "Yahoo Fantasy Platform"
+    },
+    {
+      "id": "slack-communities",
+      "name": "Slack Communities"
+    }
+  ]
+}

@@ -1,0 +1,131 @@
+{
+  "subcomponentId": "gap-public-content-routing",
+  "componentId": "league-connection-identity",
+  "tracesTo": [
+    "SOW: Public vs Private Presentation",
+    "SOW: League Connection & Identity",
+    "Gap Analysis: Priority 2 - Quality Enhancements"
+  ],
+  "stories": [
+    {
+      "id": "PCR-001",
+      "title": "Enable Selective Public Sharing for Private League Content",
+      "user": "League Admin",
+      "goal": "share specific pages or moments publicly while keeping my league private overall",
+      "benefit": "I can showcase interesting content externally without compromising league privacy",
+      "acceptanceCriteria": [
+        "Admin can access content sharing controls for any page or moment in private league",
+        "Admin can toggle 'Make Public' option for specific power rankings, matchup recaps, or moments",
+        "Public content is accessible via direct URL without requiring authentication",
+        "Public content displays 'From Private League' indicator and limited league context",
+        "League discovery and navigation remain private even when some content is public",
+        "Admin can revoke public access for previously shared content at any time"
+      ]
+    },
+    {
+      "id": "PCR-002",
+      "title": "Generate Shareable Public Links for Private Content",
+      "user": "League Admin",
+      "goal": "create shareable links that allow external viewers to access specific private content",
+      "benefit": "I can share content on social media or with non-members without making entire league public",
+      "acceptanceCriteria": [
+        "Admin can click 'Generate Public Link' button on any content item in private league",
+        "System generates unique, secure URL for shared content",
+        "Public link provides access to single content item without exposing other league content",
+        "Public link displays read-only view with comments and engagement disabled for non-members",
+        "Admin can copy public link to clipboard and share externally",
+        "System provides preview of how content will appear to public link visitors"
+      ]
+    },
+    {
+      "id": "PCR-003",
+      "title": "Configure Public Content Access Restrictions",
+      "user": "League Admin",
+      "goal": "control what information is visible in publicly shared content from private league",
+      "benefit": "I can share content while protecting sensitive information like member identities or private conversations",
+      "acceptanceCriteria": [
+        "Admin can set public sharing policies for private league",
+        "Admin can choose to anonymize member names in publicly shared content",
+        "Admin can hide comments and reactions from public view of shared content",
+        "Admin can configure whether team names and logos are visible in public shares",
+        "System respects user privacy settings even when admin shares content publicly",
+        "Public shares exclude any content marked as private by individual members"
+      ]
+    },
+    {
+      "id": "PCR-004",
+      "title": "Track Public Engagement on Shared Private Content",
+      "user": "League Admin",
+      "goal": "see analytics on how publicly shared content is performing externally",
+      "benefit": "I can understand which content resonates beyond my league and optimize sharing strategy",
+      "acceptanceCriteria": [
+        "Admin can access analytics dashboard for all publicly shared content",
+        "Dashboard displays view counts, unique visitors, and referral sources for each public link",
+        "System tracks geographic distribution and device types of public link visitors",
+        "Admin can see conversion rate of public visitors who join league or request access",
+        "Dashboard shows comparison of engagement between member views and public views",
+        "Admin can export public engagement data for external analysis"
+      ]
+    },
+    {
+      "id": "PCR-005",
+      "title": "Expire or Revoke Public Content Links",
+      "user": "League Admin",
+      "goal": "automatically expire public links after time period or manually revoke access",
+      "benefit": "I can share content temporarily for events or discussions without permanent public exposure",
+      "acceptanceCriteria": [
+        "Admin can set expiration date when generating public link",
+        "System automatically disables public links after expiration date",
+        "Admin can manually revoke public access for any shared content at any time",
+        "Revoked links display 'Content No Longer Available' message to visitors",
+        "System notifies admin when public links are about to expire",
+        "Admin can extend expiration or make public links permanent if desired"
+      ]
+    },
+    {
+      "id": "PCR-006",
+      "title": "Embed Public Content from Private Leagues",
+      "user": "League Admin",
+      "goal": "generate embed codes for publicly shared content to use on external websites or social media",
+      "benefit": "I can showcase league content in blog posts, league websites, or social media platforms",
+      "acceptanceCriteria": [
+        "Admin can generate embed code for any publicly shared content",
+        "System provides responsive iframe embed code with customizable dimensions",
+        "Embedded content displays correctly on external websites without authentication",
+        "Embedded content includes minimal branding and optional link back to source",
+        "Admin can customize embed appearance (theme, colors, show/hide elements)",
+        "System tracks embeds and displays where content is embedded externally"
+      ]
+    },
+    {
+      "id": "PCR-007",
+      "title": "Bulk Manage Public Content Sharing",
+      "user": "League Admin",
+      "goal": "manage multiple publicly shared content items from central interface",
+      "benefit": "I can efficiently audit and control all public access points for my private league",
+      "acceptanceCriteria": [
+        "Admin can access 'Public Sharing Manager' dashboard listing all publicly shared content",
+        "Dashboard shows content type, sharing date, expiration date, and view count for each item",
+        "Admin can filter shared content by type, date range, or engagement level",
+        "Admin can bulk revoke public access for multiple items simultaneously",
+        "Admin can bulk extend expiration dates for selected public links",
+        "Dashboard provides summary of total public exposure and recommendations for privacy optimization"
+      ]
+    },
+    {
+      "id": "PCR-008",
+      "title": "Enable Guest Access Preview for Public Content",
+      "user": "League Admin",
+      "goal": "preview exactly how publicly shared content appears to non-authenticated visitors",
+      "benefit": "I can verify content presentation and privacy before sharing externally",
+      "acceptanceCriteria": [
+        "Admin can click 'Preview as Guest' button when configuring public sharing",
+        "System displays content exactly as non-authenticated public visitors will see it",
+        "Preview shows what information is visible vs hidden based on sharing settings",
+        "Preview includes visual indicators of privacy boundaries and hidden content",
+        "Admin can test public link in incognito mode without generating actual public URL",
+        "Preview allows admin to adjust sharing settings before finalizing public link"
+      ]
+    }
+  ]
+}

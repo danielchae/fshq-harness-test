@@ -1,0 +1,1831 @@
+{
+  "overview": "This specification defines the complete application state architecture for FSHQ.gg, covering user context states (roles, permissions, preferences), business process state machines (league connection, team claiming, content publishing), component UI states (loading, error handling, data synchronization), and global application states (connectivity, caching, authentication). The architecture supports a multi-role fantasy sports clubhouse platform where commissioners create weekly content, members engage through pick'ems competitions, and automated sync processes maintain data consistency with external platforms. State management follows React patterns with server state via React Query, local component state via hooks, and persistent preferences via database. All state transitions include validation rules, error recovery procedures, and rollback strategies to ensure data integrity and positive user experience.",
+
+  "user_context_states": {
+    "UserRole": {
+      "state_name": "UserRole",
+      "description": "User's role within a specific league context determines permissions and UI access",
+      "possible_values": ["guest", "pending_member", "admin", "manager", "fan"],
+      "transitions": [
+        {
+          "from": "guest",
+          "to": "pending_member",
+          "trigger": "join_request_submitted",
+          "validation": ["authenticated", "league_accessible", "not_already_member"],
+          "actions": ["create_membership_record", "set_status_pending", "notify_admins"]
+        },
+        {
+          "from": "pending_member",
+          "to": "manager",
+          "trigger": "admin_approval_with_team_claim",
+          "validation": ["admin_authorized", "team_claim_valid", "membership_status_pending"],
+          "actions": ["update_status_approved", "link_team", "grant_manager_permissions", "notify_user"]
+        },
+        {
+          "from": "pending_member",
+          "to": "fan",
+          "trigger": "admin_approval_without_team",
+          "validation": ["admin_authorized", "fan_access_enabled", "membership_status_pending"],
+          "actions": ["update_status_approved", "grant_fan_permissions", "notify_user"]
+        },
+        {
+          "from": "pending_member",
+          "to": "guest",
+          "trigger": "admin_rejection",
+          "validation": ["admin_authorized"],
+          "actions": ["update_status_rejected", "notify_user", "log_rejection_reason"]
+        },
+        {
+          "from": "manager",
+          "to": "admin",
+          "trigger": "admin_promotes_user",
+          "validation": ["admin_authorized", "target_is_approved_manager"],
+          "actions": ["update_role_admin", "grant_full_permissions", "log_promotion"]
+        },
+        {
+          "from": "admin",
+          "to": "manager",
+          "trigger": "admin_demotes_user",
+          "validation": ["admin_authorized", "not_last_admin", "target_is_admin"],
+          "actions": ["update_role_manager", "revoke_admin_permissions", "log_demotion"]
+        }
+      ],
+      "triggers": ["join_request", "admin_approval", "admin_rejection", "role_change", "team_claim", "claim_release"],
+      "side_effects": ["permission_update", "ui_access_change", "notification_sent", "audit_log_created"],
+      "persistence": "database: league_memberships.role and .status",
+      "recovery_procedures": [
+        "If role change fails mid-transaction, rollback to previous role",
+        "If last admin is demoted, prevent transaction and show error",
+        "If membership approval fails, preserve pending state for retry"
+      ]
+    },
+
+    "UserPermissions": {
+      "state_name": "UserPermissions",
+      "description": "Granular permissions derived from user role that control feature access",
+      "possible_values": {
+        "admin": ["view_league", "edit_league_settings", "approve_members", "reject_members", "promote_users", "moderate_content", "pin_moments", "hide_posts", "manage_roles", "view_commissioner_desk", "publish_content", "submit_pickems", "comment", "react", "post"],
+        "manager": ["view_league", "view_commissioner_desk", "publish_content", "submit_pickems", "comment", "react", "post", "claim_team", "view_private_league"],
+        "fan": ["view_league", "submit_pickems", "comment", "react", "post", "view_private_league"],
+        "pending_member": ["view_public_league_only"],
+        "guest": ["view_public_league_only"]
+      },
+      "transitions": [
+        {
+          "from": "guest_permissions",
+          "to": "fan_permissions",
+          "trigger": "role_changes_to_fan",
+          "validation": ["membership_approved"],
+          "actions": ["grant_engagement_permissions", "enable_pickems_access"]
+        },
+        {
+          "from": "fan_permissions",
+          "to": "manager_permissions",
+          "trigger": "role_changes_to_manager",
+          "validation": ["team_claimed", "membership_approved"],
+          "actions": ["grant_team_management_permissions", "enable_commissioner_desk_conditional"]
+        },
+        {
+          "from": "manager_permissions",
+          "to": "admin_permissions",
+          "trigger": "role_changes_to_admin",
+          "validation": ["promoted_by_admin"],
+          "actions": ["grant_full_admin_permissions", "enable_moderation_tools", "enable_member_management"]
+        }
+      ],
+      "triggers": ["role_change", "league_settings_change", "commissioner_designation"],
+      "side_effects": ["ui_menu_update", "route_access_update", "api_authorization_change"],
+      "persistence": "derived from league_memberships.role + league_settings",
+      "recovery_procedures": [
+        "If permission check fails, default to most restrictive (guest) permissions",
+        "Cache permissions per session, invalidate on role change",
+        "Refresh permissions on page reload if stale"
+      ]
+    },
+
+    "UserPreferences": {
+      "state_name": "UserPreferences",
+      "description": "User-configurable preferences for notifications, display, and behavior",
+      "possible_values": {
+        "notification_preferences": {
+          "email_weekly_digest": "boolean",
+          "email_membership_approved": "boolean",
+          "email_mentioned_in_comment": "boolean",
+          "email_pickems_reminder": "boolean",
+          "browser_notification_enabled": "boolean"
+        },
+        "display_preferences": {
+          "theme": ["light", "dark", "auto"],
+          "default_league_id": "uuid",
+          "feed_sort_preference": ["recent", "chronological"],
+          "pickems_reminder_hours_before": "integer"
+        }
+      },
+      "transitions": [
+        {
+          "from": "default_preferences",
+          "to": "custom_preferences",
+          "trigger": "user_updates_preferences",
+          "validation": ["authenticated", "valid_preference_values"],
+          "actions": ["save_to_database", "update_session_cache"]
+        }
+      ],
+      "triggers": ["user_settings_update", "notification_opt_out", "theme_toggle"],
+      "side_effects": ["ui_theme_change", "notification_behavior_change", "default_route_change"],
+      "persistence": "database: users.preferences (JSONB)",
+      "recovery_procedures": [
+        "If preferences save fails, keep in-memory state and retry on next update",
+        "If preferences corrupted, reset to defaults with user notification"
+      ]
+    },
+
+    "OnboardingProgress": {
+      "state_name": "OnboardingProgress",
+      "description": "Tracks new user onboarding flow completion status",
+      "possible_values": ["not_started", "league_selection", "role_selection", "team_claiming", "tour_active", "completed"],
+      "transitions": [
+        {
+          "from": "not_started",
+          "to": "league_selection",
+          "trigger": "first_login_or_registration",
+          "validation": ["user_authenticated", "no_league_memberships"],
+          "actions": ["show_league_connection_modal", "track_onboarding_start"]
+        },
+        {
+          "from": "league_selection",
+          "to": "role_selection",
+          "trigger": "league_joined_or_created",
+          "validation": ["league_exists", "user_is_creator_or_invited"],
+          "actions": ["navigate_to_role_selection", "load_available_teams"]
+        },
+        {
+          "from": "role_selection",
+          "to": "team_claiming",
+          "trigger": "manager_role_selected",
+          "validation": ["teams_available_for_claiming"],
+          "actions": ["show_team_claiming_interface", "fetch_sleeper_user_mapping"]
+        },
+        {
+          "from": "role_selection",
+          "to": "tour_active",
+          "trigger": "fan_role_selected",
+          "validation": ["fan_access_enabled"],
+          "actions": ["skip_team_claiming", "start_product_tour"]
+        },
+        {
+          "from": "team_claiming",
+          "to": "tour_active",
+          "trigger": "team_claimed_successfully",
+          "validation": ["team_claim_validated"],
+          "actions": ["link_team_to_membership", "start_product_tour"]
+        },
+        {
+          "from": "tour_active",
+          "to": "completed",
+          "trigger": "tour_finished_or_skipped",
+          "validation": [],
+          "actions": ["mark_onboarding_complete", "redirect_to_feed"]
+        }
+      ],
+      "triggers": ["registration", "league_join", "role_select", "team_claim", "tour_interaction"],
+      "side_effects": ["modal_display", "tour_overlay", "navigation_redirect", "analytics_event"],
+      "persistence": "database: users.preferences.onboarding_status or separate onboarding_progress table",
+      "recovery_procedures": [
+        "If onboarding interrupted, resume from last completed step",
+        "Allow manual restart of onboarding from user settings",
+        "Skip onboarding for users with existing league memberships"
+      ]
+    },
+
+    "ActiveLeagueContext": {
+      "state_name": "ActiveLeagueContext",
+      "description": "Currently selected league for multi-league users",
+      "possible_values": "uuid (league_id) or null",
+      "transitions": [
+        {
+          "from": "null",
+          "to": "league_id",
+          "trigger": "user_selects_league",
+          "validation": ["user_is_member", "league_exists"],
+          "actions": ["set_active_league_id", "load_league_data", "update_ui_context"]
+        },
+        {
+          "from": "league_id",
+          "to": "different_league_id",
+          "trigger": "user_switches_league",
+          "validation": ["user_is_member_of_target", "target_league_exists"],
+          "actions": ["save_previous_league_state", "load_new_league_data", "update_url", "refresh_navigation"]
+        }
+      ],
+      "triggers": ["league_switcher_click", "direct_url_navigation", "invitation_link_follow"],
+      "side_effects": ["url_update", "data_refetch", "permission_recalculation", "navigation_menu_update"],
+      "persistence": "session storage + database: users.preferences.default_league_id",
+      "recovery_procedures": [
+        "If league context lost, redirect to league selector",
+        "If league no longer accessible, show error and redirect to accessible league",
+        "Default to most recently active league on login"
+      ]
+    }
+  },
+
+  "business_process_states": {
+    "LeagueConnectionProcess": {
+      "process_name": "League Connection and Initial Sync",
+      "state_machine": {
+        "initial_state": "unconnected",
+        "states": [
+          {
+            "name": "unconnected",
+            "description": "No league connected yet",
+            "entry_actions": ["display_connection_form"],
+            "exit_actions": ["clear_form_errors"]
+          },
+          {
+            "name": "validating",
+            "description": "Validating Sleeper league ID or username",
+            "entry_actions": ["show_loading_spinner", "fetch_sleeper_league_metadata"],
+            "exit_actions": ["hide_loading_spinner"]
+          },
+          {
+            "name": "confirming",
+            "description": "Showing league details for user confirmation",
+            "entry_actions": ["display_league_preview", "show_confirmation_button"],
+            "exit_actions": ["clear_preview"]
+          },
+          {
+            "name": "syncing",
+            "description": "Performing initial full league sync",
+            "entry_actions": ["create_league_record", "start_sync_job", "show_progress_indicator"],
+            "exit_actions": ["stop_progress_indicator"]
+          },
+          {
+            "name": "connected",
+            "description": "League successfully connected and synced",
+            "entry_actions": ["redirect_to_league_page", "show_success_message", "schedule_ongoing_sync"],
+            "exit_actions": []
+          },
+          {
+            "name": "validation_failed",
+            "description": "League ID invalid or not found",
+            "entry_actions": ["show_error_message", "highlight_input_field"],
+            "exit_actions": ["clear_error"]
+          },
+          {
+            "name": "already_connected",
+            "description": "League already exists in FSHQ",
+            "entry_actions": ["show_existing_league_message", "offer_join_option"],
+            "exit_actions": []
+          },
+          {
+            "name": "sync_error",
+            "description": "Initial sync failed",
+            "entry_actions": ["show_error_details", "offer_retry", "log_error"],
+            "exit_actions": []
+          }
+        ],
+        "transitions": [
+          {
+            "from": "unconnected",
+            "to": "validating",
+            "event": "league_id_submitted",
+            "guard_conditions": ["valid_league_id_format", "user_authenticated"],
+            "actions": ["call_sleeper_api"]
+          },
+          {
+            "from": "validating",
+            "to": "confirming",
+            "event": "league_found",
+            "guard_conditions": ["league_data_retrieved"],
+            "actions": ["populate_preview"]
+          },
+          {
+            "from": "validating",
+            "to": "validation_failed",
+            "event": "league_not_found",
+            "guard_conditions": [],
+            "actions": ["log_validation_failure"]
+          },
+          {
+            "from": "validating",
+            "to": "already_connected",
+            "event": "league_exists_in_db",
+            "guard_conditions": ["existing_league_detected"],
+            "actions": ["fetch_existing_league_data"]
+          },
+          {
+            "from": "confirming",
+            "to": "syncing",
+            "event": "user_confirms_connection",
+            "guard_conditions": ["user_clicked_confirm"],
+            "actions": ["initiate_full_sync"]
+          },
+          {
+            "from": "confirming",
+            "to": "unconnected",
+            "event": "user_cancels",
+            "guard_conditions": [],
+            "actions": ["clear_form"]
+          },
+          {
+            "from": "syncing",
+            "to": "connected",
+            "event": "sync_completed_successfully",
+            "guard_conditions": ["all_entities_synced", "no_critical_errors"],
+            "actions": ["mark_league_active", "set_user_as_admin"]
+          },
+          {
+            "from": "syncing",
+            "to": "sync_error",
+            "event": "sync_failed",
+            "guard_conditions": ["critical_error_occurred"],
+            "actions": ["mark_league_connection_failed", "preserve_partial_data"]
+          },
+          {
+            "from": "sync_error",
+            "to": "syncing",
+            "event": "user_retries_sync",
+            "guard_conditions": [],
+            "actions": ["restart_sync_from_checkpoint"]
+          },
+          {
+            "from": "validation_failed",
+            "to": "validating",
+            "event": "user_corrects_input",
+            "guard_conditions": ["input_changed"],
+            "actions": []
+          },
+          {
+            "from": "already_connected",
+            "to": "connected",
+            "event": "user_chooses_to_join",
+            "guard_conditions": ["league_accessible"],
+            "actions": ["navigate_to_join_flow"]
+          }
+        ]
+      },
+      "validation_rules": [
+        "League ID must be valid Sleeper format (numeric)",
+        "League must not already be connected to FSHQ",
+        "User must be authenticated",
+        "Sleeper API must be reachable",
+        "League must have at least 2 teams"
+      ],
+      "error_states": [
+        {
+          "name": "validation_failed",
+          "causes": ["invalid_league_id", "league_not_found", "api_timeout"],
+          "recovery": "User can retry with different league ID or username",
+          "user_message": "We couldn't find that league. Please check your league ID or username and try again."
+        },
+        {
+          "name": "already_connected",
+          "causes": ["duplicate_league_id_in_database"],
+          "recovery": "User can join existing league or go back",
+          "user_message": "This league is already connected to FSHQ. Would you like to join it?"
+        },
+        {
+          "name": "sync_error",
+          "causes": ["api_timeout", "network_error", "rate_limit", "invalid_data_format", "database_error"],
+          "recovery": "Automatic retry with exponential backoff, or manual retry by user",
+          "user_message": "We encountered an error syncing your league data. We'll retry automatically, or you can try again manually."
+        }
+      ],
+      "rollback_procedures": [
+        "If sync fails after league record created, mark as connection_failed but preserve record",
+        "If sync partially completes, preserve fetched data for differential retry",
+        "If user cancels during sync, stop sync job but keep partial data",
+        "Allow admin to manually retry sync or delete failed connection"
+      ],
+      "success_criteria": [
+        "League record created in database",
+        "All teams imported with Sleeper roster IDs",
+        "League settings and metadata synced",
+        "User set as initial admin",
+        "Unique URL slug generated and assigned",
+        "Ongoing sync jobs scheduled"
+      ]
+    },
+
+    "TeamClaimingProcess": {
+      "process_name": "Manager Team Claiming Workflow",
+      "state_machine": {
+        "initial_state": "unclaimed",
+        "states": [
+          {
+            "name": "unclaimed",
+            "description": "User has not claimed a team yet",
+            "entry_actions": ["show_team_selection_interface", "fetch_available_teams"],
+            "exit_actions": []
+          },
+          {
+            "name": "claiming",
+            "description": "Validating team claim against Sleeper user ID",
+            "entry_actions": ["show_validation_spinner", "fetch_sleeper_user_data"],
+            "exit_actions": []
+          },
+          {
+            "name": "claimed",
+            "description": "Team successfully claimed and linked to user",
+            "entry_actions": ["update_membership_with_team", "grant_manager_permissions", "show_success"],
+            "exit_actions": []
+          },
+          {
+            "name": "claim_rejected",
+            "description": "Claim validation failed",
+            "entry_actions": ["show_validation_error", "offer_retry_or_contact_admin"],
+            "exit_actions": []
+          },
+          {
+            "name": "pending_admin_approval",
+            "description": "Claim requires admin manual verification",
+            "entry_actions": ["create_admin_notification", "show_pending_message"],
+            "exit_actions": []
+          }
+        ],
+        "transitions": [
+          {
+            "from": "unclaimed",
+            "to": "claiming",
+            "event": "user_selects_team",
+            "guard_conditions": ["team_available", "user_authenticated"],
+            "actions": ["validate_sleeper_user_id_match"]
+          },
+          {
+            "from": "claiming",
+            "to": "claimed",
+            "event": "validation_successful",
+            "guard_conditions": ["sleeper_user_id_matches", "team_not_already_claimed"],
+            "actions": ["link_team_to_membership"]
+          },
+          {
+            "from": "claiming",
+            "to": "claim_rejected",
+            "event": "validation_failed",
+            "guard_conditions": ["sleeper_user_id_mismatch_or_team_taken"],
+            "actions": ["log_claim_failure"]
+          },
+          {
+            "from": "claiming",
+            "to": "pending_admin_approval",
+            "event": "validation_inconclusive",
+            "guard_conditions": ["ambiguous_match_or_missing_data"],
+            "actions": ["notify_admin_for_manual_review"]
+          },
+          {
+            "from": "claim_rejected",
+            "to": "claiming",
+            "event": "user_retries_different_team",
+            "guard_conditions": ["other_teams_available"],
+            "actions": []
+          },
+          {
+            "from": "pending_admin_approval",
+            "to": "claimed",
+            "event": "admin_approves_claim",
+            "guard_conditions": ["admin_authorized"],
+            "actions": ["link_team_to_membership", "notify_user"]
+          },
+          {
+            "from": "pending_admin_approval",
+            "to": "claim_rejected",
+            "event": "admin_rejects_claim",
+            "guard_conditions": ["admin_authorized"],
+            "actions": ["notify_user_with_reason"]
+          },
+          {
+            "from": "claimed",
+            "to": "unclaimed",
+            "event": "user_releases_claim",
+            "guard_conditions": ["within_grace_period_or_admin_action"],
+            "actions": ["unlink_team_from_membership", "log_release"]
+          }
+        ]
+      },
+      "validation_rules": [
+        "User must match Sleeper username or user_id for selected team",
+        "Team cannot be claimed by multiple users unless co-manager is explicitly supported",
+        "User must have manager role to claim teams",
+        "Claim can be released within 24-hour grace period or by admin"
+      ],
+      "error_states": [
+        {
+          "name": "claim_rejected",
+          "causes": ["sleeper_user_id_mismatch", "team_already_claimed", "invalid_team_id"],
+          "recovery": "User can try different team or contact admin",
+          "user_message": "We couldn't verify you as the owner of this team. Please try another team or contact a league admin."
+        },
+        {
+          "name": "pending_admin_approval",
+          "causes": ["ambiguous_ownership", "missing_sleeper_data", "multiple_potential_matches"],
+          "recovery": "Admin manually reviews and approves/rejects",
+          "user_message": "Your team claim requires admin approval. We've notified the league admin to review your request."
+        }
+      ],
+      "rollback_procedures": [
+        "If claim fails mid-transaction, no database changes persist",
+        "If user releases claim within grace period, team becomes available again",
+        "If admin overrides claim, original user notified and team reassigned"
+      ],
+      "success_criteria": [
+        "Membership record updated with team_id",
+        "User granted manager role and permissions",
+        "Team visible in user's league context",
+        "User can access manager-specific features"
+      ]
+    },
+
+    "MembershipApprovalWorkflow": {
+      "process_name": "Admin Membership Approval Process",
+      "state_machine": {
+        "initial_state": "pending",
+        "states": [
+          {
+            "name": "pending",
+            "description": "Membership request awaiting admin review",
+            "entry_actions": ["notify_admins", "display_in_approval_queue"],
+            "exit_actions": []
+          },
+          {
+            "name": "approved",
+            "description": "Admin approved membership",
+            "entry_actions": ["grant_access", "notify_user", "update_member_list"],
+            "exit_actions": []
+          },
+          {
+            "name": "rejected",
+            "description": "Admin rejected membership",
+            "entry_actions": ["notify_user_with_reason", "log_rejection"],
+            "exit_actions": []
+          }
+        ],
+        "transitions": [
+          {
+            "from": "pending",
+            "to": "approved",
+            "event": "admin_approves",
+            "guard_conditions": ["admin_authorized", "league_has_capacity"],
+            "actions": ["update_status_approved", "send_welcome_email"]
+          },
+          {
+            "from": "pending",
+            "to": "rejected",
+            "event": "admin_rejects",
+            "guard_conditions": ["admin_authorized"],
+            "actions": ["update_status_rejected", "send_rejection_email"]
+          }
+        ]
+      },
+      "validation_rules": [
+        "Only admins can approve/reject memberships",
+        "Membership must be in pending status to approve/reject",
+        "League join_rule must be 'approval_required' for workflow to apply"
+      ],
+      "error_states": [
+        {
+          "name": "approval_failed",
+          "causes": ["database_error", "notification_send_failure"],
+          "recovery": "Preserve pending state, admin can retry",
+          "user_message": "Approval failed. Please try again."
+        }
+      ],
+      "rollback_procedures": [
+        "If approval fails, membership remains pending",
+        "If notification fails, user is approved but email queued for retry"
+      ],
+      "success_criteria": [
+        "Membership status updated in database",
+        "User notified of decision",
+        "User granted appropriate access if approved"
+      ]
+    },
+
+    "CommissionerContentLifecycle": {
+      "process_name": "Weekly Content Creation and Publishing",
+      "state_machine": {
+        "initial_state": "empty",
+        "states": [
+          {
+            "name": "empty",
+            "description": "No content created for this week yet",
+            "entry_actions": ["show_create_draft_button"],
+            "exit_actions": []
+          },
+          {
+            "name": "draft",
+            "description": "Content being edited, not published",
+            "entry_actions": ["load_draft_data", "enable_autosave", "show_edit_interface"],
+            "exit_actions": ["stop_autosave"]
+          },
+          {
+            "name": "publishing",
+            "description": "Content being validated and published",
+            "entry_actions": ["validate_content", "create_feed_moments", "update_pages"],
+            "exit_actions": []
+          },
+          {
+            "name": "published",
+            "description": "Content live and visible to league",
+            "entry_actions": ["show_published_badge", "disable_direct_edit", "notify_members"],
+            "exit_actions": []
+          },
+          {
+            "name": "editing_published",
+            "description": "Creating updated version of published content",
+            "entry_actions": ["load_published_content_to_draft", "show_update_mode_indicator"],
+            "exit_actions": []
+          },
+          {
+            "name": "republishing",
+            "description": "Publishing updated content",
+            "entry_actions": ["validate_changes", "update_feed_moments", "add_updated_badge"],
+            "exit_actions": []
+          },
+          {
+            "name": "skipped",
+            "description": "Commissioner chose to skip this week",
+            "entry_actions": ["mark_as_skipped", "log_skip_reason"],
+            "exit_actions": []
+          }
+        ],
+        "transitions": [
+          {
+            "from": "empty",
+            "to": "draft",
+            "event": "commissioner_creates_draft",
+            "guard_conditions": ["user_is_commissioner_or_admin"],
+            "actions": ["initialize_draft_record", "start_autosave"]
+          },
+          {
+            "from": "draft",
+            "to": "publishing",
+            "event": "commissioner_clicks_publish",
+            "guard_conditions": ["content_validation_passes", "required_sections_complete"],
+            "actions": ["begin_publish_transaction"]
+          },
+          {
+            "from": "publishing",
+            "to": "published",
+            "event": "publish_successful",
+            "guard_conditions": ["all_moments_created", "pages_updated"],
+            "actions": ["update_status_published", "set_published_timestamp"]
+          },
+          {
+            "from": "publishing",
+            "to": "draft",
+            "event": "publish_failed",
+            "guard_conditions": [],
+            "actions": ["rollback_changes", "show_error_message", "preserve_draft"]
+          },
+          {
+            "from": "published",
+            "to": "editing_published",
+            "event": "commissioner_edits_published_content",
+            "guard_conditions": ["user_is_commissioner_or_admin"],
+            "actions": ["create_draft_version_from_published"]
+          },
+          {
+            "from": "editing_published",
+            "to": "republishing",
+            "event": "commissioner_republishes",
+            "guard_conditions": ["content_validation_passes", "changes_detected"],
+            "actions": ["begin_update_transaction"]
+          },
+          {
+            "from": "republishing",
+            "to": "published",
+            "event": "republish_successful",
+            "guard_conditions": ["all_updates_applied"],
+            "actions": ["update_published_timestamp", "mark_as_updated"]
+          },
+          {
+            "from": "draft",
+            "to": "skipped",
+            "event": "commissioner_marks_skip",
+            "guard_conditions": ["user_is_commissioner_or_admin"],
+            "actions": ["set_skip_flag", "delete_draft_if_exists"]
+          },
+          {
+            "from": "skipped",
+            "to": "draft",
+            "event": "commissioner_unskips_week",
+            "guard_conditions": [],
+            "actions": ["clear_skip_flag", "initialize_draft"]
+          }
+        ]
+      },
+      "validation_rules": [
+        "Power rankings must have all teams ranked with no duplicates",
+        "Matchup predictions must reference valid matchup IDs",
+        "Featured matchup must be one of the predicted matchups",
+        "Commentary fields have max length of 500 characters",
+        "Cannot publish if required sections are incomplete unless explicitly skipped"
+      ],
+      "error_states": [
+        {
+          "name": "publish_failed",
+          "causes": ["database_error", "invalid_content", "moment_creation_failure"],
+          "recovery": "Preserve draft, allow user to fix and retry",
+          "user_message": "Publishing failed. Your draft has been saved. Please try again."
+        },
+        {
+          "name": "autosave_failed",
+          "causes": ["network_error", "session_expired", "database_error"],
+          "recovery": "Queue changes in local storage, retry when connection restored",
+          "user_message": "Autosave failed. Your changes are saved locally and will sync when connection is restored."
+        }
+      ],
+      "rollback_procedures": [
+        "If publish fails, rollback all database changes and preserve draft",
+        "If moment creation fails, rollback content publish status",
+        "If republish fails, preserve original published version",
+        "Autosave failures queue changes for retry on next interval"
+      ],
+      "success_criteria": [
+        "Content status updated to published in database",
+        "Feed moments created for each published section",
+        "Power rankings page updated with new data",
+        "Matchup page updated with predictions",
+        "Publication timestamp recorded",
+        "League members notified or can see new content in feed"
+      ]
+    },
+
+    "PickemsSubmissionGrading": {
+      "process_name": "Pick'ems Submission and Grading Workflow",
+      "state_machine": {
+        "initial_state": "not_submitted",
+        "states": [
+          {
+            "name": "not_submitted",
+            "description": "User has not submitted picks for this week",
+            "entry_actions": ["show_empty_pick_form", "display_lock_times"],
+            "exit_actions": []
+          },
+          {
+            "name": "in_progress",
+            "description": "User is actively making picks",
+            "entry_actions": ["enable_pick_selection", "show_pick_count"],
+            "exit_actions": []
+          },
+          {
+            "name": "submitted_unlocked",
+            "description": "Picks submitted but matchups not locked yet (editable)",
+            "entry_actions": ["show_submitted_picks", "enable_edit_mode"],
+            "exit_actions": []
+          },
+          {
+            "name": "locked",
+            "description": "Lock time passed, picks finalized",
+            "entry_actions": ["disable_editing", "reveal_all_picks", "show_locked_indicator"],
+            "exit_actions": []
+          },
+          {
+            "name": "graded",
+            "description": "Matchup completed, picks graded",
+            "entry_actions": ["display_correct_incorrect_indicators", "update_stats"],
+            "exit_actions": []
+          },
+          {
+            "name": "regraded",
+            "description": "Stat correction triggered re-grading",
+            "entry_actions": ["update_grade_indicators", "show_correction_badge", "recalculate_stats"],
+            "exit_actions": []
+          }
+        ],
+        "transitions": [
+          {
+            "from": "not_submitted",
+            "to": "in_progress",
+            "event": "user_makes_first_pick",
+            "guard_conditions": ["matchup_not_locked", "user_authenticated"],
+            "actions": ["create_pickems_entry_record"]
+          },
+          {
+            "from": "in_progress",
+            "to": "submitted_unlocked",
+            "event": "user_submits_picks",
+            "guard_conditions": ["at_least_one_pick_made"],
+            "actions": ["save_all_picks", "show_confirmation"]
+          },
+          {
+            "from": "submitted_unlocked",
+            "to": "in_progress",
+            "event": "user_edits_pick",
+            "guard_conditions": ["matchup_not_locked"],
+            "actions": ["enable_edit_interface"]
+          },
+          {
+            "from": "submitted_unlocked",
+            "to": "locked",
+            "event": "lock_time_reached",
+            "guard_conditions": ["current_time_past_lock_time"],
+            "actions": ["set_locked_timestamp", "reveal_other_picks"]
+          },
+          {
+            "from": "not_submitted",
+            "to": "locked",
+            "event": "lock_time_reached_no_submission",
+            "guard_conditions": ["user_did_not_submit"],
+            "actions": ["mark_did_not_participate"]
+          },
+          {
+            "from": "locked",
+            "to": "graded",
+            "event": "matchup_completed",
+            "guard_conditions": ["winner_determined", "scores_finalized"],
+            "actions": ["calculate_correct_incorrect", "update_leaderboards", "create_grading_record"]
+          },
+          {
+            "from": "graded",
+            "to": "regraded",
+            "event": "stat_correction_detected",
+            "guard_conditions": ["winner_changed_due_to_correction"],
+            "actions": ["recalculate_grades", "update_leaderboards", "log_correction"]
+          }
+        ]
+      },
+      "validation_rules": [
+        "User can only pick teams that are in the matchup",
+        "Picks cannot be edited after lock time",
+        "Partial submissions are allowed (not all matchups must be picked)",
+        "Lock time is per-matchup based on game start time",
+        "Grading only occurs after stat correction window (72 hours)"
+      ],
+      "error_states": [
+        {
+          "name": "submission_failed",
+          "causes": ["network_error", "database_error", "matchup_already_locked"],
+          "recovery": "Preserve picks in local storage, retry submission",
+          "user_message": "Pick submission failed. Your picks are saved locally. Please try again."
+        },
+        {
+          "name": "grading_error",
+          "causes": ["missing_matchup_data", "invalid_winner", "database_error"],
+          "recovery": "Queue for manual grading or retry on next grading cycle",
+          "user_message": "Grading is delayed. We'll update your results shortly."
+        }
+      ],
+      "rollback_procedures": [
+        "If submission fails, picks remain in local state for retry",
+        "If grading fails, preserve ungraded state and retry on next cycle",
+        "If re-grading fails due to stat correction, preserve original grade until corrected"
+      ],
+      "success_criteria": [
+        "Picks saved in database with timestamp",
+        "User confirmation displayed",
+        "Picks locked at appropriate time",
+        "Grades calculated correctly after matchup completion",
+        "Leaderboards updated with new results",
+        "Stat corrections trigger re-grading within 4 hours"
+      ]
+    },
+
+    "MatchupCompletionCorrections": {
+      "process_name": "Matchup Finalization and Stat Correction Handling",
+      "state_machine": {
+        "initial_state": "in_progress",
+        "states": [
+          {
+            "name": "in_progress",
+            "description": "Matchup ongoing, scores updating",
+            "entry_actions": ["poll_scores_frequently", "update_live_scores"],
+            "exit_actions": []
+          },
+          {
+            "name": "completed_provisional",
+            "description": "Matchup finished but within stat correction window",
+            "entry_actions": ["show_provisional_winner", "start_correction_monitoring"],
+            "exit_actions": ["stop_correction_monitoring"]
+          },
+          {
+            "name": "finalized",
+            "description": "Stat correction window passed, result final",
+            "entry_actions": ["mark_as_final", "trigger_grading", "update_standings"],
+            "exit_actions": []
+          },
+          {
+            "name": "corrected",
+            "description": "Stat correction changed outcome",
+            "entry_actions": ["update_winner", "trigger_regrading", "create_correction_moment"],
+            "exit_actions": []
+          }
+        ],
+        "transitions": [
+          {
+            "from": "in_progress",
+            "to": "completed_provisional",
+            "event": "matchup_ends",
+            "guard_conditions": ["all_games_finished", "final_scores_available"],
+            "actions": ["determine_provisional_winner", "start_72hr_timer"]
+          },
+          {
+            "from": "completed_provisional",
+            "to": "finalized",
+            "event": "correction_window_expires",
+            "guard_conditions": ["72_hours_passed", "no_corrections_detected"],
+            "actions": ["mark_result_final", "trigger_all_grading"]
+          },
+          {
+            "from": "completed_provisional",
+            "to": "corrected",
+            "event": "stat_correction_changes_winner",
+            "guard_conditions": ["score_changed", "winner_different"],
+            "actions": ["update_scores", "change_winner", "log_correction"]
+          },
+          {
+            "from": "corrected",
+            "to": "finalized",
+            "event": "correction_window_expires_after_correction",
+            "guard_conditions": ["72_hours_passed_since_correction"],
+            "actions": ["mark_result_final_with_correction_flag"]
+          }
+        ]
+      },
+      "validation_rules": [
+        "Matchups monitored for 72 hours after completion for stat corrections",
+        "Score changes >0.1 points trigger correction detection",
+        "Winner changes trigger immediate re-grading of affected picks",
+        "Correction moments generated only for winner-changing corrections"
+      ],
+      "error_states": [
+        {
+          "name": "sync_failure_during_correction_window",
+          "causes": ["api_error", "network_timeout"],
+          "recovery": "Continue monitoring, retry sync on next interval",
+          "user_message": "Score updates delayed. Refreshing..."
+        }
+      ],
+      "rollback_procedures": [
+        "If correction detection fails, queue for manual review",
+        "If re-grading fails, preserve original grades and retry",
+        "If correction moment creation fails, log error and create on next sync"
+      ],
+      "success_criteria": [
+        "Matchup winner accurately determined",
+        "Stat corrections detected and processed within 4 hours",
+        "All affected picks re-graded",
+        "Leaderboards updated with corrected results",
+        "Correction moments created and published to feed"
+      ]
+    },
+
+    "TransactionPromotionFlow": {
+      "process_name": "Transaction Engagement and Feed Promotion",
+      "state_machine": {
+        "initial_state": "synced",
+        "states": [
+          {
+            "name": "synced",
+            "description": "Transaction imported but not promoted to feed",
+            "entry_actions": ["display_in_transactions_page"],
+            "exit_actions": []
+          },
+          {
+            "name": "engaging",
+            "description": "Transaction receiving comments/reactions",
+            "entry_actions": ["track_engagement_count"],
+            "exit_actions": []
+          },
+          {
+            "name": "promoted",
+            "description": "Transaction promoted to main feed due to high engagement",
+            "entry_actions": ["create_feed_moment", "bump_to_top_of_feed"],
+            "exit_actions": []
+          }
+        ],
+        "transitions": [
+          {
+            "from": "synced",
+            "to": "engaging",
+            "event": "first_engagement_received",
+            "guard_conditions": ["comment_or_reaction_added"],
+            "actions": ["increment_engagement_count"]
+          },
+          {
+            "from": "engaging",
+            "to": "promoted",
+            "event": "engagement_threshold_reached",
+            "guard_conditions": ["engagement_count_exceeds_threshold"],
+            "actions": ["promote_to_feed", "set_promoted_flag"]
+          }
+        ]
+      },
+      "validation_rules": [
+        "Engagement threshold is configurable per league (default: 5 interactions)",
+        "Promoted transactions appear in feed with transaction details",
+        "Promotion is one-way, transactions stay in feed once promoted",
+        "Duplicate moments not created if already promoted"
+      ],
+      "error_states": [
+        {
+          "name": "promotion_failed",
+          "causes": ["moment_creation_error", "database_error"],
+          "recovery": "Retry promotion on next engagement event",
+          "user_message": "Transaction details temporarily unavailable"
+        }
+      ],
+      "rollback_procedures": [
+        "If moment creation fails, flag for retry without losing engagement count",
+        "If promotion fails, transaction remains on transactions page"
+      ],
+      "success_criteria": [
+        "Engagement accurately tracked",
+        "Promotion occurs at correct threshold",
+        "Feed moment created with transaction details",
+        "Transaction marked as promoted in database"
+      ]
+    },
+
+    "ContentModerationProcess": {
+      "process_name": "Admin Content Moderation Workflow",
+      "state_machine": {
+        "initial_state": "visible",
+        "states": [
+          {
+            "name": "visible",
+            "description": "Content visible to all league members",
+            "entry_actions": [],
+            "exit_actions": []
+          },
+          {
+            "name": "pinned",
+            "description": "Admin pinned content to top of feed",
+            "entry_actions": ["set_pin_flag", "move_to_top", "log_pin_action"],
+            "exit_actions": []
+          },
+          {
+            "name": "hidden",
+            "description": "Admin hid content from feed",
+            "entry_actions": ["set_hidden_flag", "remove_from_feed", "log_hide_action"],
+            "exit_actions": []
+          },
+          {
+            "name": "deleted",
+            "description": "Admin or author deleted content",
+            "entry_actions": ["soft_delete", "log_deletion"],
+            "exit_actions": []
+          }
+        ],
+        "transitions": [
+          {
+            "from": "visible",
+            "to": "pinned",
+            "event": "admin_pins_moment",
+            "guard_conditions": ["user_is_admin"],
+            "actions": ["update_pinned_status", "update_feed_order"]
+          },
+          {
+            "from": "pinned",
+            "to": "visible",
+            "event": "admin_unpins_moment",
+            "guard_conditions": ["user_is_admin"],
+            "actions": ["clear_pinned_status", "restore_normal_order"]
+          },
+          {
+            "from": "visible",
+            "to": "hidden",
+            "event": "admin_hides_content",
+            "guard_conditions": ["user_is_admin"],
+            "actions": ["set_hidden_flag", "remove_visibility"]
+          },
+          {
+            "from": "hidden",
+            "to": "visible",
+            "event": "admin_unhides_content",
+            "guard_conditions": ["user_is_admin"],
+            "actions": ["clear_hidden_flag", "restore_visibility"]
+          },
+          {
+            "from": "visible",
+            "to": "deleted",
+            "event": "user_deletes_own_content",
+            "guard_conditions": ["user_is_author_or_admin"],
+            "actions": ["soft_delete_post"]
+          }
+        ]
+      },
+      "validation_rules": [
+        "Only admins can pin, hide, or delete others' content",
+        "Authors can delete their own content",
+        "Pinned moments display at top of feed regardless of timestamp",
+        "Hidden content not visible to non-admins but preserved in database",
+        "Deleted content soft deleted to preserve thread structure"
+      ],
+      "error_states": [
+        {
+          "name": "moderation_action_failed",
+          "causes": ["database_error", "permission_error"],
+          "recovery": "Preserve current state, admin can retry",
+          "user_message": "Moderation action failed. Please try again."
+        }
+      ],
+      "rollback_procedures": [
+        "If moderation action fails, content remains in previous state",
+        "Moderation actions are logged for audit trail",
+        "Hidden content can be restored by admin"
+      ],
+      "success_criteria": [
+        "Content state updated in database",
+        "Feed display updated accordingly",
+        "Moderation action logged with admin ID and timestamp",
+        "Content visibility matches intended state"
+      ]
+    }
+  },
+
+  "component_states": {
+    "FeedComponent": {
+      "component_name": "NewsfeedDisplay",
+      "local_states": [
+        {
+          "name": "loading_state",
+          "type": "enum",
+          "values": ["idle", "loading", "refreshing", "loading_more", "error"],
+          "initial": "idle",
+          "description": "Feed data loading status"
+        },
+        {
+          "name": "pagination_state",
+          "type": "object",
+          "properties": {
+            "cursor": {"type": "string", "nullable": true},
+            "hasMore": {"type": "boolean"},
+            "isLoadingMore": {"type": "boolean"}
+          },
+          "description": "Infinite scroll pagination cursor state"
+        },
+        {
+          "name": "sort_preference",
+          "type": "enum",
+          "values": ["recent", "chronological"],
+          "initial": "recent",
+          "description": "User's selected feed sort order"
+        }
+      ],
+      "shared_states": [
+        {
+          "name": "feed_moments",
+          "source": "react_query",
+          "cache_key": "league_{leagueId}_feed",
+          "invalidation_triggers": ["new_moment_created", "moment_updated", "comment_added", "reaction_added", "moment_pinned"]
+        },
+        {
+          "name": "pinned_moments",
+          "source": "react_query",
+          "cache_key": "league_{leagueId}_pinned_moments",
+          "invalidation_triggers": ["moment_pinned", "moment_unpinned"]
+        }
+      ],
+      "state_synchronization": {
+        "real_time_updates": "Supabase realtime subscription on moments table filtered by league_id",
+        "optimistic_updates": ["add_comment_immediately", "add_reaction_immediately", "rollback_on_error"],
+        "conflict_resolution": "Server state always wins, re-fetch on conflict detected"
+      },
+      "state_persistence": "React Query cache with 5-minute stale time, localStorage for sort preference",
+      "cleanup_procedures": [
+        "Unsubscribe from Supabase realtime on component unmount",
+        "Clear infinite query on league context change",
+        "Cancel in-flight requests on unmount"
+      ]
+    },
+
+    "CommissionerDeskComponent": {
+      "component_name": "CommissionerDeskInterface",
+      "local_states": [
+        {
+          "name": "edit_mode",
+          "type": "enum",
+          "values": ["viewing", "editing", "previewing"],
+          "initial": "viewing",
+          "description": "Current editing mode"
+        },
+        {
+          "name": "autosave_status",
+          "type": "enum",
+          "values": ["idle", "saving", "saved", "error"],
+          "initial": "idle",
+          "description": "Autosave operation status"
+        },
+        {
+          "name": "selected_week",
+          "type": "object",
+          "properties": {
+            "season": "integer",
+            "week": "integer"
+          },
+          "description": "Currently selected week for content editing"
+        },
+        {
+          "name": "unsaved_changes",
+          "type": "boolean",
+          "initial": false,
+          "description": "Whether there are unsaved draft changes"
+        },
+        {
+          "name": "validation_errors",
+          "type": "array",
+          "items": {"type": "object"},
+          "description": "Content validation errors preventing publish"
+        }
+      ],
+      "shared_states": [
+        {
+          "name": "draft_content",
+          "source": "react_query",
+          "cache_key": "league_{leagueId}_desk_draft_{season}_{week}",
+          "invalidation_triggers": ["draft_saved", "content_published"]
+        },
+        {
+          "name": "published_content",
+          "source": "react_query",
+          "cache_key": "league_{leagueId}_desk_published_{season}_{week}",
+          "invalidation_triggers": ["content_published", "content_updated"]
+        },
+        {
+          "name": "available_teams",
+          "source": "react_query",
+          "cache_key": "league_{leagueId}_teams",
+          "invalidation_triggers": ["team_sync_completed"]
+        },
+        {
+          "name": "matchups_for_week",
+          "source": "react_query",
+          "cache_key": "league_{leagueId}_matchups_{season}_{week}",
+          "invalidation_triggers": ["matchup_sync_completed"]
+        }
+      ],
+      "state_synchronization": {
+        "real_time_updates": "No real-time sync needed, draft is single-user state",
+        "optimistic_updates": ["update_local_draft_immediately", "sync_to_server_debounced"],
+        "conflict_resolution": "Last write wins, show warning if concurrent edit detected"
+      },
+      "state_persistence": "React Query cache + localStorage for unsaved changes recovery, 30-second debounced autosave to database",
+      "cleanup_procedures": [
+        "Trigger autosave on unmount if unsaved changes exist",
+        "Warn user if navigating away with unsaved changes",
+        "Clear validation errors on component unmount"
+      ]
+    },
+
+    "PowerRankingsChart": {
+      "component_name": "RankingTrajectoryVisualization",
+      "local_states": [
+        {
+          "name": "chart_loading",
+          "type": "enum",
+          "values": ["loading", "rendering", "ready", "error"],
+          "initial": "loading",
+          "description": "Chart data loading and rendering state"
+        },
+        {
+          "name": "selected_season",
+          "type": "integer",
+          "description": "Season for trajectory display"
+        },
+        {
+          "name": "hovered_week",
+          "type": "integer",
+          "nullable": true,
+          "description": "Week user is hovering over for tooltip"
+        },
+        {
+          "name": "visible_teams",
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "Team IDs currently visible on chart (for filtering)"
+        }
+      ],
+      "shared_states": [
+        {
+          "name": "rankings_history",
+          "source": "react_query",
+          "cache_key": "league_{leagueId}_rankings_history_{season}",
+          "invalidation_triggers": ["rankings_published", "rankings_updated"]
+        },
+        {
+          "name": "teams_metadata",
+          "source": "react_query",
+          "cache_key": "league_{leagueId}_teams",
+          "invalidation_triggers": ["team_sync_completed"]
+        }
+      ],
+      "state_synchronization": {
+        "real_time_updates": "Not needed, rankings are published weekly",
+        "optimistic_updates": "None, read-only visualization",
+        "conflict_resolution": "N/A"
+      },
+      "state_persistence": "React Query cache with 5-minute stale time, selected season in sessionStorage",
+      "cleanup_procedures": [
+        "Destroy chart instance on unmount to prevent memory leaks",
+        "Cancel data fetches on unmount"
+      ]
+    },
+
+    "PickemsForm": {
+      "component_name": "WeeklyPickemsSubmissionForm",
+      "local_states": [
+        {
+          "name": "submission_status",
+          "type": "enum",
+          "values": ["editing", "submitting", "submitted", "error"],
+          "initial": "editing",
+          "description": "Form submission state"
+        },
+        {
+          "name": "picks",
+          "type": "object",
+          "properties": {
+            "matchupId": {"type": "string", "value": "teamId"}
+          },
+          "description": "User's current picks by matchup ID"
+        },
+        {
+          "name": "lock_statuses",
+          "type": "object",
+          "properties": {
+            "matchupId": {"type": "boolean"}
+          },
+          "description": "Lock status for each matchup"
+        },
+        {
+          "name": "validation_errors",
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "Pick validation errors"
+        }
+      ],
+      "shared_states": [
+        {
+          "name": "week_matchups",
+          "source": "react_query",
+          "cache_key": "league_{leagueId}_matchups_{season}_{week}",
+          "invalidation_triggers": ["matchup_sync_completed", "scores_updated"]
+        },
+        {
+          "name": "user_picks",
+          "source": "react_query",
+          "cache_key": "user_{userId}_picks_{season}_{week}",
+          "invalidation_triggers": ["picks_submitted", "pick_updated"]
+        },
+        {
+          "name": "all_users_picks",
+          "source": "react_query",
+          "cache_key": "league_{leagueId}_all_picks_{season}_{week}",
+          "invalidation_triggers": ["picks_revealed_at_lock"],
+          "access": "Only fetched after lock time"
+        }
+      ],
+      "state_synchronization": {
+        "real_time_updates": "Lock status updates via polling every 60 seconds near lock times",
+        "optimistic_updates": ["update_picks_immediately", "sync_to_server_on_change"],
+        "conflict_resolution": "Server state wins if user edits on multiple devices, show conflict warning"
+      },
+      "state_persistence": "React Query cache + localStorage for unsaved picks recovery, immediate save to database on pick change",
+      "cleanup_procedures": [
+        "Save any unsaved picks on unmount",
+        "Clear validation errors on unmount",
+        "Stop lock time polling on unmount"
+      ]
+    },
+
+    "LeaderboardDisplay": {
+      "component_name": "PickemsLeaderboardTable",
+      "local_states": [
+        {
+          "name": "filter_role",
+          "type": "enum",
+          "values": ["all", "manager", "fan"],
+          "initial": "all",
+          "description": "Role filter for leaderboard"
+        },
+        {
+          "name": "scope",
+          "type": "enum",
+          "values": ["weekly", "season", "alltime"],
+          "initial": "season",
+          "description": "Leaderboard time scope"
+        },
+        {
+          "name": "selected_week",
+          "type": "integer",
+          "nullable": true,
+          "description": "Week number for weekly leaderboard"
+        },
+        {
+          "name": "loading_state",
+          "type": "enum",
+          "values": ["loading", "ready", "error"],
+          "initial": "loading"
+        }
+      ],
+      "shared_states": [
+        {
+          "name": "leaderboard_data",
+          "source": "react_query",
+          "cache_key": "league_{leagueId}_leaderboard_{scope}_{role}_{week}",
+          "invalidation_triggers": ["pickems_graded", "leaderboard_updated"]
+        }
+      ],
+      "state_synchronization": {
+        "real_time_updates": "Poll for updates every 2 minutes during grading periods",
+        "optimistic_updates": "None, read-only display",
+        "conflict_resolution": "N/A"
+      },
+      "state_persistence": "React Query cache with 2-minute stale time, filter preferences in sessionStorage",
+      "cleanup_procedures": [
+        "Cancel polling on unmount",
+        "Clear cache on league context change"
+      ]
+    },
+
+    "MembershipApprovalQueue": {
+      "component_name": "AdminMembershipApprovalInterface",
+      "local_states": [
+        {
+          "name": "action_in_progress",
+          "type": "object",
+          "properties": {
+            "membershipId": {"type": "string", "nullable": true},
+            "action": {"type": "enum", "values": ["approving", "rejecting"], "nullable": true}
+          },
+          "description": "Currently processing approval/rejection"
+        },
+        {
+          "name": "filter_status",
+          "type": "enum",
+          "values": ["all", "pending", "approved", "rejected"],
+          "initial": "pending",
+          "description": "Status filter for membership list"
+        }
+      ],
+      "shared_states": [
+        {
+          "name": "pending_memberships",
+          "source": "react_query",
+          "cache_key": "league_{leagueId}_memberships_pending",
+          "invalidation_triggers": ["membership_status_changed", "new_membership_requested"]
+        },
+        {
+          "name": "all_memberships",
+          "source": "react_query",
+          "cache_key": "league_{leagueId}_memberships",
+          "invalidation_triggers": ["membership_status_changed", "role_changed"]
+        }
+      ],
+      "state_synchronization": {
+        "real_time_updates": "Supabase realtime subscription on league_memberships table",
+        "optimistic_updates": ["update_status_immediately", "rollback_on_error"],
+        "conflict_resolution": "Server state wins, refresh on conflict"
+      },
+      "state_persistence": "React Query cache with 30-second stale time",
+      "cleanup_procedures": [
+        "Unsubscribe from realtime on unmount",
+        "Cancel in-flight approval requests on unmount"
+      ]
+    },
+
+    "TransactionList": {
+      "component_name": "LeagueTransactionHistory",
+      "local_states": [
+        {
+          "name": "filter_type",
+          "type": "enum",
+          "values": ["all", "trade", "waiver", "free_agent_add", "free_agent_drop"],
+          "initial": "all",
+          "description": "Transaction type filter"
+        },
+        {
+          "name": "pagination",
+          "type": "object",
+          "properties": {
+            "cursor": {"type": "string", "nullable": true},
+            "hasMore": "boolean"
+          }
+        },
+        {
+          "name": "loading_state",
+          "type": "enum",
+          "values": ["idle", "loading", "loading_more", "error"],
+          "initial": "idle"
+        }
+      ],
+      "shared_states": [
+        {
+          "name": "transactions",
+          "source": "react_query_infinite",
+          "cache_key": "league_{leagueId}_transactions_{filter_type}",
+          "invalidation_triggers": ["transaction_synced", "transaction_engagement_updated"]
+        }
+      ],
+      "state_synchronization": {
+        "real_time_updates": "Poll for new transactions every 5 minutes during active season",
+        "optimistic_updates": ["add_comment_immediately", "add_reaction_immediately"],
+        "conflict_resolution": "Server state wins"
+      },
+      "state_persistence": "React Query infinite cache with 5-minute stale time",
+      "cleanup_procedures": [
+        "Cancel polling on unmount",
+        "Clear infinite query on league change"
+      ]
+    }
+  },
+
+  "global_application_states": {
+    "loading_states": [
+      {
+        "name": "initial_app_load",
+        "description": "First page load, checking authentication and loading critical data",
+        "indicators": ["full_page_skeleton", "app_logo_spinner"],
+        "duration": "1-3 seconds typical",
+        "fallback": "If >10 seconds, show error message with retry option"
+      },
+      {
+        "name": "route_transition",
+        "description": "Navigating between pages within app",
+        "indicators": ["top_progress_bar", "page_fade_transition"],
+        "duration": "200-500ms typical",
+        "fallback": "If >3 seconds, show loading message"
+      },
+      {
+        "name": "data_mutation",
+        "description": "Saving changes, creating content, submitting forms",
+        "indicators": ["button_spinner", "disabled_form_fields", "loading_overlay"],
+        "duration": "500ms-2s typical",
+        "fallback": "If >5 seconds, show 'Still working...' message with cancel option"
+      },
+      {
+        "name": "background_sync",
+        "description": "Scheduled data sync operations",
+        "indicators": ["subtle_sync_icon_in_header", "optional_toast_notification"],
+        "duration": "Variable, non-blocking",
+        "fallback": "Silent failure, retry on next interval"
+      }
+    ],
+
+    "error_states": [
+      {
+        "name": "network_error",
+        "causes": ["offline", "api_timeout", "dns_failure", "connection_refused"],
+        "recovery": ["show_offline_banner", "retry_button", "queue_mutations_for_retry"],
+        "user_actions": ["manual_retry", "reload_page", "check_connection"],
+        "user_message": "You're offline. Some features may not work. We'll retry automatically when your connection is restored.",
+        "fallback_behavior": "Show cached data if available, queue writes for retry"
+      },
+      {
+        "name": "authentication_error",
+        "causes": ["session_expired", "invalid_token", "logout_occurred"],
+        "recovery": ["redirect_to_login", "refresh_token_attempt", "clear_stale_cache"],
+        "user_actions": ["login_again", "contact_support_if_persists"],
+        "user_message": "Your session has expired. Please log in again.",
+        "fallback_behavior": "Redirect to login page, preserve attempted navigation for post-login redirect"
+      },
+      {
+        "name": "authorization_error",
+        "causes": ["insufficient_permissions", "league_private", "membership_not_approved", "role_changed"],
+        "recovery": ["show_permission_error", "suggest_request_access", "redirect_to_accessible_page"],
+        "user_actions": ["request_membership", "contact_admin", "go_back"],
+        "user_message": "You don't have permission to access this. Contact your league admin if you think this is an error.",
+        "fallback_behavior": "Show error page with explanation and action button to request access"
+      },
+      {
+        "name": "data_validation_error",
+        "causes": ["invalid_input", "constraint_violation", "duplicate_entry", "required_field_missing"],
+        "recovery": ["show_field_errors", "highlight_invalid_fields", "preserve_user_input"],
+        "user_actions": ["correct_input", "cancel", "contact_support"],
+        "user_message": "Please correct the errors highlighted below and try again.",
+        "fallback_behavior": "Preserve user input, show specific field errors, allow retry"
+      },
+      {
+        "name": "not_found_error",
+        "causes": ["invalid_league_id", "deleted_content", "invalid_route", "stale_link"],
+        "recovery": ["show_404_page", "suggest_navigation", "search_functionality"],
+        "user_actions": ["go_home", "search", "contact_support"],
+        "user_message": "We couldn't find what you're looking for. It may have been deleted or moved.",
+        "fallback_behavior": "Show 404 page with suggestions and navigation options"
+      },
+      {
+        "name": "server_error",
+        "causes": ["500_internal_server_error", "503_service_unavailable", "database_error", "unhandled_exception"],
+        "recovery": ["show_error_page", "automatic_retry_after_delay", "log_error_details"],
+        "user_actions": ["retry", "reload_page", "wait_and_retry"],
+        "user_message": "Something went wrong on our end. We've been notified and are working on it. Please try again in a moment.",
+        "fallback_behavior": "Show error page, log to monitoring service, retry after 30s"
+      },
+      {
+        "name": "rate_limit_error",
+        "causes": ["too_many_requests", "api_throttling"],
+        "recovery": ["show_rate_limit_message", "disable_actions_temporarily", "queue_for_retry"],
+        "user_actions": ["wait", "try_again_later"],
+        "user_message": "You're doing that too often. Please wait a moment and try again.",
+        "fallback_behavior": "Disable action for countdown period, auto-retry after cooldown"
+      }
+    ],
+
+    "connectivity_states": [
+      {
+        "name": "online",
+        "description": "Normal operation with full network connectivity",
+        "capabilities": ["full_functionality", "real_time_updates", "immediate_saves"],
+        "indicators": "No special indicator",
+        "transitions_to": ["offline", "degraded"]
+      },
+      {
+        "name": "offline",
+        "description": "No network connection detected",
+        "capabilities": ["view_cached_data", "queue_mutations", "read_only_mode"],
+        "indicators": ["offline_banner_at_top", "grayed_out_action_buttons"],
+        "user_feedback": "Persistent banner: 'You're offline. Changes will be saved when you reconnect.'",
+        "transitions_to": ["online", "degraded"]
+      },
+      {
+        "name": "degraded",
+        "description": "Partial connectivity or slow connection",
+        "capabilities": ["core_features_only", "increased_cache_usage", "reduced_polling"],
+        "indicators": ["warning_banner", "slower_loading_indicators"],
+        "user_feedback": "Warning banner: 'Your connection is slow. Some features may be delayed.'",
+        "transitions_to": ["online", "offline"]
+      }
+    ],
+
+    "data_synchronization": {
+      "sync_states": ["idle", "syncing", "error", "conflict"],
+      "sync_strategies": {
+        "league_metadata": {
+          "frequency": "On league context change + every 24 hours",
+          "method": "Full fetch with cache",
+          "priority": "high"
+        },
+        "weekly_matchups": {
+          "frequency": "Every 5 minutes during game days, hourly otherwise",
+          "method": "Differential sync with checksum comparison",
+          "priority": "high"
+        },
+        "feed_moments": {
+          "frequency": "Real-time subscription + initial fetch",
+          "method": "Supabase realtime with optimistic updates",
+          "priority": "medium"
+        },
+        "power_rankings": {
+          "frequency": "On publish + user navigation to rankings page",
+          "method": "On-demand fetch with 5-minute cache",
+          "priority": "medium"
+        },
+        "transactions": {
+          "frequency": "Every 15 minutes during active season",
+          "method": "Differential sync from Sleeper API",
+          "priority": "low"
+        },
+        "pickems_leaderboards": {
+          "frequency": "Every 2 minutes during grading periods, hourly otherwise",
+          "method": "Full refresh on invalidation",
+          "priority": "medium"
+        },
+        "user_preferences": {
+          "frequency": "On change + app load",
+          "method": "Write-through cache with immediate DB save",
+          "priority": "high"
+        }
+      },
+      "conflict_resolution": {
+        "strategy": "last_write_wins",
+        "exceptions": [
+          "Commissioner desk drafts use optimistic locking with version numbers",
+          "Pick'ems lock time strictly enforced, late submissions rejected",
+          "Concurrent comment/reaction creation allowed, no conflicts possible"
+        ],
+        "user_notification": "Show conflict warning if user edits stale data, offer to refresh and retry"
+      }
+    },
+
+    "cache_management": {
+      "cache_layers": [
+        {
+          "name": "browser_memory_cache",
+          "implementation": "React Query",
+          "ttl": {
+            "dynamic_data": "5 minutes",
+            "semi_static_data": "1 hour",
+            "static_data": "24 hours"
+          },
+          "size_limit": "50MB approximate",
+          "eviction_policy": "LRU (Least Recently Used)"
+        },
+        {
+          "name": "browser_localStorage",
+          "implementation": "Custom wrapper with compression",
+          "ttl": "7 days for drafts, 30 days for preferences",
+          "size_limit": "5MB",
+          "eviction_policy": "Oldest first when limit reached"
+        },
+        {
+          "name": "cdn_edge_cache",
+          "implementation": "Vercel Edge Network",
+          "ttl": {
+            "static_assets": "365 days",
+            "api_responses": "60 seconds with stale-while-revalidate"
+          },
+          "size_limit": "N/A (Vercel managed)",
+          "eviction_policy": "Vercel automatic"
+        }
+      ],
+      "invalidation_triggers": [
+        {
+          "trigger": "data_mutation",
+          "action": "Invalidate specific query keys related to mutated entity",
+          "example": "After creating comment, invalidate moment query and feed query"
+        },
+        {
+          "trigger": "real_time_event",
+          "action": "Update cache with new data or invalidate for refetch",
+          "example": "Supabase realtime insert triggers cache update"
+        },
+        {
+          "trigger": "manual_refresh",
+          "action": "Invalidate all queries for current page",
+          "example": "User pulls to refresh on mobile"
+        },
+        {
+          "trigger": "stale_time_exceeded",
+          "action": "Background refetch on next access",
+          "example": "Feed data older than 5 minutes triggers background refetch"
+        },
+        {
+          "trigger": "league_context_change",
+          "action": "Clear all league-specific cache",
+          "example": "Switching leagues clears previous league's cached data"
+        }
+      ],
+      "cache_warming": {
+        "on_app_load": ["user_profile", "default_league_metadata", "league_members"],
+        "on_league_select": ["feed_first_page", "user_permissions", "league_settings"],
+        "on_commissioner_desk_open": ["available_teams", "current_week_matchups", "draft_if_exists"]
+      }
+    },
+
+    "offline_capability": {
+      "supported": "Limited",
+      "read_access": {
+        "enabled": true,
+        "cached_data": ["viewed_feed_moments", "viewed_power_rankings", "viewed_matchups"],
+        "limitations": "Only previously loaded data available, no pagination or search"
+      },
+      "write_access": {
+        "enabled": true,
+        "queued_mutations": ["comments", "reactions", "pick'ems_submissions", "draft_autosaves"],
+        "sync_on_reconnect": "Automatic with conflict detection",
+        "limitations": "No immediate feedback for queued actions"
+      },
+      "rationale": "FSHQ is primarily a web app requiring real-time data from external APIs. Full offline support adds complexity without significant value for the target use case of engaged fantasy sports users who are typically online when using the app.",
+      "future_consideration": "Could add Service Worker for basic offline read access to recent feed in future if user demand exists"
+    },
+
+    "session_management": {
+      "session_storage": {
+        "implementation": "Supabase Auth JWT tokens",
+        "access_token_ttl": "1 hour",
+        "refresh_token_ttl": "30 days",
+        "storage": "httpOnly cookies for security"
+      },
+      "session_refresh": {
+        "strategy": "Automatic refresh before expiry",
+        "timing": "Refresh 5 minutes before access token expires",
+        "failure_handling": "Redirect to login if refresh fails"
+      },
+      "concurrent_sessions": {
+        "allowed": true,
+        "sync_behavior": "Session state synced across tabs via localStorage events",
+        "logout_behavior": "Logout in one tab logs out all tabs"
+      },
+      "idle_timeout": {
+        "enabled": false,
+        "rationale": "Users often leave fantasy apps open to check updates, idle timeout would cause frustration"
+      },
+      "session_recovery": {
+        "on_page_reload": "Attempt to restore session from refresh token",
+        "on_browser_crash": "Session restored on restart if refresh token valid",
+        "on_token_theft": "Supabase detects and invalidates compromised tokens"
+      }
+    },
+
+    "performance_monitoring": {
+      "metrics_tracked": [
+        "initial_page_load_time",
+        "route_transition_time",
+        "api_response_time",
+        "cache_hit_rate",
+        "real_time_event_latency"
+      ],
+      "error_tracking": {
+        "client_errors": "Logged to Vercel Analytics",
+        "api_errors": "Logged to Next.js server logs",
+        "external_api_errors": "Logged with rate limit monitoring"
+      },
+      "performance_budgets": {
+        "initial_load": "< 3 seconds on 3G",
+        "route_transition": "< 500ms",
+        "api_mutation": "< 2 seconds",
+        "feed_scroll": "60 FPS (16ms per frame)"
+      }
+    }
+  }
+}

@@ -1,0 +1,237 @@
+{
+  "overview": "FSHQ.gg Integration Functions Specification defines comprehensive external system integration patterns, focusing primarily on Sleeper API synchronization. The architecture implements adaptive polling with differential sync, automated moment generation from external events, stat correction detection and re-grading workflows, and comprehensive error handling with circuit breakers. All integrations use service-layer abstraction, implement caching strategies (24h for static data, 1h for rosters, 5min for live matchups), and include rate limiting to stay within API constraints (1000 req/min for Sleeper). The system supports multi-league coordination, transaction deduplication, and real-time season state awareness for intelligent sync frequency adjustments.",
+
+  "integration_functions": {
+    "fetchSleeperLeague": {
+      "purpose": "Retrieve league configuration and settings from Sleeper API",
+      "inputs": ["league_id"],
+      "outputs": ["league_name", "season", "total_rosters", "scoring_settings", "roster_positions", "playoff_config", "status"],
+      "external_system": "Sleeper API",
+      "business_rules": [
+        "Cache league settings for 24 hours as they rarely change mid-season",
+        "Track version timestamp to detect league setting changes"
+      ],
+      "error_cases": ["LEAGUE_NOT_FOUND", "LEAGUE_PRIVATE", "API_UNAVAILABLE"]
+    },
+
+    "fetchSleeperRosters": {
+      "purpose": "Retrieve all team rosters and owner mappings for a league",
+      "inputs": ["league_id"],
+      "outputs": ["roster_id", "owner_id", "players", "starters", "wins", "losses", "fpts"],
+      "external_system": "Sleeper API",
+      "business_rules": [
+        "Cache roster data for 1 hour during season",
+        "Map Sleeper roster_id to FSHQ team_id using external_reference"
+      ],
+      "error_cases": ["INVALID_LEAGUE", "ROSTERS_NOT_AVAILABLE"]
+    },
+
+    "fetchSleeperMatchups": {
+      "purpose": "Retrieve weekly matchup schedule and scores for specific week",
+      "inputs": ["league_id", "week_number"],
+      "outputs": ["matchup_id", "roster_id", "points", "starters_points"],
+      "external_system": "Sleeper API",
+      "business_rules": [
+        "Poll every 5 minutes during active game days",
+        "Use change detection (checksum) to avoid reprocessing unchanged data"
+      ],
+      "error_cases": ["WEEK_NOT_STARTED", "INVALID_WEEK_NUMBER"]
+    },
+
+    "fetchSleeperTransactions": {
+      "purpose": "Retrieve league transactions including trades, waivers, and free agent moves",
+      "inputs": ["league_id", "round_number"],
+      "outputs": ["type", "status", "timestamp", "roster_ids", "players", "draft_picks"],
+      "external_system": "Sleeper API",
+      "business_rules": [
+        "Differentiate between trade, waiver, and free_agent transaction types",
+        "Handle multi-team trades correctly"
+      ],
+      "error_cases": ["INVALID_ROUND", "TRANSACTION_PARSE_ERROR"]
+    },
+
+    "fetchSleeperPlayers": {
+      "purpose": "Retrieve comprehensive NFL player database for roster display",
+      "inputs": [],
+      "outputs": ["player_id", "full_name", "position", "team", "status"],
+      "external_system": "Sleeper API",
+      "business_rules": [
+        "Cache player data for 24 hours (updates daily max)",
+        "Update player database weekly during season for status changes"
+      ],
+      "error_cases": ["PLAYERS_DB_UNAVAILABLE", "PARSE_ERROR"]
+    },
+
+    "fetchSleeperNFLState": {
+      "purpose": "Retrieve current NFL season state to determine active week and season phase",
+      "inputs": [],
+      "outputs": ["season", "season_type", "week"],
+      "external_system": "Sleeper API",
+      "business_rules": [
+        "Poll NFL state hourly to detect season phase changes",
+        "Use season_type (pre, regular, post) to adjust sync frequency"
+      ],
+      "error_cases": ["STATE_API_DOWN"]
+    },
+
+    "detectStatCorrections": {
+      "purpose": "Identify when matchup scores change due to NFL stat corrections after initial results",
+      "inputs": ["league_id", "week_number"],
+      "outputs": ["affected_matchup_ids", "old_scores", "new_scores"],
+      "external_system": "Sleeper API (via comparison)",
+      "business_rules": [
+        "Monitor completed matchups for 72 hours after week conclusion",
+        "Detect score changes greater than 0.1 points as corrections"
+      ],
+      "error_cases": ["COMPARISON_FAILED"]
+    },
+
+    "performDifferentialSync": {
+      "purpose": "Sync only changed data since last successful sync using checksums",
+      "inputs": ["league_id", "last_sync_timestamp", "data_type"],
+      "outputs": ["changed_entities", "sync_summary"],
+      "external_system": "Sleeper API (via comparison)",
+      "business_rules": [
+        "Track last sync timestamp per league and data type",
+        "Compare checksums (MD5 hash) of fetched vs stored data"
+      ],
+      "error_cases": ["CHECKSUM_CALCULATION_FAILED"]
+    },
+
+    "generateAutomatedMoment": {
+      "purpose": "Create feed moment from detected external event (trade, match result, transaction)",
+      "inputs": ["event_type", "event_data", "league_id"],
+      "outputs": ["moment_id", "moment_type", "formatted_content"],
+      "external_system": "None (internal creation)",
+      "business_rules": [
+        "Auto-generate grammatically correct text with league-specific terms",
+        "Tag moments for filtering and searchability"
+      ],
+      "error_cases": ["MOMENT_GENERATION_FAILED"]
+    },
+
+    "triggerReGrading": {
+      "purpose": "Recalculate pick'ems and predictions when stat corrections change match outcomes",
+      "inputs": ["affected_matchup_ids", "corrected_scores"],
+      "outputs": ["regraded_entries", "leaderboard_changes"],
+      "external_system": "None (internal workflow)",
+      "business_rules": [
+        "Recalculate winners based on corrected scores",
+        "Update leaderboards and user statistics atomically"
+      ],
+      "error_cases": ["REGRADING_FAILED"]
+    },
+
+    "syncLeagueComplete": {
+      "purpose": "Orchestrate complete league sync including rosters, matchups, transactions, and moment generation",
+      "inputs": ["league_id"],
+      "outputs": ["sync_status", "entities_updated", "moments_created"],
+      "external_system": "Sleeper API (orchestration of multiple calls)",
+      "business_rules": [
+        "Execute in priority order: NFL state, league settings, current week matchups, rosters, transactions",
+        "Queue sync requests to prevent concurrent syncs for same league"
+      ],
+      "error_cases": ["SYNC_TIMEOUT", "PARTIAL_SYNC"]
+    }
+  },
+
+  "workflows": {
+    "InitialLeagueSync": {
+      "trigger": "User connects a new Sleeper league to FSHQ",
+      "steps": [
+        "Validate Sleeper league_id and check accessibility",
+        "Fetch and store league configuration and settings",
+        "Fetch and map all team rosters to FSHQ teams",
+        "Fetch NFL player database for player name resolution",
+        "Fetch complete transaction history",
+        "Fetch all weekly matchups for current season",
+        "Mark league as connected and schedule ongoing sync jobs"
+      ],
+      "rollback": "If sync fails midway, mark league as connection_failed and allow retry"
+    },
+
+    "WeeklyMatchupSync": {
+      "trigger": "Scheduled sync job during active NFL week (5min during games, 1hr off-games)",
+      "steps": [
+        "Fetch current NFL season state to determine active week",
+        "Fetch matchup data for active week from Sleeper API",
+        "Perform differential sync - compare checksums with stored matchups",
+        "Update only changed matchup scores in database",
+        "Generate match result moments if week finalized",
+        "Update team records (wins/losses) and standings"
+      ],
+      "rollback": "No rollback needed - differential sync is additive"
+    },
+
+    "StatCorrectionDetectionAndRegrade": {
+      "trigger": "Scheduled monitoring job runs on completed weeks (every 4 hours for 72 hours post-week)",
+      "steps": [
+        "Fetch matchup data for completed weeks within correction window",
+        "Compare current scores against stored scores using checksum",
+        "Detect score changes greater than 0.1 points as stat corrections",
+        "Identify all affected pick'ems entries and commissioner predictions",
+        "Recalculate winners/losers based on corrected scores",
+        "Update pick'ems leaderboards atomically",
+        "Generate corrected match result moment with explanation",
+        "Send notifications to users whose entries were affected"
+      ],
+      "rollback": "If re-grading fails, preserve original grades and allow manual re-grade"
+    },
+
+    "TransactionSyncAndMomentGeneration": {
+      "trigger": "Scheduled transaction sync (hourly during season, daily off-season)",
+      "steps": [
+        "Fetch transactions for recent rounds from Sleeper API",
+        "Perform differential sync - identify new transactions",
+        "Check if moment already exists (deduplication)",
+        "Generate automated moment based on transaction type",
+        "Publish moment to league newsfeed with timestamp"
+      ],
+      "rollback": "No rollback - moment deduplication prevents duplicates"
+    }
+  },
+
+  "data_sync": {
+    "LeagueSettings": {
+      "type": "event_driven",
+      "source": "Sleeper API",
+      "target": "FSHQ leagues table",
+      "frequency": "on_change (monitored via 24h cache refresh)"
+    },
+
+    "TeamRosters": {
+      "type": "batch",
+      "source": "Sleeper API",
+      "target": "FSHQ teams and team_rosters tables",
+      "frequency": "hourly during season, daily off-season"
+    },
+
+    "WeeklyMatchups": {
+      "type": "real_time",
+      "source": "Sleeper API",
+      "target": "FSHQ matchups and match_scores tables",
+      "frequency": "5min during games, 1hr off-games"
+    },
+
+    "Transactions": {
+      "type": "batch",
+      "source": "Sleeper API",
+      "target": "FSHQ transactions table and newsfeed moments",
+      "frequency": "hourly during season"
+    },
+
+    "PlayerDatabase": {
+      "type": "batch",
+      "source": "Sleeper API",
+      "target": "FSHQ players table (cache)",
+      "frequency": "weekly during season"
+    },
+
+    "StatCorrections": {
+      "type": "batch",
+      "source": "Sleeper API (via differential comparison)",
+      "target": "FSHQ matchups, pickems_entries, predictions",
+      "frequency": "every 4 hours for 72 hours post-week completion"
+    }
+  }
+}

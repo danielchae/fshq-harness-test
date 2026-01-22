@@ -1,0 +1,190 @@
+{
+  "subcomponentId": "pickems-grading",
+  "componentId": "matchups-pickems-brackets",
+  "tracesTo": [
+    "SOW: Matchups, Playoff Brackets & Pick'ems",
+    "UserFlow: Weekly Member Engagement, Feed Interaction, Pick'ems & History Browsing"
+  ],
+  "stories": [
+    {
+      "id": "PG-001",
+      "title": "Automatically Grade Picks After Stat Corrections",
+      "user": "System Administrator",
+      "goal": "ensure picks are graded only after official stat corrections are finalized",
+      "benefit": "grading is accurate and reflects final official results without premature scoring",
+      "acceptanceCriteria": [
+        "System monitors for stat correction completion signals from fantasy platform API",
+        "Grading process does not run until stat corrections are marked as final",
+        "System automatically triggers grading when corrections are complete",
+        "Previously graded picks are re-evaluated if stat corrections change matchup outcomes",
+        "Grading timestamp reflects stat-correction-finalized time, not game end time",
+        "System logs all grading events with timestamps and correction status"
+      ]
+    },
+    {
+      "id": "PG-002",
+      "title": "Calculate Correct vs Incorrect Picks for Each User",
+      "user": "League Member",
+      "goal": "see which of my picks were correct and incorrect for a completed week",
+      "benefit": "I can evaluate my prediction accuracy and understand my performance",
+      "acceptanceCriteria": [
+        "System compares each user's pick against final matchup winner after stat corrections",
+        "Each pick is marked as correct (green) or incorrect (red) with clear visual indicator",
+        "User can view their graded picks on matchups page for completed weeks",
+        "System displays total correct picks out of total picks made for the week",
+        "Percentage accuracy is calculated and displayed (e.g., '6/10 correct - 60%')",
+        "Non-participating users show no picks and no grading for that week"
+      ]
+    },
+    {
+      "id": "PG-003",
+      "title": "Track Weekly Pick'ems Stats Per User",
+      "user": "League Member",
+      "goal": "view my performance stats for each individual week",
+      "benefit": "I can analyze my week-by-week prediction accuracy and track improvement",
+      "acceptanceCriteria": [
+        "System stores weekly stats including correct picks, total picks, and accuracy percentage",
+        "User can view their own weekly stats history in profile or dedicated stats page",
+        "Weekly stats display week number, correct/total picks, percentage, and rank for that week",
+        "Stats reflect only matchups that were picked by the user (partial participation supported)",
+        "System calculates weekly rank among all participants based on correct pick count",
+        "Weekly stats are finalized only after all matchups are graded post-stat-corrections"
+      ]
+    },
+    {
+      "id": "PG-004",
+      "title": "Calculate Season-Long Pick'ems Stats",
+      "user": "League Member",
+      "goal": "see my cumulative pick'ems performance across all weeks of the current season",
+      "benefit": "I can track my overall season accuracy and compare to previous seasons",
+      "acceptanceCriteria": [
+        "System aggregates all weekly pick results into season totals",
+        "Season stats include total correct picks, total picks made, overall accuracy percentage",
+        "Season stats display current season's data with clear season identifier",
+        "User can view season stats on their profile or leaderboard",
+        "Season stats update after each week's grading is completed",
+        "System calculates season rank among all participants based on cumulative correct picks or accuracy"
+      ]
+    },
+    {
+      "id": "PG-005",
+      "title": "Track All-Time Pick'ems Stats Across All Seasons",
+      "user": "League Member",
+      "goal": "view my pick'ems performance across all seasons I've participated in",
+      "benefit": "I can see my legacy and long-term prediction skills",
+      "acceptanceCriteria": [
+        "System maintains historical stats for all completed seasons",
+        "All-time stats include total correct picks, total picks, and overall accuracy across all seasons",
+        "User can view breakdown by season in their all-time stats view",
+        "All-time stats are separate from current season stats with clear labeling",
+        "System supports dynasty leagues with continuous history and redraft leagues with season-by-season history",
+        "All-time leaderboard ranks users by cumulative correct picks or highest average accuracy"
+      ]
+    },
+    {
+      "id": "PG-006",
+      "title": "View Separate Manager Leaderboard",
+      "user": "Manager (Team Owner)",
+      "goal": "see how I rank among other managers in pick'ems performance",
+      "benefit": "I can compete with fellow managers who have similar league knowledge and investment",
+      "acceptanceCriteria": [
+        "System maintains separate leaderboard filtering for users with Manager role",
+        "Manager leaderboard displays username, total correct picks, accuracy percentage, and rank",
+        "Leaderboard supports sorting by correct picks (descending) or accuracy percentage",
+        "Manager leaderboard shows both current season and all-time stats views",
+        "System filters users by role (excludes Fans and Admins from Manager leaderboard)",
+        "Leaderboard updates automatically after each week's grading"
+      ]
+    },
+    {
+      "id": "PG-007",
+      "title": "View Separate Fan Leaderboard",
+      "user": "Fan (Non-Team Owner)",
+      "goal": "see how I rank among other fans in pick'ems performance",
+      "benefit": "I can compete with other fans in a fair comparison without managers who have insider advantages",
+      "acceptanceCriteria": [
+        "System maintains separate leaderboard filtering for users with Fan role",
+        "Fan leaderboard displays username, total correct picks, accuracy percentage, and rank",
+        "Leaderboard supports sorting by correct picks or accuracy percentage",
+        "Fan leaderboard shows both current season and all-time stats views",
+        "System filters users by role (excludes Managers and Admins from Fan leaderboard)",
+        "Leaderboard updates automatically after each week's grading"
+      ]
+    },
+    {
+      "id": "PG-008",
+      "title": "Display Cumulative Records on Leaderboard",
+      "user": "League Member",
+      "goal": "see win-loss records in addition to raw correct pick counts",
+      "benefit": "I can understand performance in familiar sports record format (e.g., 45-23)",
+      "acceptanceCriteria": [
+        "System calculates cumulative record as [correct picks]-[incorrect picks] for each user",
+        "Leaderboard displays records in format 'W-L' (e.g., '45-23') alongside accuracy percentage",
+        "Record reflects only weeks with participation (non-picked matchups not counted as losses)",
+        "Season records and all-time records are displayed separately with clear labels",
+        "System sorts leaderboard by total correct picks (wins) as primary, accuracy as tiebreaker",
+        "Records update automatically after each grading cycle"
+      ]
+    },
+    {
+      "id": "PG-009",
+      "title": "View My Personal Stats Summary",
+      "user": "League Member",
+      "goal": "access a dashboard showing my pick'ems performance across all timeframes",
+      "benefit": "I can quickly understand my prediction skills and progress at a glance",
+      "acceptanceCriteria": [
+        "User can access personal stats page or widget showing weekly, season, and all-time stats",
+        "Summary displays correct/total picks, accuracy percentage, and record for each timeframe",
+        "Personal stats show current rank on both Manager and Fan leaderboards (if applicable)",
+        "Stats include visual indicators like charts or progress bars for accuracy",
+        "System displays recent week performance and improvement trends",
+        "Personal stats page links to detailed weekly history and leaderboards"
+      ]
+    },
+    {
+      "id": "PG-010",
+      "title": "Handle Partial Week Participation in Stats",
+      "user": "League Member Who Picked Some But Not All Matchups",
+      "goal": "have my stats reflect only the matchups I actually picked",
+      "benefit": "my accuracy is calculated fairly based on games I chose to predict",
+      "acceptanceCriteria": [
+        "System calculates stats based only on matchups user submitted picks for",
+        "Unpicked matchups are not counted as incorrect or included in total picks",
+        "Stats display both correct picks and total picks made to show participation level",
+        "Leaderboard allows comparison based on accuracy percentage regardless of participation level",
+        "System clearly indicates participation rate (e.g., '8/10 matchups picked this week')",
+        "Partial participation does not penalize user's accuracy percentage"
+      ]
+    },
+    {
+      "id": "PG-011",
+      "title": "View Comparative Stats Against League Average",
+      "user": "League Member",
+      "goal": "see how my performance compares to the league average",
+      "benefit": "I can gauge if I'm above or below average in prediction skill",
+      "acceptanceCriteria": [
+        "System calculates league-wide average accuracy for each week and season",
+        "User stats display comparison indicator showing percentage above or below average",
+        "Comparative stats are shown for weekly, season, and all-time performance",
+        "League average excludes non-participants from calculation",
+        "Visual indicator (e.g., color, badge) shows if user is above, at, or below average",
+        "Comparative stats update after each grading cycle"
+      ]
+    },
+    {
+      "id": "PG-012",
+      "title": "Detect and Handle Stat Correction Impact on Grading",
+      "user": "System Administrator",
+      "goal": "identify when stat corrections change matchup outcomes and regrade accordingly",
+      "benefit": "pick'ems results remain accurate and fair even when official scores change",
+      "acceptanceCriteria": [
+        "System monitors matchup scores before and after stat correction window",
+        "System detects if stat corrections flip winner/loser of any matchup",
+        "Affected picks are automatically regraded with updated outcome",
+        "Users are notified if their picks were affected by stat correction changes",
+        "Historical grading logs show original and corrected grades with timestamps",
+        "Leaderboards reflect updated grades after stat correction regrading"
+      ]
+    }
+  ]
+}

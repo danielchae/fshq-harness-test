@@ -1,0 +1,116 @@
+{
+  "subcomponentId": "league-navigation",
+  "componentId": "onboarding-access-control",
+  "tracesTo": [
+    "SOW: Public League Support - For public leagues, allow non-logged visitors to view league content read-only",
+    "UserFlow: Public League Visitor Experience",
+    "Gap Analysis: Priority 1 - Public league visitor stories (0% coverage)"
+  ],
+  "stories": [
+    {
+      "id": "PV-001",
+      "title": "View Public League Content as Non-Authenticated Visitor",
+      "user": "Non-authenticated Public Visitor",
+      "goal": "browse and view public league content without creating an account",
+      "benefit": "I can explore league information and decide if I want to join or create an account",
+      "acceptanceCriteria": [
+        "Visitor can access public league pages via direct URL or league discovery without login",
+        "System displays league newsfeed with posts, comments, and reactions in read-only mode",
+        "Visitor can view power rankings with team standings and weekly rankings",
+        "Visitor can see matchup schedules and results for current and past weeks",
+        "Visitor can view transaction history and waiver wire activity",
+        "System displays league settings and roster rules in read-only format",
+        "All interactive elements (post, comment, like, trade) are disabled or hidden for visitors",
+        "System shows clear visual indicators that content is read-only (e.g., disabled buttons, lock icons)",
+        "Visitor can navigate between different league sections (newsfeed, rankings, matchups, transactions)",
+        "System prevents access to private league information and admin controls",
+        "Page performance is optimized for unauthenticated access with minimal data loading",
+        "System tracks anonymous visitor analytics for league discovery metrics"
+      ]
+    },
+    {
+      "id": "PV-002",
+      "title": "Access League Team Rosters and Player Information as Visitor",
+      "user": "Non-authenticated Public Visitor",
+      "goal": "view team rosters and player details in a public league",
+      "benefit": "I can understand team compositions and league competitiveness before joining",
+      "acceptanceCriteria": [
+        "Visitor can view all team rosters in the public league",
+        "System displays starting lineups and bench players for each team",
+        "Visitor can see player names, positions, and current season statistics",
+        "System shows team records, points scored, and weekly performance history",
+        "Visitor can access individual team pages with detailed roster breakdown",
+        "System displays player injury status and bye week information",
+        "All roster management features (add, drop, trade) are hidden for visitors",
+        "Visitor can view historical lineup decisions and scoring breakdowns for past weeks",
+        "System provides tooltip or modal information for player stats without requiring login",
+        "Player comparison and analysis tools are visible but disabled with login prompt",
+        "System ensures roster data is cached appropriately for visitor performance",
+        "Visitor cannot see draft history or keeper designations without authentication"
+      ]
+    },
+    {
+      "id": "PV-003",
+      "title": "View League Standings and Playoff Picture as Visitor",
+      "user": "Non-authenticated Public Visitor",
+      "goal": "see current league standings and playoff implications",
+      "benefit": "I can follow league competition and understand playoff scenarios",
+      "acceptanceCriteria": [
+        "Visitor can view league standings table with team names, records, and points",
+        "System displays division standings if league has multiple divisions",
+        "Visitor can see current playoff bracket or playoff qualification status",
+        "System shows clinched playoff spots and elimination status where applicable",
+        "Visitor can view historical standings from previous weeks",
+        "System displays tiebreaker information and playoff seeding rules",
+        "Standings are updated in real-time as games complete (within reasonable refresh interval)",
+        "Visitor can see points for and points against for each team",
+        "System provides sortable columns for different standing metrics (wins, points, streak)",
+        "Playoff projections and 'magic numbers' are visible if league uses them",
+        "System shows league median and average scoring statistics",
+        "All standings data is read-only with no ability to edit or challenge results"
+      ]
+    },
+    {
+      "id": "PV-004",
+      "title": "Browse League Message Board and Announcements as Visitor",
+      "user": "Non-authenticated Public Visitor",
+      "goal": "read league discussions and commissioner announcements",
+      "benefit": "I can gauge league activity and community engagement before joining",
+      "acceptanceCriteria": [
+        "Visitor can view league message board with posts and replies in chronological order",
+        "System displays commissioner announcements and pinned posts prominently",
+        "Visitor can read post content, author names, and timestamps",
+        "System shows post engagement metrics (likes, replies, views) without interaction capability",
+        "Visitor cannot create new posts, reply to existing posts, or like content",
+        "System displays clear 'Login to Participate' message on disabled interaction elements",
+        "Message board is paginated or lazy-loaded for performance with large post history",
+        "Visitor can see post categories or tags if league uses them",
+        "System filters out deleted or moderated content appropriately",
+        "Visitor can view embedded media (images, links) within posts safely",
+        "System prevents access to private direct messages or admin-only announcements",
+        "Search functionality is available for visitors to find specific posts or topics"
+      ]
+    },
+    {
+      "id": "PV-005",
+      "title": "Access League Rules and Scoring Settings as Visitor",
+      "user": "Non-authenticated Public Visitor",
+      "goal": "review league rules, scoring format, and roster requirements",
+      "benefit": "I can determine if the league format matches my preferences before joining",
+      "acceptanceCriteria": [
+        "Visitor can view complete league scoring settings (PPR, passing TDs, bonuses)",
+        "System displays roster composition requirements (QB, RB, WR, TE, FLEX, etc.)",
+        "Visitor can see league format (standard, keeper, dynasty, best ball)",
+        "System shows draft settings (snake, auction, date, keeper rules)",
+        "Visitor can view waiver wire rules and FAAB budget if applicable",
+        "System displays trade deadline, playoff schedule, and championship week",
+        "League constitution or custom rules document is accessible if published",
+        "Visitor can see lineup lock times and scoring period (weekly, daily, season-long)",
+        "System shows league size (number of teams) and playoff format (e.g., 6-team, 2-week matchups)",
+        "Visitor can view prize structure or buy-in information if league is public about it",
+        "All settings are display-only with no ability for visitors to propose changes",
+        "System provides comparison table if league uses custom scoring vs standard formats"
+      ]
+    }
+  ]
+}

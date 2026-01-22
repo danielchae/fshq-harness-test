@@ -1,0 +1,150 @@
+{
+  "subcomponentId": "core-schema",
+  "componentId": "data-persistence",
+  "tracesTo": [
+    "SOW: Tech Stack - Supabase (PostgreSQL)",
+    "SOW: Core Functionality"
+  ],
+  "stories": [
+    {
+      "id": "CS-001",
+      "title": "Design Users Table Schema",
+      "user": "System",
+      "goal": "define a users table that stores user account information and authentication details via Supabase Auth",
+      "benefit": "user authentication, profile management, and role assignments are properly supported with referential integrity",
+      "acceptanceCriteria": [
+        "Users table includes id (UUID, primary key), email (unique), created_at, updated_at timestamps",
+        "Table integrates with Supabase Auth for authentication and session management",
+        "Schema includes optional fields for display_name, avatar_url, and user preferences",
+        "Table includes indexes on email for efficient lookups during login and registration",
+        "Foreign key relationships established for memberships and content ownership"
+      ]
+    },
+    {
+      "id": "CS-002",
+      "title": "Design Leagues Table Schema",
+      "user": "System",
+      "goal": "define a leagues table that stores league configuration and metadata",
+      "benefit": "all league spaces have consistent data structure with proper external platform references",
+      "acceptanceCriteria": [
+        "Leagues table includes id (UUID, primary key), name, created_at, updated_at timestamps",
+        "Table includes external_platform (enum: 'sleeper'), external_league_id (unique per platform) for API sync",
+        "Schema stores league settings including team_count, season, scoring_format, playoff_structure",
+        "Table includes is_dynasty boolean flag for dynasty league handling and season continuity",
+        "Foreign key established to creator_user_id linking to users table for initial admin assignment"
+      ]
+    },
+    {
+      "id": "CS-003",
+      "title": "Design Teams Table Schema",
+      "user": "System",
+      "goal": "define a teams table that stores team information within leagues",
+      "benefit": "team data is properly structured for roster management, claiming, and historical tracking",
+      "acceptanceCriteria": [
+        "Teams table includes id (UUID, primary key), league_id (foreign key to leagues), name, created_at, updated_at",
+        "Table stores external_roster_id for mapping to fantasy platform rosters for sync operations",
+        "Schema includes team_logo_url, win_loss_record (JSON), points_scored, and current_season fields",
+        "Table includes stable_fantasy_user_id for anchoring team continuity across seasons in dynasty leagues",
+        "Composite unique index on (league_id, external_roster_id) to prevent duplicate team imports"
+      ]
+    },
+    {
+      "id": "CS-004",
+      "title": "Design Roles and Permissions Schema",
+      "user": "System",
+      "goal": "define role types and permission levels for users within leagues",
+      "benefit": "access control, feature visibility, and administrative actions are properly enforced",
+      "acceptanceCriteria": [
+        "Schema defines role enum with values: 'admin', 'manager', 'fan' with clear permission hierarchy",
+        "Admin role grants full league configuration, membership approval, and content moderation permissions",
+        "Manager role grants team claiming, commissioner desk access (if admin-designated), and full engagement features",
+        "Fan role grants read access, engagement features (comments, reactions, pick'ems), and optional team support",
+        "Role definitions stored as database constraints or enum types for consistent enforcement across queries"
+      ]
+    },
+    {
+      "id": "CS-005",
+      "title": "Design League Memberships Table Schema",
+      "user": "System",
+      "goal": "define a league_memberships table that tracks user participation and roles in leagues",
+      "benefit": "user-league relationships are properly managed with role assignments and approval workflows",
+      "acceptanceCriteria": [
+        "Memberships table includes id (UUID, primary key), user_id (foreign key to users), league_id (foreign key to leagues)",
+        "Table stores role (enum: admin, manager, fan), status (enum: pending, approved, rejected), created_at, updated_at",
+        "Schema includes optional team_id (foreign key to teams) for manager role team claiming and fan team support",
+        "Table includes approved_by_user_id (foreign key to users) for tracking approval workflow and accountability",
+        "Composite unique index on (user_id, league_id) to prevent duplicate memberships"
+      ]
+    },
+    {
+      "id": "CS-006",
+      "title": "Design League Settings Table Schema",
+      "user": "System",
+      "goal": "define a league_settings table that stores per-league configuration options",
+      "benefit": "league visibility, join rules, and feature toggles are properly configured and enforced",
+      "acceptanceCriteria": [
+        "League_settings table includes id (UUID, primary key), league_id (foreign key to leagues, unique)",
+        "Table stores visibility (enum: 'public', 'private') for league discoverability and access control",
+        "Schema includes join_rule (enum: 'auto_join', 'approval_required') for membership workflows",
+        "Table includes fan_access_enabled boolean for controlling fan role availability in league",
+        "Settings defaults established for new leagues: visibility='private', join_rule='approval_required', fan_access_enabled=true"
+      ]
+    },
+    {
+      "id": "CS-007",
+      "title": "Design URL Slugs Table Schema",
+      "user": "System",
+      "goal": "define a url_slugs table that stores unique league URL identifiers for routing",
+      "benefit": "leagues have stable, human-readable URLs (fshq.gg/LEAGUESLUG) with collision handling and edit support",
+      "acceptanceCriteria": [
+        "URL_slugs table includes id (UUID, primary key), slug (unique, case-insensitive), league_id (foreign key to leagues)",
+        "Table includes created_at, updated_at, and created_by_user_id for tracking slug history and audit trail",
+        "Unique index on slug column enforces collision prevention at database level",
+        "Schema supports slug update history through created_at timestamp tracking for admin reference",
+        "Check constraint ensures slug format validation (alphanumeric, hyphens, lowercase) at database level"
+      ]
+    },
+    {
+      "id": "CS-008",
+      "title": "Implement Foreign Key Relationships and Referential Integrity",
+      "user": "System",
+      "goal": "establish all foreign key constraints and cascade behaviors for data consistency",
+      "benefit": "database maintains referential integrity and prevents orphaned records across all core tables",
+      "acceptanceCriteria": [
+        "Teams.league_id references leagues.id with ON DELETE CASCADE to remove teams when league deleted",
+        "League_memberships.user_id references users.id with ON DELETE CASCADE to clean up memberships when user deleted",
+        "League_memberships.league_id references leagues.id with ON DELETE CASCADE",
+        "League_memberships.team_id references teams.id with ON DELETE SET NULL to handle team reassignments",
+        "League_settings.league_id references leagues.id with ON DELETE CASCADE to remove settings when league deleted"
+      ]
+    },
+    {
+      "id": "CS-009",
+      "title": "Design Database Indexes for Query Optimization",
+      "user": "System",
+      "goal": "create indexes on frequently queried columns to optimize read performance",
+      "benefit": "common queries for league lookups, membership checks, and team listings execute efficiently at scale",
+      "acceptanceCriteria": [
+        "Index on leagues.external_league_id for fast league detection during connection flows",
+        "Index on league_memberships(user_id, league_id) for multi-league switcher queries",
+        "Index on teams.league_id for efficient team listing per league",
+        "Index on url_slugs.slug for fast league routing by URL (already enforced by unique constraint)",
+        "Composite index on league_memberships(league_id, status) for approval queue queries"
+      ]
+    },
+    {
+      "id": "CS-010",
+      "title": "Implement Row-Level Security Policies",
+      "user": "System",
+      "goal": "configure Supabase RLS policies to enforce access control at database level",
+      "benefit": "data privacy and security are enforced automatically for all database queries without application-level checks",
+      "acceptanceCriteria": [
+        "Users table RLS policy allows users to read/update only their own profile data",
+        "Leagues table RLS policy allows read access based on membership status and league visibility settings",
+        "Teams table RLS policy allows read access to league members, write access to admins only",
+        "League_memberships table RLS policy allows users to read their own memberships, admins to manage all memberships",
+        "RLS policies leverage Supabase auth.uid() for secure user identification in policy expressions"
+      ]
+    }
+  ]
+}

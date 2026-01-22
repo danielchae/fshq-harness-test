@@ -1,0 +1,246 @@
+{
+  "id": "US-4.7",
+  "title": "Preseason Week Numbering and Display Distinction",
+  "epic": "Commissioner Tools & Content Management",
+  "priority": "P2",
+  "status": "draft",
+  "batch": "1 of 2",
+  "category": "quality-enhancement",
+  "story_type": "gap-filling",
+  "user_role": "League Commissioner & League Member",
+  "user_story": "As a League Commissioner or League Member, I want preseason weeks to be clearly distinguished from regular season weeks in all UI elements, so that I can easily identify preseason content, avoid confusion when navigating historical data, and understand the context of any week-specific information.",
+  "problem_statement": "Current system may not adequately differentiate preseason weeks (NFL weeks 1-3 of calendar year) from regular season weeks in UI, causing confusion when commissioners create content or members browse historical data. Without clear visual and textual distinctions, users may misinterpret preseason matchups as regular season games, leading to incorrect assumptions about league standings, player performance, or content relevance.",
+  "business_value": {
+    "user_clarity": "Eliminate confusion between preseason and regular season data, improving user trust",
+    "content_accuracy": "Ensure commissioners and members correctly contextualize historical content",
+    "platform_professionalism": "Demonstrate attention to detail and fantasy sports domain expertise",
+    "support_reduction": "Reduce support inquiries about week numbering and content misinterpretation"
+  },
+  "acceptance_criteria": [
+    {
+      "id": "AC-4.7.1",
+      "description": "Preseason Week Label Formatting",
+      "criteria": [
+        "GIVEN any UI component displaying week numbers (dropdowns, navigation, headers, cards)",
+        "WHEN week is identified as preseason (NFL weeks 1-3 of calendar year, before regular season start)",
+        "THEN week label displays as 'Preseason Week X' (e.g., 'Preseason Week 1', 'Preseason Week 2')",
+        "AND regular season weeks display as 'Week X' (e.g., 'Week 1', 'Week 2')",
+        "AND formatting is consistent across all components: week selectors, content cards, timeline views, historical archives"
+      ]
+    },
+    {
+      "id": "AC-4.7.2",
+      "description": "Visual Badge/Icon for Preseason Content",
+      "criteria": [
+        "GIVEN content or data associated with preseason weeks",
+        "WHEN displayed in lists, cards, or timeline views",
+        "THEN preseason items include visual badge with text 'Preseason' or icon (e.g., calendar icon with 'PS' label)",
+        "AND badge uses distinct color (e.g., light blue) different from regular season (default), playoffs (gold), offseason (gray)",
+        "AND badge is positioned consistently (top-right corner of cards, inline with week label in lists)",
+        "AND tooltip on hover explains 'Preseason content - exhibition games, no standings impact'"
+      ]
+    },
+    {
+      "id": "AC-4.7.3",
+      "description": "Week Selector Categorization",
+      "criteria": [
+        "GIVEN user accesses week selector dropdown or navigation",
+        "WHEN viewing available weeks for a season",
+        "THEN weeks are grouped into sections with headers: 'Preseason Weeks 1-3', 'Regular Season Weeks 1-17' (or 18 for newer seasons), 'Playoff Weeks X-Y'",
+        "AND section headers use bold or distinct styling for clear visual separation",
+        "AND preseason section collapses by default (user can expand to view)",
+        "AND selecting preseason week updates URL with 'season_type=preseason' parameter"
+      ]
+    },
+    {
+      "id": "AC-4.7.4",
+      "description": "Historical Archive Distinction",
+      "criteria": [
+        "GIVEN user browses historical league data (past seasons)",
+        "WHEN viewing timeline or season summary",
+        "THEN preseason weeks appear in separate section or with clear divider before 'Regular Season Start'",
+        "AND preseason content cards include 'Preseason Week X' label + badge",
+        "AND filter options include 'Show Preseason Content' toggle (default: OFF for historical views)",
+        "AND season overview page displays preseason record separately from regular season record (if applicable)"
+      ]
+    },
+    {
+      "id": "AC-4.7.5",
+      "description": "API Response Metadata",
+      "criteria": [
+        "GIVEN API endpoint returns week-specific data (e.g., GET /weeks, GET /commissioner-content)",
+        "WHEN preseason weeks are included",
+        "THEN response includes 'season_type' field with value 'preseason'",
+        "AND 'week_label' field includes full formatted label ('Preseason Week 1')",
+        "AND 'week_number' field contains numeric value (1-3 for preseason)",
+        "AND API documentation clearly defines season_type enum values and usage"
+      ]
+    },
+    {
+      "id": "AC-4.7.6",
+      "description": "Content Creation UI Guidance",
+      "criteria": [
+        "GIVEN commissioner creates content for preseason week",
+        "WHEN selecting week from dropdown in content editor",
+        "THEN preseason weeks display with 'Preseason Week X' label",
+        "AND helper text below dropdown states: 'Preseason content is for exhibition games and preparation. Select regular season weeks for competitive content.'",
+        "AND preview pane shows how week label and badge will appear on published content",
+        "AND system auto-tags content with 'season_type: preseason' metadata"
+      ]
+    },
+    {
+      "id": "AC-4.7.7",
+      "description": "Error Handling: Ambiguous Week Context",
+      "criteria": [
+        "GIVEN system detects ambiguous week context (e.g., external API returns 'Week 1' without season_type)",
+        "WHEN displaying week to user",
+        "THEN system infers season_type from date context (preseason if before regular season start date)",
+        "AND logs warning to monitoring service: 'Ambiguous week context resolved for Week X, Season YYYY'",
+        "AND displays inferred label with lower opacity badge to indicate uncertainty",
+        "AND provides admin dashboard to review and correct ambiguous week assignments"
+      ]
+    },
+    {
+      "id": "AC-4.7.8",
+      "description": "Edge Case: Transition from Preseason to Regular Season",
+      "criteria": [
+        "GIVEN league transitions from preseason Week 3 to regular season Week 1",
+        "WHEN user navigates week-by-week using 'Next Week' button",
+        "THEN system displays modal or banner: 'Regular Season Starting - Week 1 begins competitive play'",
+        "AND week label changes from 'Preseason Week 3' to 'Week 1' (no 'Preseason' prefix)",
+        "AND badge color changes from preseason (light blue) to regular season (default)",
+        "AND URL parameter updates from 'season_type=preseason' to 'season_type=regular'"
+      ]
+    },
+    {
+      "id": "AC-4.7.9",
+      "description": "Edge Case: Multiple Preseason Weeks Same Number",
+      "criteria": [
+        "GIVEN edge case where multiple preseason games occur in same numbered week (rare, but possible with rescheduling)",
+        "WHEN displaying preseason content",
+        "THEN system differentiates with sub-labels: 'Preseason Week 2a', 'Preseason Week 2b'",
+        "AND API returns 'week_number' (2) and 'sub_week' ('a', 'b') fields separately",
+        "AND UI sorts by week_number, then sub_week alphabetically",
+        "AND admin tools allow manual reassignment of sub_week values if needed"
+      ]
+    },
+    {
+      "id": "AC-4.7.10",
+      "description": "Accessibility: Screen Reader Clarity",
+      "criteria": [
+        "GIVEN user navigates with screen reader",
+        "WHEN encountering preseason week element",
+        "THEN screen reader announces full label: 'Preseason Week One, exhibition content, not counted in standings'",
+        "AND badge has accessible label (aria-label='Preseason badge')",
+        "AND week selector sections have semantic headings (<h3>Preseason</h3>, <h3>Regular Season</h3>)",
+        "AND keyboard navigation allows expanding/collapsing week selector sections with Enter key"
+      ]
+    }
+  ],
+  "technical_considerations": {
+    "database_schema": [
+      "Ensure 'season_type' ENUM column exists on 'commissioner_content' and 'weeks' tables",
+      "Add 'sub_week' VARCHAR(5) column for edge case of multiple preseason games same week",
+      "Create database function to auto-infer season_type from week_number and season_start_date",
+      "Add index on ('season_type', 'week_number') for efficient filtering"
+    ],
+    "api_changes": [
+      "Add 'season_type' and 'week_label' fields to all week-related API responses",
+      "Update GET /weeks endpoint to accept 'season_type' filter parameter",
+      "Modify week selector API to return grouped data (preseason/regular/playoff sections)",
+      "Add GET /weeks/transition endpoint to detect preseason-to-regular-season boundary"
+    ],
+    "ui_components": [
+      "Create 'SeasonTypeBadge' reusable component with color variants (preseason=light blue, regular=default, playoff=gold, offseason=gray)",
+      "Update 'WeekSelector' component to render grouped sections with expand/collapse",
+      "Create 'WeekLabel' component to format week labels consistently ('Preseason Week X' vs 'Week X')",
+      "Add 'SeasonTransitionBanner' component for preseason-to-regular-season modal"
+    ],
+    "styling": [
+      "Define CSS color variables for season_type badges (--preseason-color, --regular-color, etc.)",
+      "Ensure sufficient color contrast for badges (WCAG AA compliance)",
+      "Use consistent badge positioning (top-right corner, 8px margin) across all card components"
+    ]
+  },
+  "dependencies": {
+    "requires": [
+      "US-4.6 (Offseason content creation - establishes season_type field and preseason handling)"
+    ],
+    "blocks": [],
+    "relates_to": [
+      "US-4.1 (Commissioner content creation - week selector must display preseason weeks correctly)",
+      "US-4.4 (Content history - historical views must distinguish preseason content)"
+    ]
+  },
+  "testing_strategy": {
+    "unit_tests": [
+      "Test week label formatting logic (preseason vs regular season)",
+      "Verify season_type inference from date context",
+      "Test SeasonTypeBadge component renders correct colors and labels",
+      "Test week selector grouping and section rendering"
+    ],
+    "integration_tests": [
+      "Test full navigation flow: preseason Week 1 -> preseason Week 3 -> regular season Week 1",
+      "Verify API responses include season_type and week_label fields",
+      "Test historical archive filtering (preseason content hidden by default)",
+      "Test content creation with preseason week selection and preview"
+    ],
+    "edge_case_tests": [
+      "Test transition from preseason Week 3 to regular season Week 1 (modal/banner display)",
+      "Test multiple preseason weeks with same number (sub_week differentiation)",
+      "Test ambiguous week context resolution (external API without season_type)",
+      "Test week selector with collapsed preseason section (expand/collapse behavior)"
+    ],
+    "visual_regression_tests": [
+      "Capture screenshots of preseason badges on content cards",
+      "Verify week selector grouped sections render consistently across browsers",
+      "Test badge positioning on various card sizes (mobile, tablet, desktop)"
+    ],
+    "accessibility_tests": [
+      "Verify screen reader announces preseason week labels correctly",
+      "Test keyboard navigation for week selector expand/collapse",
+      "Verify badge color contrast meets WCAG AA standards",
+      "Test focus indicators for week selector sections"
+    ]
+  },
+  "non_functional_requirements": {
+    "performance": [
+      "Week label formatting completes in <10ms (simple string operation)",
+      "Week selector grouping adds <50ms overhead to rendering",
+      "Badge rendering adds <5ms per card (minimal visual overhead)"
+    ],
+    "security": [
+      "No security implications (UI-only changes)",
+      "Ensure season_type field is not user-modifiable (server-side enforcement)"
+    ],
+    "usability": [
+      "User testing confirms 100% correct identification of preseason vs regular season weeks",
+      "Time to locate preseason content in historical archive reduces by 70%",
+      "Support inquiries about week numbering confusion decrease by 90%"
+    ]
+  },
+  "definition_of_done": [
+    "All 10 acceptance criteria pass automated tests",
+    "Preseason week labels display consistently across all UI components",
+    "Visual badges render with correct colors and positioning",
+    "Week selector groups preseason/regular/playoff sections correctly",
+    "Historical archives distinguish preseason content (filter toggle works)",
+    "API responses include season_type and week_label metadata",
+    "Accessibility tests pass (screen reader, keyboard navigation, color contrast)",
+    "Visual regression tests confirm badge consistency across browsers",
+    "User testing validates clarity of preseason vs regular season distinction",
+    "Documentation updated with season_type field usage and UI guidelines"
+  ],
+  "notes": [
+    "Key gap: Lack of clear distinction between preseason and regular season weeks causes user confusion",
+    "Visual badges + text labels provide dual reinforcement for clarity",
+    "Grouped week selector improves navigation and discoverability",
+    "Historical archive filtering (hide preseason by default) reduces clutter",
+    "Transition modal/banner educates users about season start",
+    "Accessibility critical: screen readers must announce full context ('Preseason Week One, exhibition content')",
+    "Sub_week field handles rare edge case of multiple preseason games same numbered week"
+  ],
+  "created_date": "2025-12-05",
+  "updated_date": "2025-12-05",
+  "estimated_effort": "5 story points"
+}

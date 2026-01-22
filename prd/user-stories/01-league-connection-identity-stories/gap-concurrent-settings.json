@@ -1,0 +1,358 @@
+{
+  "story_id": "US-LCI-GAP-003",
+  "epic": "League Connection & Identity",
+  "title": "Concurrent League Settings Conflict Resolution with Audit Trail",
+  "priority": "P1 - Critical",
+  "story_type": "Quality/Edge Case",
+  "gap_category": "Concurrent Operations Safety",
+  "as_a": "League Commissioner",
+  "i_want": "Clear handling when multiple people try to modify league settings simultaneously",
+  "so_that": "Settings changes are applied consistently, conflicts are resolved transparently, and all changes are auditable",
+
+  "acceptance_criteria": [
+    {
+      "scenario": "Last-write-wins strategy with version control",
+      "given": [
+        "League settings at version 5",
+        "Commissioner A loads settings (version 5)",
+        "Commissioner B loads same settings (version 5)",
+        "Commissioner A changes roster_size from 10 to 12"
+      ],
+      "when": [
+        "Commissioner A submits changes with version 5",
+        "A's changes commit successfully, incrementing to version 6",
+        "Commissioner B changes scoring_system to 'PPR'",
+        "B submits changes with stale version 5"
+      ],
+      "then": [
+        "B's request returns HTTP 409 Conflict",
+        "Error message: 'Settings were modified by another user. Please review changes and resubmit.'",
+        "Response includes: current_version=6, your_version=5, conflicting_fields=['roster_size']",
+        "B's UI shows: 'Another admin changed roster_size to 12. Your changes have not been saved.'",
+        "B can review both changes and resubmit with merged values",
+        "Audit log shows: A's change at timestamp T1, B's conflict at T2"
+      ]
+    },
+    {
+      "scenario": "Non-conflicting field changes merge automatically",
+      "given": [
+        "League settings at version 5",
+        "Commissioner A changes roster_size (settings_roster_size field)",
+        "Commissioner B changes scoring_system (settings_scoring field)",
+        "Both fields are independent with no validation dependencies"
+      ],
+      "when": [
+        "A submits roster_size=12 at 10:00:01",
+        "B submits scoring_system='PPR' at 10:00:02",
+        "System detects no overlapping field conflicts"
+      ],
+      "then": [
+        "Both changes are applied successfully",
+        "Final state: roster_size=12, scoring_system='PPR', version=7",
+        "Audit log shows both changes with timestamps",
+        "Both commissioners see success messages",
+        "Email notification sent: 'League settings updated by multiple admins'",
+        "Changelog visible to all league members shows both changes"
+      ]
+    },
+    {
+      "scenario": "Conflicting field changes with manual resolution",
+      "given": [
+        "League settings version 5",
+        "Commissioner A changes roster_size from 10 to 12",
+        "Commissioner B changes roster_size from 10 to 15",
+        "Both submit within 30 seconds"
+      ],
+      "when": [
+        "A submits first (roster_size=12, version 5→6)",
+        "B submits second (roster_size=15, version 5→conflict)"
+      ],
+      "then": [
+        "B receives HTTP 409 Conflict with detailed conflict info",
+        "Response payload: { conflicting_fields: [{ field: 'roster_size', your_value: 15, current_value: 12, changed_by: 'Commissioner A', changed_at: '2025-09-08T10:00:01Z' }] }",
+        "B's UI shows merge dialog: 'Commissioner A changed roster_size to 12. You tried to change it to 15. Choose which value to keep.'",
+        "Options: 'Keep A's value (12)', 'Use my value (15)', 'Enter different value'",
+        "B selects option and resubmits with version 6",
+        "Audit log records: A's original change, B's conflict, B's resolution"
+      ]
+    },
+    {
+      "scenario": "Notification of conflicting changes to all parties",
+      "given": [
+        "Commissioner A successfully saves changes",
+        "Commissioner B's changes conflict and are rejected",
+        "League has 3 commissioners: A, B, C"
+      ],
+      "when": [
+        "Conflict occurs and is resolved",
+        "System determines notification recipients"
+      ],
+      "then": [
+        "Commissioner A receives: 'Your settings changes saved. Commissioner B attempted conflicting changes.'",
+        "Commissioner B receives: 'Your changes conflicted with recent changes by Commissioner A. Please review and resubmit.'",
+        "Commissioner C receives: 'League settings modified by Commissioner A (roster_size). Commissioner B attempted conflicting change.'",
+        "All notifications include: timestamp, fields changed, who made changes",
+        "In-app notification banner for all commissioners",
+        "Email sent to all commissioners with full changelog"
+      ]
+    },
+    {
+      "scenario": "Audit trail with complete change history",
+      "given": [
+        "League has been active for 3 months with multiple settings changes",
+        "Multiple concurrent conflicts have occurred"
+      ],
+      "when": [
+        "Commissioner requests full settings audit trail"
+      ],
+      "then": [
+        "Audit log displays chronologically: { timestamp, user, field, old_value, new_value, version, conflict_occurred, conflict_resolved_by }",
+        "Example entry: { timestamp: '2025-09-08T10:00:01Z', user: 'Commissioner A', field: 'roster_size', old_value: 10, new_value: 12, version: 6, conflict_occurred: false }",
+        "Conflict entry: { timestamp: '2025-09-08T10:00:05Z', user: 'Commissioner B', field: 'roster_size', old_value: 10, new_value: 15, version: 5, conflict_occurred: true, conflict_resolved: false }",
+        "Resolution entry: { timestamp: '2025-09-08T10:01:00Z', user: 'Commissioner B', field: 'roster_size', old_value: 12, new_value: 15, version: 7, conflict_occurred: false, resolution_of: 'audit_id_123' }",
+        "Filterable by: date range, user, field, conflict status",
+        "Exportable to CSV for external analysis"
+      ]
+    },
+    {
+      "scenario": "Rollback capability with conflict detection",
+      "given": [
+        "Commissioner wants to rollback to previous settings version",
+        "Current version is 10",
+        "Want to rollback to version 7 (3 changes ago)"
+      ],
+      "when": [
+        "Commissioner initiates rollback to version 7",
+        "System checks for conflicts with current version 10"
+      ],
+      "then": [
+        "System shows diff: 'Rolling back will revert 3 changes: roster_size (12→10), scoring_system (PPR→Standard), waivers (FAAB→Rolling)'",
+        "Confirmation required: 'Are you sure you want to rollback these changes?'",
+        "On confirm, new version 11 created (rollback recorded as new change)",
+        "Audit log: { timestamp: '...', user: 'Commissioner A', action: 'rollback', from_version: 10, to_version: 7, new_version: 11, fields_reverted: [...] }",
+        "All commissioners notified of rollback",
+        "Rollback itself can conflict if another change occurs during rollback process"
+      ]
+    },
+    {
+      "scenario": "High-frequency changes with optimistic locking",
+      "given": [
+        "Multiple commissioners actively tuning settings",
+        "10 changes attempted within 2-minute window",
+        "System uses optimistic locking with version numbers"
+      ],
+      "when": [
+        "Rapid succession of non-conflicting changes",
+        "Occasional conflicting changes on same field"
+      ],
+      "then": [
+        "Non-conflicting changes process immediately",
+        "Conflicting changes return 409 with retry guidance",
+        "System maintains < 100ms latency for conflict detection",
+        "Version numbers increment monotonically: 5→6→7→8...",
+        "No lost updates or corruption",
+        "Audit log remains complete and ordered",
+        "Metrics tracked: conflict rate, resolution time, retry success rate"
+      ]
+    }
+  ],
+
+  "technical_requirements": {
+    "version_control": {
+      "field": "INTEGER version NOT NULL",
+      "initial_value": 1,
+      "increment": "version = version + 1 on each successful update",
+      "update_pattern": "UPDATE league_settings SET field=?, version=version+1 WHERE league_id=? AND version=?",
+      "conflict_detection": "Check affected_rows = 0 to detect stale version"
+    },
+    "optimistic_locking": {
+      "mechanism": "Version-based optimistic locking",
+      "conflict_detection": "Compare submitted version with database version",
+      "retry_strategy": "Client-side retry with fresh version number",
+      "max_retries": 3,
+      "retry_delay": "Exponential backoff: 500ms, 1s, 2s"
+    },
+    "conflict_resolution": {
+      "strategy": "Last-write-wins with manual conflict resolution",
+      "field_granularity": "Track conflicts at individual field level",
+      "merge_detection": "Automatically merge non-overlapping field changes",
+      "resolution_ui": "Present conflict dialog with current vs. attempted values",
+      "resolution_tracking": "Link resolution audit entries to original conflict"
+    },
+    "audit_logging": {
+      "table": "league_settings_audit",
+      "columns": [
+        "audit_id BIGSERIAL PRIMARY KEY",
+        "league_id UUID NOT NULL",
+        "timestamp TIMESTAMPTZ NOT NULL DEFAULT NOW()",
+        "user_id UUID NOT NULL",
+        "version_before INTEGER",
+        "version_after INTEGER",
+        "field_name VARCHAR(100)",
+        "old_value JSONB",
+        "new_value JSONB",
+        "conflict_occurred BOOLEAN DEFAULT FALSE",
+        "conflict_resolved_by UUID",
+        "resolution_of BIGINT REFERENCES league_settings_audit(audit_id)",
+        "rollback_to_version INTEGER"
+      ],
+      "indexes": [
+        "CREATE INDEX ON league_settings_audit(league_id, timestamp DESC)",
+        "CREATE INDEX ON league_settings_audit(user_id, timestamp DESC)",
+        "CREATE INDEX ON league_settings_audit(conflict_occurred) WHERE conflict_occurred = TRUE"
+      ],
+      "retention": "Retain indefinitely for audit compliance"
+    },
+    "notification_system": {
+      "channels": ["in-app", "email", "push"],
+      "recipients": "All commissioners for settings changes",
+      "notification_types": {
+        "change_success": "Your settings changes saved successfully",
+        "change_conflict": "Your changes conflicted with recent changes",
+        "peer_change": "Another commissioner modified league settings",
+        "conflict_resolution": "Conflicting settings change resolved"
+      },
+      "payload": {
+        "timestamp": "ISO8601",
+        "changed_by": "user_id and display_name",
+        "fields_changed": ["field_name", "old_value", "new_value"],
+        "conflict_details": "If applicable"
+      }
+    }
+  },
+
+  "error_handling": {
+    "conflict_response": {
+      "http_status": 409,
+      "error_code": "SETTINGS_VERSION_CONFLICT",
+      "message": "Settings were modified by another user. Please review changes and resubmit.",
+      "payload": {
+        "current_version": 6,
+        "submitted_version": 5,
+        "conflicting_fields": [
+          {
+            "field": "roster_size",
+            "your_value": 15,
+            "current_value": 12,
+            "changed_by": {
+              "user_id": "uuid-123",
+              "display_name": "Commissioner A"
+            },
+            "changed_at": "2025-09-08T10:00:01Z"
+          }
+        ],
+        "non_conflicting_fields": ["scoring_system"],
+        "retry_guidance": "Fetch latest settings (version 6) and resubmit with merged changes"
+      }
+    },
+    "validation_failure": {
+      "http_status": 422,
+      "error_code": "SETTINGS_VALIDATION_ERROR",
+      "message": "Settings validation failed: {field} has invalid value",
+      "payload": {
+        "field": "roster_size",
+        "invalid_value": 50,
+        "constraint": "Must be between 8 and 20",
+        "suggestion": "Please choose a roster size between 8 and 20"
+      }
+    }
+  },
+
+  "performance_requirements": {
+    "version_check": "< 10ms at p99",
+    "conflict_detection": "< 50ms at p99",
+    "audit_log_write": "< 100ms at p99 (async, non-blocking)",
+    "notification_dispatch": "< 200ms at p99 (async, non-blocking)",
+    "total_update_time": "< 300ms at p99 for successful updates",
+    "conflict_response_time": "< 500ms at p99 including conflict field resolution"
+  },
+
+  "monitoring": {
+    "metrics": [
+      "settings_updates_total",
+      "settings_conflicts_total",
+      "settings_conflict_resolution_time_seconds",
+      "settings_update_latency_seconds",
+      "audit_log_writes_total",
+      "notification_dispatch_time_seconds"
+    ],
+    "alerts": [
+      "Settings conflict rate > 10% (potential UI/UX issue)",
+      "Conflict resolution time p99 > 5 minutes (users stuck)",
+      "Audit log write failures > 0 (data integrity risk)",
+      "Version number gaps detected (potential race condition)"
+    ],
+    "dashboards": [
+      "Real-time settings change timeline by league",
+      "Conflict occurrence heatmap (by field and time)",
+      "Audit trail completeness verification",
+      "Notification delivery success rate"
+    ]
+  },
+
+  "testing_requirements": {
+    "concurrent_testing": [
+      "Simulate 5 commissioners changing settings simultaneously",
+      "Test same-field conflicts (roster_size changed by A and B)",
+      "Test non-conflicting concurrent changes (different fields)",
+      "Verify audit log completeness under high concurrency"
+    ],
+    "edge_cases": [
+      "Version number overflow (after millions of changes)",
+      "Rollback to version that no longer exists",
+      "Conflict resolution submitted with stale version (double conflict)",
+      "Network timeout during conflict resolution"
+    ],
+    "audit_testing": [
+      "Verify every change has corresponding audit entry",
+      "Test audit log filtering and searching",
+      "Verify conflict and resolution linking in audit log",
+      "Test audit log export with large datasets"
+    ],
+    "notification_testing": [
+      "Verify all commissioners notified of changes",
+      "Test notification delivery under high change volume",
+      "Verify notification payload accuracy",
+      "Test notification preferences (opt-out scenarios)"
+    ]
+  },
+
+  "ui_requirements": {
+    "conflict_dialog": {
+      "title": "Settings Conflict Detected",
+      "message": "Commissioner {name} changed {field} to {value} while you were editing.",
+      "options": [
+        "Keep their changes (discard yours)",
+        "Use your changes (overwrite theirs)",
+        "Edit and merge both changes"
+      ],
+      "visual_diff": "Show side-by-side comparison: Their Value | Your Value"
+    },
+    "audit_trail_ui": {
+      "display": "Chronological timeline with user avatars",
+      "filters": ["Date range", "Commissioner", "Field", "Conflict status"],
+      "export": "Download as CSV button",
+      "visual_indicators": "⚠️ for conflicts, ✓ for successful changes"
+    },
+    "real_time_updates": {
+      "mechanism": "WebSocket or SSE for live updates",
+      "notification_banner": "Settings changed by {name} - Refresh to see latest",
+      "auto_refresh_prompt": "Your settings page is outdated. Click to refresh.",
+      "lock_indicator": "🔒 {name} is currently editing settings"
+    }
+  },
+
+  "related_stories": [
+    "US-LCI-002 (League Settings Management)",
+    "US-OAC-001 (Commissioner Access Control)",
+    "US-OAC-GAP-001 (Concurrent Team Claims)"
+  ],
+
+  "dependencies": [
+    "PostgreSQL with transaction isolation for version updates",
+    "Audit logging table with appropriate indexes",
+    "Notification system (email, push, in-app)",
+    "WebSocket infrastructure for real-time updates",
+    "Queue system for async notification dispatch"
+  ]
+}

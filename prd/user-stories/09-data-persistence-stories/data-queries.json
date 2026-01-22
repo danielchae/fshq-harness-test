@@ -1,0 +1,181 @@
+{
+  "subcomponentId": "data-queries",
+  "componentId": "data-persistence",
+  "tracesTo": [
+    "SOW: Tech Stack - Next.js API routes",
+    "SOW: Core Functionality - User Management",
+    "SOW: Core Functionality - League Management",
+    "SOW: Core Functionality - Social Feed",
+    "SOW: Core Functionality - Pick'em System"
+  ],
+  "stories": [
+    {
+      "id": "DQ-001",
+      "title": "Implement Next.js API Route Architecture with Middleware",
+      "user": "Backend Engineer",
+      "goal": "establish a standardized API route structure with authentication and error handling middleware",
+      "benefit": "consistent API behavior, reusable middleware patterns, and simplified route implementation",
+      "acceptanceCriteria": [
+        "API routes follow RESTful conventions with proper HTTP method routing (GET, POST, PUT, DELETE, PATCH)",
+        "Authentication middleware validates Supabase session tokens and populates request context with user data",
+        "Error handling middleware catches exceptions and returns standardized error responses with appropriate status codes",
+        "Request validation middleware enforces schema validation using Zod or similar library",
+        "Rate limiting middleware prevents API abuse with configurable limits per endpoint"
+      ]
+    },
+    {
+      "id": "DQ-002",
+      "title": "Implement Server Actions for Data Mutations",
+      "user": "Developer",
+      "goal": "use Next.js Server Actions for form submissions and data mutations with automatic revalidation",
+      "benefit": "type-safe mutations, automatic loading states, progressive enhancement, and optimized client-server communication",
+      "acceptanceCriteria": [
+        "Server Actions implement all create, update, and delete operations for core entities (users, leagues, teams, picks)",
+        "Actions validate input data using schema validation before database operations",
+        "Successful mutations automatically revalidate affected routes using revalidatePath() or revalidateTag()",
+        "Actions return typed success/error responses compatible with useFormState hook",
+        "Transaction rollback occurs on validation or database errors with descriptive error messages"
+      ]
+    },
+    {
+      "id": "DQ-003",
+      "title": "Implement Core Entity CRUD Operations",
+      "user": "Backend Engineer",
+      "goal": "create complete CRUD API routes for users, leagues, teams, and memberships with proper authorization",
+      "benefit": "complete data access layer for core platform entities with enforced business rules and security",
+      "acceptanceCriteria": [
+        "User CRUD operations enforce RLS policies and allow profile updates, avatar uploads, and preference management",
+        "League CRUD operations validate commissioner permissions, enforce unique slugs, and handle league settings updates",
+        "Team CRUD operations validate uniqueness constraints, handle logo uploads, and maintain league associations",
+        "Membership operations enforce role-based access (commissioner, member, viewer) and handle invite workflows",
+        "All operations log audit trails for administrative actions and enforce soft deletes where appropriate"
+      ]
+    },
+    {
+      "id": "DQ-004",
+      "title": "Implement Social Feed Query System",
+      "user": "Backend Engineer",
+      "goal": "build efficient queries for newsfeed, comments, reactions, and user engagement data",
+      "benefit": "performant social features with proper pagination, filtering, and real-time updates",
+      "acceptanceCriteria": [
+        "Newsfeed queries fetch posts with pagination (cursor-based), filtering by league/user, and include author/reaction counts",
+        "Comment queries support threaded replies with depth limits, sorting options, and reaction aggregations",
+        "Reaction queries aggregate counts by type (like, celebrate, insightful) with user participation tracking",
+        "Engagement queries track user activity metrics (posts, comments, reactions) with time-based aggregations",
+        "All social queries implement proper indexes and use query optimization techniques to maintain <200ms response times"
+      ]
+    },
+    {
+      "id": "DQ-005",
+      "title": "Implement Commissioner Content Management Queries",
+      "user": "Backend Engineer",
+      "goal": "create queries for power rankings, predictions, and commissioner content with autosave functionality",
+      "benefit": "reliable content management system with draft support and version history",
+      "acceptanceCriteria": [
+        "Power rankings queries fetch/update weekly rankings with drag-drop ordering, team associations, and commentary",
+        "Prediction queries manage commissioner predictions with status tracking (pending, correct, incorrect) and scoring",
+        "Autosave queries implement upsert operations with timestamp tracking and conflict resolution",
+        "Draft management distinguishes between published and draft content with proper visibility controls",
+        "Version history queries track content changes with rollback capability and author attribution"
+      ]
+    },
+    {
+      "id": "DQ-006",
+      "title": "Implement Matchup and Pick'em Data Queries",
+      "user": "Backend Engineer",
+      "goal": "build queries for bracket matchups, pick submissions, grading, and leaderboard calculations",
+      "benefit": "accurate pick'em system with real-time standings and automated grading",
+      "acceptanceCriteria": [
+        "Bracket queries fetch matchup trees with team details, game times, and current pick distributions",
+        "Pick submission queries validate game locks, enforce deadlines, and support confidence point allocation",
+        "Grading queries automatically score picks based on game results with configurable point systems",
+        "Leaderboard queries aggregate user scores by week/season with tie-breaking logic and ranking calculations",
+        "Historical queries provide season-long statistics including accuracy percentages, streak tracking, and head-to-head records"
+      ]
+    },
+    {
+      "id": "DQ-007",
+      "title": "Implement Transaction History and Filtering Queries",
+      "user": "Backend Engineer",
+      "goal": "create queries for transaction logs with advanced filtering, sorting, and aggregation capabilities",
+      "benefit": "comprehensive audit trail and analytics for all platform activities",
+      "acceptanceCriteria": [
+        "Transaction queries fetch all entity changes (creates, updates, deletes) with user attribution and timestamps",
+        "Filtering supports multiple criteria (entity type, user, date range, action type) with efficient query composition",
+        "Aggregation queries provide summary statistics (activity by user, changes per day, popular actions)",
+        "Promotional history tracking logs league promotions to home feed with engagement metrics",
+        "Export functionality generates CSV/JSON reports of filtered transaction data for administrative review"
+      ]
+    },
+    {
+      "id": "DQ-008",
+      "title": "Implement Data Validation and Business Rules Layer",
+      "user": "Backend Engineer",
+      "goal": "enforce schema validation and business rules at the query layer before database operations",
+      "benefit": "data integrity, consistent validation, and early error detection with helpful error messages",
+      "acceptanceCriteria": [
+        "Schema validation uses Zod schemas matching database column types with custom error messages",
+        "Business rule validation enforces constraints (unique league slugs, valid date ranges, game lock times)",
+        "Authorization checks verify user permissions before executing queries (commissioner-only actions, league membership)",
+        "Relational integrity validation ensures referenced entities exist (teams in leagues, users in memberships)",
+        "Validation errors return structured responses with field-level error details for client-side form handling"
+      ]
+    },
+    {
+      "id": "DQ-009",
+      "title": "Implement Standardized Error Handling and Transaction Management",
+      "user": "Backend Engineer",
+      "goal": "create consistent error handling patterns with proper transaction rollback and error reporting",
+      "benefit": "reliable data operations, easy debugging, and consistent error responses across all API endpoints",
+      "acceptanceCriteria": [
+        "Database transactions wrap multi-step operations with automatic rollback on any failure",
+        "Error responses follow standardized format including error code, message, field errors, and request ID",
+        "Database errors map to appropriate HTTP status codes (400 for validation, 404 for not found, 500 for server errors)",
+        "Error logging captures full context (user, endpoint, parameters, stack trace) for debugging",
+        "Retry logic handles transient failures (connection timeouts, deadlocks) with exponential backoff"
+      ]
+    },
+    {
+      "id": "DQ-010",
+      "title": "Implement Query Performance Optimization Layer",
+      "user": "Backend Engineer",
+      "goal": "optimize database queries with caching, pagination, and query planning for sub-200ms response times",
+      "benefit": "fast page loads, reduced database load, and scalable data access patterns",
+      "acceptanceCriteria": [
+        "Query optimization uses database indexes, proper JOIN strategies, and EXPLAIN ANALYZE for performance tuning",
+        "Caching layer implements Redis/in-memory cache for frequently accessed data (league details, user profiles)",
+        "Pagination implements cursor-based pagination for large datasets with configurable page sizes",
+        "Query batching combines multiple related queries using DataLoader pattern to prevent N+1 queries",
+        "Performance monitoring tracks slow queries (>200ms) with automatic alerts and query plan logging"
+      ]
+    },
+    {
+      "id": "DQ-011",
+      "title": "Implement Supabase Integration Layer",
+      "user": "Backend Engineer",
+      "goal": "integrate Supabase Auth, RLS policies, and real-time subscriptions with API routes",
+      "benefit": "secure data access, real-time updates, and simplified authentication flow",
+      "acceptanceCriteria": [
+        "Auth integration validates Supabase JWT tokens and creates authenticated Supabase clients for queries",
+        "RLS policy enforcement ensures all queries respect row-level security rules defined in database",
+        "Real-time subscriptions enable live updates for social feed, leaderboards, and live game tracking",
+        "Service role queries bypass RLS for administrative operations with proper authorization checks",
+        "Edge function compatibility ensures queries work in both Node.js and Edge runtime environments"
+      ]
+    },
+    {
+      "id": "DQ-012",
+      "title": "Implement External API Integration Queries",
+      "user": "Backend Engineer",
+      "goal": "create query layer for fetching and caching external sports data (ESPN, odds providers)",
+      "benefit": "reliable external data integration with fallback handling and cache optimization",
+      "acceptanceCriteria": [
+        "Sports data queries fetch game schedules, scores, and odds from external APIs with error handling",
+        "Caching strategy stores external API responses with TTL based on data freshness requirements (live vs historical)",
+        "Fallback logic handles API failures by serving cached data or degraded functionality",
+        "Rate limiting respects external API quotas with queuing and throttling mechanisms",
+        "Data transformation layer normalizes external API responses to match internal database schema"
+      ]
+    }
+  ]
+}

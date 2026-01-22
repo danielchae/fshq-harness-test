@@ -1,0 +1,122 @@
+{
+  "subcomponentId": "automated-moments",
+  "componentId": "data-sync-automation",
+  "tracesTo": [
+    "SOW: Newsfeed & Moments",
+    "UserFlow: Weekly Member Engagement, Feed Interaction, Pick'ems & History Browsing"
+  ],
+  "stories": [
+    {
+      "id": "AM-001",
+      "title": "Automated Trade Moment Creation",
+      "user": "System",
+      "goal": "automatically detect and create feed moments when trades are completed in the external fantasy platform",
+      "benefit": "league members see trade activity in their feed without manual posting, keeping everyone informed of roster changes",
+      "acceptanceCriteria": [
+        "System polls Sleeper API and detects new completed trades",
+        "Trade moment is created with involved teams, players traded, and timestamp",
+        "Trade moment appears in league newsfeed with appropriate formatting",
+        "Trade moments include all players and draft picks involved in the transaction",
+        "System handles multi-team trades correctly"
+      ]
+    },
+    {
+      "id": "AM-002",
+      "title": "Automated Match Result Moments",
+      "user": "System",
+      "goal": "automatically create feed moments when weekly matchups are completed and scored",
+      "benefit": "league members see match results prominently in their feed, driving engagement and conversation",
+      "acceptanceCriteria": [
+        "System detects when a matchup score is finalized after stat corrections",
+        "Match result moment is created with final scores, winning team, and week identifier",
+        "Moment includes key stats like point differential and notable performances if available",
+        "System waits for stat correction period before finalizing result moments",
+        "Match result moments are prominently displayed in the feed"
+      ]
+    },
+    {
+      "id": "AM-003",
+      "title": "Automated Waiver Transaction Moments",
+      "user": "System",
+      "goal": "automatically generate moments for waiver wire claims and free agent pickups",
+      "benefit": "league members stay informed about roster moves and waiver activity across all teams",
+      "acceptanceCriteria": [
+        "System detects new waiver claims when they process in the external platform",
+        "Waiver moment includes team, player added, player dropped (if applicable), and priority used",
+        "Free agent pickups are captured separately from waiver claims",
+        "Moments include timestamp and relevant transaction metadata",
+        "Multiple simultaneous waiver claims are handled correctly"
+      ]
+    },
+    {
+      "id": "AM-004",
+      "title": "Playoff Advancement Moments",
+      "user": "System",
+      "goal": "automatically create moments when teams clinch playoffs or are eliminated",
+      "benefit": "major league milestones are celebrated or acknowledged in the feed, increasing emotional engagement",
+      "acceptanceCriteria": [
+        "System detects when a team clinches a playoff spot based on standings and schedule",
+        "Playoff clinching moment is created with team info, seed if determinable, and timing",
+        "Elimination moments are created when teams are mathematically eliminated",
+        "Moments are only created once per team per milestone to avoid duplicates",
+        "System handles different playoff formats (standard bracket, toilet bowl, etc.)"
+      ]
+    },
+    {
+      "id": "AM-005",
+      "title": "Championship and Runner-Up Moments",
+      "user": "System",
+      "goal": "automatically create celebratory moments when playoff championships and runner-up positions are decided",
+      "benefit": "league championship is properly celebrated and documented in the feed and history",
+      "acceptanceCriteria": [
+        "System detects when championship matchup is completed",
+        "Championship moment is created with winner, runner-up, final scores, and season identifier",
+        "Third place and consolation bracket winners are also recognized if applicable",
+        "Championship moments are marked as major milestones and persist in league history",
+        "System supports both winners and losers/toilet bowl bracket champions"
+      ]
+    },
+    {
+      "id": "AM-006",
+      "title": "Moment Deduplication Logic",
+      "user": "System",
+      "goal": "prevent duplicate moments from being created for the same event during data sync cycles",
+      "benefit": "feed remains clean without redundant or duplicate event posts",
+      "acceptanceCriteria": [
+        "System checks if a moment already exists for a specific event before creating a new one",
+        "Deduplication logic uses event type, timestamp, and involved entities as unique identifiers",
+        "Existing moments can be updated if data changes (e.g., stat corrections) without creating duplicates",
+        "System handles edge cases like trades being modified or cancelled",
+        "Deduplication logs are maintained for debugging and audit purposes"
+      ]
+    },
+    {
+      "id": "AM-007",
+      "title": "Moment Type Classification and Formatting",
+      "user": "System",
+      "goal": "correctly classify and format different types of automated moments with appropriate styling and metadata",
+      "benefit": "moments are easily distinguishable and formatted consistently for optimal user experience",
+      "acceptanceCriteria": [
+        "Each moment type (trade, match result, waiver, playoff milestone, championship) has a distinct classification",
+        "Moments include appropriate icons, colors, or visual indicators based on type",
+        "Moment text is auto-generated with proper grammar and league-specific terminology",
+        "Metadata includes event timestamp, involved entities, and relevant stats",
+        "Moments are tagged for filtering and searchability"
+      ]
+    },
+    {
+      "id": "AM-008",
+      "title": "Retroactive Moment Correction on Stat Changes",
+      "user": "System",
+      "goal": "update or create corrected moments when NFL stat corrections change match outcomes or transaction timing",
+      "benefit": "feed reflects accurate results even when stat corrections occur, maintaining trust and accuracy",
+      "acceptanceCriteria": [
+        "System detects when a stat correction changes a match winner",
+        "Original match result moment is marked as corrected or superseded",
+        "New corrected moment is created explaining the stat correction and new outcome",
+        "Pick'ems grading and commissioner prediction grading triggers are updated accordingly",
+        "Users are notified when moments they engaged with are corrected"
+      ]
+    }
+  ]
+}

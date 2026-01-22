@@ -1,0 +1,123 @@
+{
+  "subcomponentId": "invitation-tracking",
+  "componentId": "onboarding-access-control",
+  "tracesTo": [
+    "SOW: Onboarding, Roles & Access Control - League growth through controlled invitations",
+    "Research: SendGrid integration for invitation email tracking (sendgrid/docs/06-webhooks-event-tracking.md)",
+    "Research: Viral coefficient through league invites (research/README.md)"
+  ],
+  "stories": [
+    {
+      "id": "INV-T-001",
+      "title": "Admin Views Invitation Analytics Dashboard",
+      "user": "League Admin",
+      "goal": "see comprehensive analytics about league invitations and member acquisition",
+      "benefit": "I can understand which invitation strategies are most effective for growing the league",
+      "acceptanceCriteria": [
+        "Admin can access invitation analytics dashboard from league admin section",
+        "Dashboard displays key metrics: total invites sent, acceptance rate, conversion rate, and growth trend",
+        "System shows invitation funnel visualization: sent → clicked → registered → joined",
+        "Dashboard displays time-series graph of invitation activity over customizable date ranges (7d, 30d, 90d, all time)",
+        "System shows breakdown of member acquisition by invitation source (email, link share, QR code)",
+        "Dashboard highlights top-performing invite links by conversion rate",
+        "System calculates and displays average time from invite sent to league join"
+      ]
+    },
+    {
+      "id": "INV-T-002",
+      "title": "Admin Tracks Individual Invite Link Performance",
+      "user": "League Admin",
+      "goal": "view detailed statistics for a specific invite link",
+      "benefit": "I can evaluate the effectiveness of targeted invitation campaigns",
+      "acceptanceCriteria": [
+        "Admin can click any invite link to view detailed performance dashboard",
+        "System displays complete timeline of link activity: creation, shares, clicks, and acceptances",
+        "Dashboard shows list of members who joined via this specific invite link with join dates",
+        "System tracks and displays geographic distribution of invite link clicks via IP analysis",
+        "System shows device and browser breakdown for invite link access (mobile vs desktop, browser types)",
+        "Dashboard displays referrer information showing where clicks originated (email client, social media, direct)",
+        "System provides CSV export of invite link activity for external analysis"
+      ]
+    },
+    {
+      "id": "INV-T-003",
+      "title": "Admin Receives Invite Activity Notifications",
+      "user": "League Admin",
+      "goal": "get notified when significant invitation events occur",
+      "benefit": "I can respond promptly to new members and monitor invitation health",
+      "acceptanceCriteria": [
+        "Admin receives notification when new member joins via invite link with member name and link identifier",
+        "System sends alert when invite link is approaching expiration (7 days, 24 hours, expired)",
+        "Admin receives notification when invite link reaches 80% of maximum usage limit",
+        "System alerts admin if invite link receives unusually high traffic suggesting potential sharing or abuse",
+        "Admin can configure notification preferences: email, in-app, or both for different event types",
+        "System sends daily or weekly summary digest of invitation activity based on admin preference",
+        "Notifications include direct links to relevant admin actions (extend expiration, revoke link, view analytics)"
+      ]
+    },
+    {
+      "id": "INV-T-004",
+      "title": "System Tracks Email Invitation Engagement",
+      "user": "League Admin",
+      "goal": "monitor email-based invitation delivery and engagement metrics",
+      "benefit": "I can identify delivery issues and understand which email invitations are effective",
+      "acceptanceCriteria": [
+        "System integrates with SendGrid webhooks to track email invitation events (delivered, opened, clicked, bounced, spam)",
+        "Admin can view email delivery status for each invitation sent via email",
+        "Dashboard shows email engagement metrics: open rate, click-through rate, and bounce rate",
+        "System flags email addresses that resulted in hard bounces to prevent future send attempts",
+        "Admin can see which email invitations were marked as spam and adjust messaging accordingly",
+        "System tracks time between email sent and invite link clicked for engagement analysis",
+        "Dashboard correlates email invitation engagement with actual league join conversion"
+      ]
+    },
+    {
+      "id": "INV-T-005",
+      "title": "Admin Audits Invitation History",
+      "user": "League Admin",
+      "goal": "review complete historical record of invitation activity and membership origins",
+      "benefit": "I can maintain accountability and understand long-term growth patterns",
+      "acceptanceCriteria": [
+        "Admin can access invitation audit log showing all invitation-related events in chronological order",
+        "Audit log displays: invite creation, modification, revocation, acceptance, and rejection events with timestamps",
+        "System records which admin user performed each invitation management action",
+        "Admin can filter audit log by event type, date range, invite link ID, or member username",
+        "System displays full invitation chain for each member: who invited them, which link used, and acceptance date",
+        "Audit log includes reason fields for revocations and modifications when provided",
+        "System allows export of audit log data for compliance or analysis purposes"
+      ]
+    },
+    {
+      "id": "INV-T-006",
+      "title": "System Calculates Viral Growth Coefficient",
+      "user": "League Admin",
+      "goal": "understand the viral growth potential of my league through invitation patterns",
+      "benefit": "I can measure organic growth and identify highly-engaged members who drive recruitment",
+      "acceptanceCriteria": [
+        "System calculates viral coefficient: average number of new members invited per existing member",
+        "Dashboard shows viral coefficient trend over time to identify growth acceleration or decline",
+        "System identifies top recruiters: members responsible for most successful invitations",
+        "Dashboard displays invitation network graph showing member recruitment chains",
+        "System segments viral coefficient by member role (managers vs fans) to identify most effective recruiters",
+        "Dashboard projects future membership growth based on current viral coefficient",
+        "System compares league's viral coefficient against platform benchmarks"
+      ]
+    },
+    {
+      "id": "INV-T-007",
+      "title": "Admin Manages Expired and Inactive Invitations",
+      "user": "League Admin",
+      "goal": "clean up and review expired or unused invitation links",
+      "benefit": "I can maintain organized invitation management and understand which invitations went unused",
+      "acceptanceCriteria": [
+        "System automatically marks invite links as expired when expiration date is reached",
+        "Admin can view separate list of expired invite links with their usage statistics at time of expiration",
+        "System displays unused invite links that have zero clicks or acceptances after extended period",
+        "Admin can bulk archive expired or inactive invite links to declutter active dashboard",
+        "System provides summary analysis of why invites went unused: expired before use, revoked, or zero interest",
+        "Admin can optionally delete expired invite links permanently with confirmation",
+        "System retains member join records even when original invite link is archived or deleted"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,178 @@
+{
+  "subcomponentId": "content-interaction",
+  "componentId": "social-feed-engagement",
+  "tracesTo": [
+    "SOW: Newsfeed & Moments",
+    "SOW: User Interactions - Content Creation & Engagement"
+  ],
+  "stories": [
+    {
+      "id": "CI-001",
+      "title": "Add Comments to Feed Moments",
+      "user": "League Member",
+      "goal": "add comments to any moment in the feed to participate in discussions",
+      "benefit": "I can share my reactions, opinions, and engage in conversations about league activity",
+      "acceptanceCriteria": [
+        "Comment input field appears below each moment in feed with clear call-to-action",
+        "User can write multi-line text comments with basic formatting preserved",
+        "Submitting comment immediately displays it below the moment with author attribution",
+        "Comment shows author's name, role (Manager/Fan), team affiliation, and timestamp",
+        "Character limit enforced with counter display (e.g., 2000 character maximum)"
+      ]
+    },
+    {
+      "id": "CI-002",
+      "title": "Reply to Comments with Threading",
+      "user": "League Member",
+      "goal": "reply directly to specific comments to maintain conversation context",
+      "benefit": "I can have focused sub-conversations and it's clear what each reply is responding to",
+      "acceptanceCriteria": [
+        "Reply button appears on each comment enabling threaded responses",
+        "Replies appear indented below parent comment with visual connection indicator",
+        "Threading supports at least 2 levels deep (comment → reply → nested reply)",
+        "Reply interface clearly shows which comment user is responding to",
+        "Threaded view can be collapsed/expanded for long conversation trees"
+      ]
+    },
+    {
+      "id": "CI-003",
+      "title": "Edit Own Comments",
+      "user": "League Member",
+      "goal": "edit my comments after posting to correct typos or clarify my thoughts",
+      "benefit": "I can fix mistakes without deleting and reposting, maintaining conversation continuity",
+      "acceptanceCriteria": [
+        "Edit button appears on user's own comments with edit icon or text",
+        "Clicking edit opens inline editor pre-filled with current comment text",
+        "User can modify text and save changes or cancel to revert",
+        "Edited comments display 'edited' indicator with timestamp of last edit",
+        "Edit history is not displayed publicly but may be logged for moderation"
+      ]
+    },
+    {
+      "id": "CI-004",
+      "title": "Delete Own Comments",
+      "user": "League Member",
+      "goal": "delete my comments if I change my mind or posted by mistake",
+      "benefit": "I have control over my own content and can remove comments I regret",
+      "acceptanceCriteria": [
+        "Delete button appears on user's own comments with confirmation prompt",
+        "Deleted comments are immediately removed from view for all users",
+        "If deleted comment has replies, either preserve structure with '[deleted]' placeholder or remove thread",
+        "User receives confirmation message after successful deletion",
+        "Deletion is permanent and cannot be undone by user (admin may retain for moderation)"
+      ]
+    },
+    {
+      "id": "CI-005",
+      "title": "Add Emoji Reactions to Moments",
+      "user": "League Member",
+      "goal": "quickly react to moments with emoji without writing full comments",
+      "benefit": "I can express sentiment and engage with content using minimal effort",
+      "acceptanceCriteria": [
+        "Reaction picker button appears on each moment with emoji icon",
+        "Clicking picker displays panel with common emoji options (like, laugh, sad, fire, thinking, etc.)",
+        "User can select emoji to add reaction which displays immediately below moment",
+        "Reactions show emoji with count and hovering reveals who reacted",
+        "User can only add one reaction of each emoji type per moment"
+      ]
+    },
+    {
+      "id": "CI-006",
+      "title": "Add Emoji Reactions to Comments",
+      "user": "League Member",
+      "goal": "react to individual comments with emoji for lightweight engagement",
+      "benefit": "I can show agreement or sentiment without writing reply comments",
+      "acceptanceCriteria": [
+        "Reaction picker button appears on each comment similar to moment reactions",
+        "Same emoji picker interface and behavior as moment reactions",
+        "Comment reactions display inline below or beside comment text",
+        "Reactions contribute to comment engagement scoring for visibility",
+        "User can toggle off their own reaction by clicking same emoji again"
+      ]
+    },
+    {
+      "id": "CI-007",
+      "title": "Remove Own Reactions",
+      "user": "League Member",
+      "goal": "remove emoji reactions I added if my sentiment changes",
+      "benefit": "I can update my reactions to reflect current feelings without permanent commitment",
+      "acceptanceCriteria": [
+        "User can click on emoji they previously added to remove their reaction",
+        "Reaction count decrements immediately and emoji removed if count reaches zero",
+        "Visual indicator shows which reactions current user has added (e.g., highlighted border)",
+        "Removing reaction does not trigger notification or create audit trail visible to others",
+        "User can remove and re-add same reaction multiple times without restriction"
+      ]
+    },
+    {
+      "id": "CI-008",
+      "title": "Display Comment Counts on Moments",
+      "user": "League Member",
+      "goal": "see how many comments each moment has before expanding discussion",
+      "benefit": "I can identify active discussions and decide which moments to engage with",
+      "acceptanceCriteria": [
+        "Comment count badge displays prominently on each moment card",
+        "Count includes all top-level comments and replies in total",
+        "Count updates in real-time as new comments are added",
+        "Clicking comment count scrolls to or expands comment section",
+        "Zero-comment moments show 'Be the first to comment' prompt"
+      ]
+    },
+    {
+      "id": "CI-009",
+      "title": "Display Reaction Summary on Moments",
+      "user": "League Member",
+      "goal": "see what reactions a moment has received at a glance",
+      "benefit": "I can gauge community sentiment without opening full detail",
+      "acceptanceCriteria": [
+        "Reaction summary displays top 3-5 most used emoji with counts",
+        "Reactions show in order of popularity (most used first)",
+        "Total unique reactors count displayed alongside emoji breakdown",
+        "Clicking reaction summary shows full list of who reacted with what emoji",
+        "Empty reactions section hidden or shows 'Be the first to react' prompt"
+      ]
+    },
+    {
+      "id": "CI-010",
+      "title": "Track Engagement for Feed Bumping",
+      "user": "System",
+      "goal": "track all comment and reaction activity to enable engagement-based feed sorting",
+      "benefit": "active discussions receive visibility and moments don't get buried too quickly",
+      "acceptanceCriteria": [
+        "System records timestamp for every comment and reaction added",
+        "Moment's 'last activity' timestamp updates whenever engagement occurs",
+        "Engagement metrics (comment count, reaction count, recent activity) stored for sorting algorithm",
+        "System distinguishes between initial post time and last engagement time",
+        "Engagement data persists across sessions for historical analysis"
+      ]
+    },
+    {
+      "id": "CI-011",
+      "title": "Notification of Replies to My Comments",
+      "user": "League Member",
+      "goal": "be notified when someone replies to my comments",
+      "benefit": "I can continue conversations and don't miss direct responses to my engagement",
+      "acceptanceCriteria": [
+        "User receives notification when another member replies to their comment",
+        "Notification includes snippet of reply text and link to moment/comment",
+        "Notifications distinguish between direct replies and other activity on same moment",
+        "User can control notification preferences for reply alerts",
+        "Notification marks as read when user views the replied comment"
+      ]
+    },
+    {
+      "id": "CI-012",
+      "title": "Admin Moderation of Comments",
+      "user": "League Admin",
+      "goal": "remove inappropriate or problematic comments from feed",
+      "benefit": "I can maintain healthy community environment and enforce league standards",
+      "acceptanceCriteria": [
+        "Admin can delete any comment regardless of author with moderation UI",
+        "Deleted comments show '[removed by admin]' placeholder or disappear entirely per admin preference",
+        "Admin action logged in moderation history with admin identity and timestamp",
+        "Admin can optionally provide removal reason visible to comment author",
+        "Bulk moderation tools available for removing multiple comments in one action"
+      ]
+    }
+  ]
+}

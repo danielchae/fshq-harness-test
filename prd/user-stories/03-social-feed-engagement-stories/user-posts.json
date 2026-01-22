@@ -1,0 +1,122 @@
+{
+  "subcomponentId": "user-posts",
+  "componentId": "social-feed-engagement",
+  "tracesTo": [
+    "SOW: Newsfeed & Moments",
+    "SOW: User Interactions - Content Creation & Engagement"
+  ],
+  "stories": [
+    {
+      "id": "UP-001",
+      "title": "Create Basic Text Post",
+      "user": "League Member (Manager or Fan)",
+      "goal": "create a text-only post to share thoughts with the league",
+      "benefit": "I can express my opinions and engage with other members without needing external media",
+      "acceptanceCriteria": [
+        "User can access a post creation interface from the newsfeed",
+        "User can enter text content with basic formatting (line breaks, paragraphs)",
+        "User can preview the post before publishing",
+        "User can publish the post, which immediately appears in the newsfeed",
+        "Post displays author name, role, team affiliation (if applicable), and timestamp"
+      ]
+    },
+    {
+      "id": "UP-002",
+      "title": "Add Links to Posts",
+      "user": "League Member",
+      "goal": "include external links in my posts to reference articles, videos, or other content",
+      "benefit": "I can support my arguments with external sources and share relevant content with the league",
+      "acceptanceCriteria": [
+        "User can paste URLs into post content during creation",
+        "System automatically detects and converts URLs to clickable links",
+        "Links open in new browser tabs when clicked",
+        "Links display with appropriate styling to distinguish them from regular text",
+        "Links are validated to prevent malicious URLs"
+      ]
+    },
+    {
+      "id": "UP-003",
+      "title": "Format Post Text",
+      "user": "League Member",
+      "goal": "apply basic text formatting to my posts for better readability and emphasis",
+      "benefit": "I can make my posts more engaging and easier to read through formatting",
+      "acceptanceCriteria": [
+        "User can apply bold, italic, and strikethrough formatting",
+        "User can create bulleted or numbered lists",
+        "User can add headers or section breaks",
+        "Formatting controls are intuitive and visible during post creation",
+        "Formatted content renders correctly in the newsfeed"
+      ]
+    },
+    {
+      "id": "UP-004",
+      "title": "Edit My Own Posts",
+      "user": "League Member",
+      "goal": "edit my posts after publishing to correct mistakes or update content",
+      "benefit": "I can maintain accuracy and relevance of my content without deleting and recreating posts",
+      "acceptanceCriteria": [
+        "User can access an edit option on their own posts only",
+        "Edit interface loads the existing post content with all formatting preserved",
+        "User can modify text, links, and formatting",
+        "Post displays 'edited' indicator with timestamp after updates",
+        "Edit history is tracked for moderation purposes"
+      ]
+    },
+    {
+      "id": "UP-005",
+      "title": "Delete My Own Posts",
+      "user": "League Member",
+      "goal": "remove posts I've created if I no longer want them visible",
+      "benefit": "I have control over my content and can remove posts that are no longer relevant or appropriate",
+      "acceptanceCriteria": [
+        "User can access a delete option on their own posts only",
+        "System prompts for confirmation before deleting",
+        "Deleted posts are removed from the newsfeed immediately",
+        "Associated comments and reactions are also removed or archived",
+        "Deletion is logged for audit purposes"
+      ]
+    },
+    {
+      "id": "UP-006",
+      "title": "Draft Posts for Later Publishing",
+      "user": "League Member",
+      "goal": "save posts as drafts and publish them later",
+      "benefit": "I can compose posts over time without being forced to publish immediately",
+      "acceptanceCriteria": [
+        "User can save a post as draft during creation",
+        "Drafts are stored and accessible from user's profile or post creation area",
+        "User can return to edit drafts at any time",
+        "User can publish drafts with a single action",
+        "Drafts are private and not visible to other users"
+      ]
+    },
+    {
+      "id": "UP-007",
+      "title": "Post Character Limit and Validation",
+      "user": "League Member",
+      "goal": "receive guidance on acceptable post length and content",
+      "benefit": "I understand content limitations and avoid wasting time on posts that won't be accepted",
+      "acceptanceCriteria": [
+        "System enforces a reasonable character limit (e.g., 5000 characters)",
+        "Character counter displays remaining characters during composition",
+        "User receives clear error message if attempting to exceed limit",
+        "System validates content for prohibited elements (e.g., excessive special characters)",
+        "Publish button is disabled until validation passes"
+      ]
+    },
+    {
+      "id": "UP-008",
+      "title": "View Post Engagement Metrics",
+      "user": "Post Author",
+      "goal": "see how many people have engaged with my posts",
+      "benefit": "I can understand which content resonates with the league and adjust my participation accordingly",
+      "acceptanceCriteria": [
+        "Post displays count of comments and reactions",
+        "Author can see total view count (if tracking is implemented)",
+        "Engagement metrics update in real-time or near real-time",
+        "Author can click on metrics to see details (e.g., who reacted)",
+        "Metrics are displayed consistently across all post types"
+      ]
+    }
+  ]
+}

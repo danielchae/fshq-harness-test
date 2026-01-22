@@ -1,0 +1,279 @@
+{
+  "id": "US-2.7",
+  "title": "Co-Manager Permission Conflicts and Data Consistency Validation",
+  "epic": "Onboarding & Access Control",
+  "priority": "P2",
+  "status": "draft",
+  "batch": "1 of 2",
+  "category": "quality-enhancement",
+  "story_type": "gap-filling",
+  "user_role": "League Commissioner & Co-Manager",
+  "user_story": "As a League Commissioner, I want the system to prevent and resolve co-manager permission conflicts, so that when multiple co-managers edit team data concurrently, historical statistics are attributed correctly, permission hierarchies are enforced, and no data inconsistencies occur that could corrupt league records.",
+  "problem_statement": "When multiple co-managers have permission to edit the same team (e.g., two people managing 'Team Alpha'), concurrent edits can create data conflicts: lineup changes overwriting each other, trade proposals duplicated, or historical statistics incorrectly attributed to the wrong manager. Without clear permission hierarchy (which co-manager's action takes precedence?) and conflict resolution mechanisms, teams with multiple managers become data consistency risks. Additionally, if a co-manager is removed mid-season, their historical contributions must be preserved while future access is revoked.",
+  "business_value": {
+    "data_integrity": "Prevent data corruption and inconsistencies in multi-manager scenarios",
+    "user_trust": "Ensure co-managers can collaborate without fear of overwriting each other's work",
+    "audit_compliance": "Maintain accurate historical attribution of all team actions for league records",
+    "scalability": "Enable advanced league configurations with multiple managers per team"
+  },
+  "acceptance_criteria": [
+    {
+      "id": "AC-2.7.1",
+      "description": "Permission Hierarchy Definition",
+      "criteria": [
+        "GIVEN team has multiple co-managers with same role ('manager' or 'co-manager')",
+        "WHEN defining permission hierarchy",
+        "THEN system establishes precedence: (1) Primary Manager (first user assigned to team), (2) Co-Managers (ordered by date added), (3) Commissioner (can override all)",
+        "AND primary manager cannot be removed unless reassigned to another user (prevents orphaned teams)",
+        "AND permission hierarchy is visible in team management UI: 'Primary Manager: User A, Co-Managers: User B (added 2024-08-01), User C (added 2024-09-15)'",
+        "AND API returns 'manager_role' field with values: 'primary' | 'co-manager' | 'commissioner-override'"
+      ]
+    },
+    {
+      "id": "AC-2.7.2",
+      "description": "Concurrent Edit Detection via Optimistic Locking",
+      "criteria": [
+        "GIVEN two co-managers edit same team entity (lineup, roster, team name) simultaneously",
+        "WHEN both submit changes within <10 second window",
+        "THEN system uses optimistic locking: each entity has 'version' field (integer, increments on each update)",
+        "AND first edit to acquire lock succeeds, increments version",
+        "AND second edit detects version mismatch, rejects with error: 'Team data was updated by another manager. Refresh and reapply your changes.'",
+        "AND rejected user receives notification with diff showing conflicting changes: 'User B changed Lineup Slot 1 from Player X to Player Y while you were editing'",
+        "AND system provides 'Merge Changes' option if conflicts are in different fields (e.g., one changed lineup, other changed team name)"
+      ]
+    },
+    {
+      "id": "AC-2.7.3",
+      "description": "Real-Time Collaboration Indicators",
+      "criteria": [
+        "GIVEN co-manager is actively editing team (has edit form open)",
+        "WHEN another co-manager opens same edit form",
+        "THEN system displays banner: 'User B is currently editing this team. Changes may conflict.'",
+        "AND UI shows 'active editor' badge next to fields being edited (e.g., 'Lineup: User B is editing...')",
+        "AND real-time sync via WebSocket updates form fields as other user makes changes (live collaboration, like Google Docs)",
+        "AND if edit session inactive for >5 minutes, 'active editor' lock released automatically"
+      ]
+    },
+    {
+      "id": "AC-2.7.4",
+      "description": "Historical Stat Attribution Accuracy",
+      "criteria": [
+        "GIVEN co-manager makes team action (sets lineup, proposes trade, changes team name)",
+        "WHEN action is recorded",
+        "THEN system stores attribution metadata: (1) 'action_by_user_id', (2) 'action_timestamp', (3) 'action_type', (4) 'manager_role_at_time' (primary/co-manager/commissioner)",
+        "AND historical records display: 'Lineup set by User B (Co-Manager) on 2024-09-15 at 2:45 PM'",
+        "AND if co-manager is later removed, historical records still show their name/role at time of action (not 'Unknown User')",
+        "AND API endpoint GET /teams/:id/action-history returns full attribution details for all past actions"
+      ]
+    },
+    {
+      "id": "AC-2.7.5",
+      "description": "Trade Proposal Deduplication",
+      "criteria": [
+        "GIVEN two co-managers propose identical trade (same teams, same players) within 1 hour window",
+        "WHEN second trade proposal submitted",
+        "THEN system detects duplicate via hash of (team_ids, player_ids, direction) and rejects with error: 'Identical trade already proposed by User B. View existing proposal instead.'",
+        "AND rejected user is redirected to existing proposal page",
+        "AND if trade details differ slightly (e.g., different players), both proposals are allowed (not considered duplicates)",
+        "AND trade proposal UI shows 'Proposed by: User B (Primary Manager)' to clarify originator"
+      ]
+    },
+    {
+      "id": "AC-2.7.6",
+      "description": "Co-Manager Removal with Historical Preservation",
+      "criteria": [
+        "GIVEN commissioner or primary manager removes co-manager mid-season",
+        "WHEN co-manager removal executes",
+        "THEN system: (1) Revokes co-manager's future access to team (immediate RLS policy update), (2) Preserves all historical action records with original user_id and role, (3) Updates team management UI to show 'Former Co-Manager: User C (managed 2024-08-01 to 2024-10-15)'",
+        "AND removed co-manager receives notification: 'You have been removed as co-manager of [Team Name]. Your historical contributions remain recorded.'",
+        "AND commissioner can optionally add 'removal reason' field (stored in audit log): 'User requested removal', 'Inactive for 30+ days', 'Permission revoked by primary manager'",
+        "AND removed co-manager can still view team's public profile (if league is public) but cannot edit"
+      ]
+    },
+    {
+      "id": "AC-2.7.7",
+      "description": "Permission Conflict Resolution: Commissioner Override",
+      "criteria": [
+        "GIVEN permission conflict arises (e.g., co-managers disagree on lineup decision, both submit conflicting edits)",
+        "WHEN commissioner intervenes",
+        "THEN commissioner can select 'Commissioner Override' option to force-apply a specific edit",
+        "AND override bypasses optimistic locking (no version check) and immediately applies change",
+        "AND override is logged in audit trail with: 'Commissioner [Name] overrode co-manager edits. Selected User B's lineup over User C's.'",
+        "AND all co-managers receive notification: 'Commissioner resolved edit conflict. Current lineup set by Commissioner override.'",
+        "AND UI displays 'Commissioner Override' badge on affected entity (e.g., lineup slot)"
+      ]
+    },
+    {
+      "id": "AC-2.7.8",
+      "description": "Error Handling: Orphaned Team Prevention",
+      "criteria": [
+        "GIVEN attempt to remove last manager from team (leaving team with zero managers)",
+        "WHEN removal is attempted",
+        "THEN system prevents removal with error: 'Cannot remove last manager. Assign a new primary manager before removing User A.'",
+        "AND UI disables 'Remove' button for last manager (grayed out, tooltip explains restriction)",
+        "AND API returns 400 Bad Request with detailed message",
+        "AND audit log records failed removal attempt with reason: 'Blocked: Would create orphaned team'"
+      ]
+    },
+    {
+      "id": "AC-2.7.9",
+      "description": "Edge Case: Concurrent Co-Manager Addition/Removal",
+      "criteria": [
+        "GIVEN commissioner adds co-manager while primary manager simultaneously removes different co-manager",
+        "WHEN both actions occur within <1 second window",
+        "THEN database-level row locking on 'team_managers' table prevents race condition",
+        "AND both actions are queued sequentially (first to acquire lock executes, second waits)",
+        "AND both actions succeed unless constraints violated (e.g., adding duplicate co-manager)",
+        "AND audit log shows exact execution order with timestamps: 'User B added at 14:30:45.123, User C removed at 14:30:45.456'"
+      ]
+    },
+    {
+      "id": "AC-2.7.10",
+      "description": "Edge Case: Primary Manager Reassignment During Active Edit",
+      "criteria": [
+        "GIVEN co-manager is actively editing team (has form open, unsaved changes)",
+        "WHEN commissioner reassigns primary manager role from User A to User B",
+        "THEN system sends real-time notification to active editor: 'Primary manager changed during your edit session. Your changes will be saved as co-manager actions.'",
+        "AND active editor's unsaved changes are preserved (not lost due to role change)",
+        "AND when editor submits changes, action is attributed with new role: 'Lineup set by User A (Co-Manager)' (not Primary Manager, since role changed mid-edit)",
+        "AND if optimistic locking conflict occurs, version check still applies (role change doesn't bypass locking)"
+      ]
+    },
+    {
+      "id": "AC-2.7.11",
+      "description": "Data Consistency: Audit Trail Completeness",
+      "criteria": [
+        "GIVEN any co-manager action (lineup change, trade proposal, roster move, team name update)",
+        "WHEN action completes",
+        "THEN audit log records: (1) action_id (UUID), (2) team_id, (3) user_id, (4) manager_role (primary/co-manager/commissioner), (5) action_type (enum), (6) before_value (JSON), (7) after_value (JSON), (8) timestamp (ISO8601), (9) version_at_time (for optimistic locking), (10) conflict_resolution_method (if applicable: 'first-wins', 'commissioner-override', 'merged')",
+        "AND audit log is append-only (no updates/deletes allowed)",
+        "AND commissioners can query audit log via dashboard: filter by team, user, action_type, date_range",
+        "AND audit log exports to CSV for external analysis (GDPR data portability)"
+      ]
+    }
+  ],
+  "technical_considerations": {
+    "database_schema": [
+      "Add 'version' INTEGER column to 'teams' and related tables (rosters, lineups) for optimistic locking",
+      "Create 'team_managers' table with columns: team_id, user_id, role ('primary' | 'co-manager'), added_at, removed_at (nullable), removal_reason (nullable)",
+      "Create 'team_action_audit' table with columns: action_id (UUID), team_id, user_id, manager_role, action_type (ENUM), before_value (JSONB), after_value (JSONB), timestamp, version_at_time, conflict_resolution_method",
+      "Add database trigger to auto-increment 'version' on every update to teams/rosters/lineups",
+      "Add unique constraint on (team_id, user_id) in 'team_managers' table (prevent duplicate co-managers)",
+      "Add check constraint: at least one row per team_id with removed_at IS NULL (prevent orphaned teams at DB level)"
+    ],
+    "api_changes": [
+      "Update PUT /teams/:id endpoints to include 'version' parameter (reject if version mismatch)",
+      "Add GET /teams/:id/managers endpoint to list all managers with roles and addition dates",
+      "Add POST /teams/:id/managers endpoint to add co-manager (checks for duplicates)",
+      "Add DELETE /teams/:id/managers/:user_id endpoint to remove co-manager (enforces primary manager retention)",
+      "Add GET /teams/:id/action-history endpoint with filters: user_id, action_type, date_range",
+      "Add POST /teams/:id/commissioner-override endpoint for resolving conflicts"
+    ],
+    "real_time_sync": [
+      "Implement WebSocket connection for active edit sessions (send updates every 2 seconds)",
+      "Broadcast 'active-editor' events to all co-managers viewing same team",
+      "Send 'role-changed' event via WebSocket when primary manager reassigned",
+      "Implement session timeout: release 'active editor' lock after 5 minutes of inactivity"
+    ],
+    "conflict_resolution": [
+      "Implement merge logic for non-conflicting changes (e.g., User A changes lineup, User B changes team name - both succeed)",
+      "Use JSON diff library (e.g., jsondiffpatch) to visualize conflicting changes for users",
+      "Provide 'Reapply My Changes' button for rejected edits (pre-fills form with user's original values)"
+    ],
+    "security_considerations": [
+      "Verify co-manager permissions on every API call (don't cache role for >1 minute)",
+      "Use RLS policies to enforce team_managers table access (co-managers can only see their own teams)",
+      "Rate-limit team update endpoints (max 20 updates/minute per team to prevent abuse)",
+      "Encrypt audit log entries containing before_value/after_value (may include sensitive data)"
+    ]
+  },
+  "dependencies": {
+    "requires": [
+      "US-2.1 (League member roles and permissions - establishes manager role definitions)",
+      "US-2.2 (Team assignment and roster access - establishes team-user relationship)"
+    ],
+    "blocks": [],
+    "relates_to": [
+      "US-2.5 (Trade proposals and approval workflow - co-managers can propose trades, must prevent duplicates)",
+      "US-4.4 (Content history - audit trail integrates with content history views)"
+    ]
+  },
+  "testing_strategy": {
+    "unit_tests": [
+      "Test optimistic locking version mismatch detection",
+      "Verify permission hierarchy enforcement (primary > co-manager > commissioner)",
+      "Test trade proposal deduplication hash logic",
+      "Verify orphaned team prevention (cannot remove last manager)"
+    ],
+    "integration_tests": [
+      "Test concurrent edit conflict: two co-managers edit lineup simultaneously, verify first-wins and second-rejected",
+      "Test co-manager removal with historical preservation (past actions still attributed correctly)",
+      "Test commissioner override resolves conflict and logs to audit trail",
+      "Test primary manager reassignment during active edit session"
+    ],
+    "edge_case_tests": [
+      "Test concurrent co-manager addition/removal (database row locking)",
+      "Test active edit session when co-manager removed (verify access revocation, unsaved changes handling)",
+      "Test duplicate trade proposal detection with slight variations (e.g., different players)",
+      "Test audit trail completeness for all co-manager action types"
+    ],
+    "real_time_tests": [
+      "Test WebSocket 'active-editor' notifications (verify all co-managers receive updates)",
+      "Test session timeout releases 'active editor' lock after 5 minutes",
+      "Test real-time sync of form fields during concurrent edits"
+    ],
+    "performance_tests": [
+      "Measure optimistic locking overhead on team update latency (target: <50ms)",
+      "Test audit log write performance with 1000+ concurrent actions (target: <100ms per write)",
+      "Measure WebSocket broadcast latency for 'active-editor' events (target: <500ms)"
+    ]
+  },
+  "non_functional_requirements": {
+    "performance": [
+      "Optimistic locking adds <50ms overhead to team update operations",
+      "Audit log writes complete in <100ms per action",
+      "WebSocket notifications delivered in <500ms",
+      "Real-time collaboration indicators update every 2 seconds"
+    ],
+    "security": [
+      "Co-manager permissions verified on every API call (no stale role caching >1 minute)",
+      "Audit log is append-only and encrypted at rest",
+      "Rate limiting: max 20 team updates/minute per team",
+      "RLS policies enforce team-manager access control"
+    ],
+    "reliability": [
+      "Optimistic locking prevents 100% of concurrent edit data corruption",
+      "Database constraints prevent orphaned teams (at least one manager always assigned)",
+      "Audit trail achieves 100% completeness (no missing action records)"
+    ]
+  },
+  "definition_of_done": [
+    "All 11 acceptance criteria pass automated tests",
+    "Optimistic locking prevents concurrent edit conflicts (first-wins, second-rejected)",
+    "Permission hierarchy enforced (primary manager > co-manager > commissioner)",
+    "Real-time collaboration indicators show active editors via WebSocket",
+    "Historical stat attribution preserved even after co-manager removal",
+    "Trade proposal deduplication prevents duplicate submissions",
+    "Commissioner override resolves conflicts and logs to audit trail",
+    "Orphaned team prevention enforced at database and API levels",
+    "Audit trail records all co-manager actions with complete metadata",
+    "Edge cases tested: concurrent addition/removal, primary manager reassignment during edit",
+    "Performance tests validate <50ms optimistic locking overhead",
+    "Documentation updated with co-manager permission model and conflict resolution"
+  ],
+  "notes": [
+    "Key gap: Multiple co-managers create data consistency risks without conflict detection",
+    "Optimistic locking (version field) is critical for preventing concurrent edit corruption",
+    "Real-time collaboration indicators improve UX and reduce accidental conflicts",
+    "Historical attribution must be preserved even after co-manager removal (audit compliance)",
+    "Trade proposal deduplication prevents confusion from duplicate proposals",
+    "Commissioner override provides escape hatch for unresolvable conflicts",
+    "Permission hierarchy clarifies which co-manager's actions take precedence",
+    "Database constraints (at least one manager per team) prevent orphaned teams",
+    "Audit trail completeness critical for dispute resolution and compliance",
+    "Edge cases: concurrent role changes, active edit sessions during removal, require special handling"
+  ],
+  "created_date": "2025-12-05",
+  "updated_date": "2025-12-05",
+  "estimated_effort": "13 story points"
+}

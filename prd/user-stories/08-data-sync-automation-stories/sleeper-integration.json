@@ -1,0 +1,150 @@
+{
+  "subcomponentId": "sleeper-integration",
+  "componentId": "data-sync-automation",
+  "tracesTo": [
+    "SOW: Tech Stack - Sleeper public API",
+    "SOW: League Connection & Identity"
+  ],
+  "stories": [
+    {
+      "id": "SI-001",
+      "title": "Fetch League Data via Sleeper API",
+      "user": "System",
+      "goal": "retrieve comprehensive league configuration and settings from Sleeper API",
+      "benefit": "FSHQ maintains accurate league information for display and synchronization",
+      "acceptanceCriteria": [
+        "System calls Sleeper API GET /league/{league_id} to fetch league metadata",
+        "System retrieves league name, season, avatar, scoring settings, roster positions, and playoff configuration",
+        "System stores league data with version timestamp for tracking changes",
+        "System handles API errors gracefully with retry logic and error logging",
+        "System validates API response structure before processing"
+      ]
+    },
+    {
+      "id": "SI-002",
+      "title": "Fetch Team Rosters and Owner Information",
+      "user": "System",
+      "goal": "retrieve all team rosters and their associated owners from Sleeper",
+      "benefit": "FSHQ can display current team compositions and link teams to owners",
+      "acceptanceCriteria": [
+        "System calls Sleeper API GET /league/{league_id}/rosters to fetch all rosters",
+        "System retrieves roster_id, owner_id, players, starters, reserve, taxi squad, wins, losses, and points",
+        "System calls GET /league/{league_id}/users to fetch owner display names and avatars",
+        "System maps roster data to FSHQ team entities using roster_id as external reference",
+        "System handles rosters without owners (orphaned teams) appropriately"
+      ]
+    },
+    {
+      "id": "SI-003",
+      "title": "Fetch Weekly Matchup Schedule",
+      "user": "System",
+      "goal": "retrieve the complete matchup schedule for all weeks of the season",
+      "benefit": "FSHQ can display weekly matchups and track season progression",
+      "acceptanceCriteria": [
+        "System calls Sleeper API GET /league/{league_id}/matchups/{week} for each week of the season",
+        "System retrieves matchup_id, roster_id, points, and custom_points for each matchup",
+        "System determines total number of weeks from league settings (regular season + playoffs)",
+        "System stores matchup data with week number and matchup pairings",
+        "System identifies playoff weeks based on league playoff configuration"
+      ]
+    },
+    {
+      "id": "SI-004",
+      "title": "Fetch League Transactions",
+      "user": "System",
+      "goal": "retrieve all transactions including trades, waivers, and free agent pickups",
+      "benefit": "FSHQ can display transaction history and generate transaction moments for the newsfeed",
+      "acceptanceCriteria": [
+        "System calls Sleeper API GET /league/{league_id}/transactions/{round} to fetch transactions",
+        "System retrieves transaction type (trade, waiver, free_agent), status, timestamp, roster_ids, players, and draft picks",
+        "System iterates through all rounds (weeks) to fetch complete transaction history",
+        "System stores transaction data with timestamps for chronological sorting",
+        "System handles different transaction types (trade vs waiver vs free agent) appropriately"
+      ]
+    },
+    {
+      "id": "SI-005",
+      "title": "Fetch Match Results and Scoring",
+      "user": "System",
+      "goal": "retrieve final match scores and player performance data for completed matchups",
+      "benefit": "FSHQ can display accurate results and generate match result moments",
+      "acceptanceCriteria": [
+        "System calls GET /league/{league_id}/matchups/{week} to fetch matchup results",
+        "System retrieves final points scored by each team in each matchup",
+        "System identifies winners and losers based on points comparison",
+        "System detects stat corrections by comparing points across multiple fetches",
+        "System stores match results with completion timestamps"
+      ]
+    },
+    {
+      "id": "SI-006",
+      "title": "Handle Sleeper API Rate Limits",
+      "user": "System",
+      "goal": "respect Sleeper API rate limits and handle throttling gracefully",
+      "benefit": "FSHQ maintains reliable API access without being blocked or throttled",
+      "acceptanceCriteria": [
+        "System implements rate limiting to stay within Sleeper API limits (1000 requests per minute)",
+        "System includes exponential backoff retry logic when rate limited",
+        "System queues API requests when approaching rate limits",
+        "System logs rate limit events for monitoring and optimization",
+        "System prioritizes critical API calls (match results) over historical data fetches"
+      ]
+    },
+    {
+      "id": "SI-007",
+      "title": "Fetch Draft Results and Draft Picks",
+      "user": "System",
+      "goal": "retrieve complete draft history including all picks and pick trades",
+      "benefit": "FSHQ can display draft results and track pick trades for dynasty leagues",
+      "acceptanceCriteria": [
+        "System calls GET /league/{league_id}/drafts to get list of drafts for league",
+        "System calls GET /draft/{draft_id}/picks to fetch all draft picks in order",
+        "System retrieves pick number, player_id, roster_id, and pick metadata",
+        "System stores draft results with timestamps and draft type (snake, linear, auction)",
+        "System handles traded picks and tracks original vs current pick ownership"
+      ]
+    },
+    {
+      "id": "SI-008",
+      "title": "Fetch Playoff Bracket Structure",
+      "user": "System",
+      "goal": "retrieve playoff bracket configuration and progression",
+      "benefit": "FSHQ can display accurate playoff brackets with winners and losers brackets",
+      "acceptanceCriteria": [
+        "System determines playoff structure from league settings (teams, rounds, bracket type)",
+        "System fetches playoff matchups using GET /league/{league_id}/matchups/{week} for playoff weeks",
+        "System identifies winners bracket vs losers/toilet bracket matchups",
+        "System tracks bracket progression and determines playoff seeding",
+        "System handles different playoff formats (single elimination, consolation bracket)"
+      ]
+    },
+    {
+      "id": "SI-009",
+      "title": "Fetch Current NFL Season State",
+      "user": "System",
+      "goal": "retrieve current NFL week, season type, and season year",
+      "benefit": "FSHQ can determine which week is active and adjust sync frequency accordingly",
+      "acceptanceCriteria": [
+        "System calls GET /state/nfl to fetch current NFL season state",
+        "System retrieves season, season_type (pre, regular, post), week, and previous_season",
+        "System uses season state to determine if league is active and which weeks need syncing",
+        "System adjusts sync frequency based on season phase (active vs offseason)",
+        "System stores season state with timestamp for tracking changes"
+      ]
+    },
+    {
+      "id": "SI-010",
+      "title": "Fetch Player Metadata for Roster Display",
+      "user": "System",
+      "goal": "retrieve player information for displaying rosters and transactions",
+      "benefit": "FSHQ can show player names, positions, and teams in roster and transaction views",
+      "acceptanceCriteria": [
+        "System calls GET /players/nfl to fetch comprehensive player database",
+        "System retrieves player_id, full_name, position, team, status, and injury information",
+        "System caches player data locally to reduce API calls",
+        "System updates player data weekly during season to capture status changes",
+        "System handles player transactions (team changes, status updates) appropriately"
+      ]
+    }
+  ]
+}

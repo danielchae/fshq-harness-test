@@ -1,0 +1,145 @@
+{
+  "subcomponentId": "league-settings",
+  "componentId": "league-connection-identity",
+  "tracesTo": [
+    "SOW: League Connection & Identity",
+    "SOW: Public vs Private Presentation"
+  ],
+  "stories": [
+    {
+      "id": "LS-001",
+      "title": "Configure League Visibility (Public/Private)",
+      "user": "League Admin",
+      "goal": "set my league as public or private to control who can discover and view it",
+      "benefit": "I can control the privacy level of my league and determine whether non-members can find and view league content",
+      "acceptanceCriteria": [
+        "Admin can access league visibility settings from league admin dashboard",
+        "Admin can toggle between 'Public' and 'Private' visibility modes",
+        "Public leagues are discoverable via search and can be viewed by anyone with the URL",
+        "Private leagues are hidden from search and require membership to view any content",
+        "System saves visibility setting to database and applies changes immediately",
+        "System displays clear explanation of what public vs private means for the league"
+      ]
+    },
+    {
+      "id": "LS-002",
+      "title": "Configure Join Rules (Auto-Join vs Approval Required)",
+      "user": "League Admin",
+      "goal": "set whether new members can join automatically or need admin approval",
+      "benefit": "I can control the membership process and maintain league quality by reviewing members before they join",
+      "acceptanceCriteria": [
+        "Admin can access join rules settings from league admin dashboard",
+        "Admin can select between 'Auto-Join' and 'Approval Required' join modes",
+        "Auto-join allows users to immediately become members after claiming a team or selecting fan role",
+        "Approval required mode adds users to pending approval queue that admin must review",
+        "System saves join rule setting to database and applies to all future join requests",
+        "Current members are not affected by changes to join rules"
+      ]
+    },
+    {
+      "id": "LS-003",
+      "title": "Configure Fan Access Settings",
+      "user": "League Admin",
+      "goal": "control whether fans can join my league and what access level they have",
+      "benefit": "I can allow or restrict fan participation and engagement in my league community",
+      "acceptanceCriteria": [
+        "Admin can toggle fan access on or off from league settings",
+        "When fan access is enabled, non-managers can request fan role during onboarding",
+        "When fan access is disabled, only manager roles are available during onboarding",
+        "System displays current fan count and total fan limit (if applicable)",
+        "Admin can optionally set maximum number of fans allowed in league",
+        "Disabling fan access prevents new fans from joining but does not remove existing fans"
+      ]
+    },
+    {
+      "id": "LS-004",
+      "title": "View League Configuration Summary",
+      "user": "League Admin",
+      "goal": "see a comprehensive summary of all current league configuration settings",
+      "benefit": "I can quickly understand my league's current configuration and identify settings that may need adjustment",
+      "acceptanceCriteria": [
+        "Admin dashboard displays summary card with key league settings",
+        "Summary shows visibility status (Public/Private), join rule (Auto/Approval), and fan access status",
+        "Summary shows league URL slug and external platform connection status",
+        "Summary displays league creation date and last settings update timestamp",
+        "Admin can click any setting in summary to navigate to detailed settings page",
+        "Summary updates in real-time when settings are changed"
+      ]
+    },
+    {
+      "id": "LS-005",
+      "title": "Set League Description and About Information",
+      "user": "League Admin",
+      "goal": "add a description and about information for my league",
+      "benefit": "potential members and fans can learn about my league's culture, rules, and community before joining",
+      "acceptanceCriteria": [
+        "Admin can access league description editor from league settings",
+        "Admin can enter multi-paragraph text description with basic formatting (line breaks, links)",
+        "System supports descriptions up to 2000 characters",
+        "Description is displayed on league landing page for both members and non-members (if public)",
+        "System auto-saves description as admin types with visual confirmation",
+        "Admin can preview how description appears to visitors before publishing"
+      ]
+    },
+    {
+      "id": "LS-006",
+      "title": "Configure Public Content Visibility for Private Leagues",
+      "user": "League Admin",
+      "goal": "control which content is visible to non-members even when league is private",
+      "benefit": "I can share specific content publicly (like power rankings) while keeping other content private (like posts and comments)",
+      "acceptanceCriteria": [
+        "Admin can access granular content visibility settings for private leagues",
+        "Admin can individually toggle visibility for: Power Rankings, Matchups, Playoff Brackets, Transactions, League History",
+        "Settings only apply when league visibility is set to Private",
+        "Public content from private leagues is accessible via direct URL but not searchable",
+        "System displays warning that making content public may reveal league member information",
+        "Changes to content visibility apply immediately to all non-member visitors"
+      ]
+    },
+    {
+      "id": "LS-007",
+      "title": "Manage League Admin Roles and Permissions",
+      "user": "League Admin (Primary)",
+      "goal": "grant admin permissions to other league members to help manage the league",
+      "benefit": "I can share administrative responsibilities with trusted members and delegate league management tasks",
+      "acceptanceCriteria": [
+        "Primary admin can view list of all current league members with their current roles",
+        "Primary admin can promote any manager or fan to admin status",
+        "Primary admin can demote other admins back to regular member status",
+        "System prevents primary admin (league creator) from losing admin status",
+        "Promoted admins receive notification of their new permissions",
+        "All admin actions are logged with timestamp and admin who performed the action"
+      ]
+    },
+    {
+      "id": "LS-008",
+      "title": "Configure Notification and Communication Settings",
+      "user": "League Admin",
+      "goal": "control how the league communicates with members via notifications",
+      "benefit": "I can manage member engagement without overwhelming them with notifications",
+      "acceptanceCriteria": [
+        "Admin can access notification settings from league configuration page",
+        "Admin can enable/disable notifications for: new moments, commissioner posts, trade alerts, weekly reminders",
+        "Admin can set default notification preferences for new members",
+        "Individual members can override league defaults with their personal preferences",
+        "System provides estimated notification frequency based on current settings and league activity",
+        "Changes to notification settings are applied immediately and communicated to members"
+      ]
+    },
+    {
+      "id": "LS-009",
+      "title": "View and Audit League Settings Change History",
+      "user": "League Admin",
+      "goal": "see a history of all changes made to league settings",
+      "benefit": "I can track who changed settings, when they were changed, and revert if needed",
+      "acceptanceCriteria": [
+        "Admin can access settings change history from league admin dashboard",
+        "History displays all settings changes with timestamp, admin who made change, and what was changed",
+        "History shows before/after values for each setting change",
+        "History is sortable and filterable by date, admin, and setting type",
+        "System retains settings history indefinitely for audit purposes",
+        "Admin can export settings history as CSV for external recordkeeping"
+      ]
+    }
+  ]
+}

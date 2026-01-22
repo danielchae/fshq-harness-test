@@ -1,0 +1,192 @@
+{
+  "subcomponentId": "power-rankings-creation",
+  "componentId": "commissioner-tools",
+  "tracesTo": [
+    "SOW: Commissioner Desk & Weekly Content Publishing",
+    "UserFlow: Weekly Commissioner Desk → Optional Content Creation & Publishing to Feed"
+  ],
+  "stories": [
+    {
+      "id": "PR-001",
+      "title": "Initialize Power Rankings Builder for Week",
+      "user": "League Commissioner",
+      "goal": "start creating power rankings for the selected week with teams pre-populated in current order",
+      "benefit": "I can begin ranking teams without manual data entry and have a clear starting point",
+      "acceptanceCriteria": [
+        "Power Rankings section loads with all league teams displayed in list format",
+        "Teams are initially ordered by previous week's published rankings (or by standings if first week)",
+        "Each team entry displays team logo, team name, manager name, and current record/standing",
+        "System provides visual indication that rankings are in draft/edit mode",
+        "Draft rankings are separate from published rankings and not visible to league members until published"
+      ]
+    },
+    {
+      "id": "PR-002",
+      "title": "Drag-and-Drop Team Reordering",
+      "user": "League Commissioner",
+      "goal": "reorder teams by dragging them to new positions to reflect my power rankings",
+      "benefit": "I can quickly arrange teams in my preferred order with an intuitive interface",
+      "acceptanceCriteria": [
+        "Each team row has visible drag handle icon indicating it is draggable",
+        "User can click and hold team row to begin drag operation",
+        "Visual feedback shows team being dragged with semi-transparent overlay and cursor change",
+        "Drop zones between teams highlight when dragging over them to show valid insertion points",
+        "Teams automatically reorder with smooth animation when dropped in new position",
+        "System updates rank numbers (1, 2, 3, etc.) automatically after each reorder action",
+        "Drag-and-drop works on both desktop (mouse) and mobile (touch) interfaces"
+      ]
+    },
+    {
+      "id": "PR-003",
+      "title": "Add Per-Team Commentary Text",
+      "user": "League Commissioner",
+      "goal": "write custom commentary for each team explaining my ranking decision",
+      "benefit": "I can provide context and analysis that makes my rankings more engaging for league members",
+      "acceptanceCriteria": [
+        "Each team row includes expandable text input field for commentary",
+        "Commentary field supports plain text with basic formatting (line breaks, basic punctuation)",
+        "System provides character count indicator with recommended range (50-500 characters)",
+        "Commentary autosaves along with rankings order every 30 seconds or when user stops typing for 3 seconds",
+        "Empty commentary fields are visually indicated but do not block publishing (commentary is optional)",
+        "System preserves commentary when reordering teams via drag-and-drop"
+      ]
+    },
+    {
+      "id": "PR-004",
+      "title": "Skip Teams from Rankings",
+      "user": "League Commissioner",
+      "goal": "exclude specific teams from this week's power rankings if they are inactive or eliminated",
+      "benefit": "I can maintain accurate rankings that reflect only active participants",
+      "acceptanceCriteria": [
+        "Each team row includes 'Skip This Team' checkbox or toggle control",
+        "Skipped teams are visually grayed out or moved to separate 'Skipped' section below main rankings",
+        "Rank numbers automatically adjust to exclude skipped teams (1, 2, 3... without gaps)",
+        "Skipped teams are not included in published rankings page or feed moment",
+        "System tracks skip status per team per week in database",
+        "User can un-skip teams and they return to rankable list at bottom position by default"
+      ]
+    },
+    {
+      "id": "PR-005",
+      "title": "Use Keyboard Shortcuts for Rankings",
+      "user": "League Commissioner",
+      "goal": "reorder teams quickly using keyboard commands as alternative to drag-and-drop",
+      "benefit": "I can work more efficiently without relying solely on mouse/touch interactions",
+      "acceptanceCriteria": [
+        "User can select a team row using arrow keys or Tab navigation",
+        "Ctrl/Cmd + Up Arrow moves selected team up one position",
+        "Ctrl/Cmd + Down Arrow moves selected team down one position",
+        "Ctrl/Cmd + Shift + Up/Down moves team to top or bottom of list",
+        "Enter key focuses commentary field for currently selected team",
+        "Keyboard shortcuts are documented in help tooltip or keyboard shortcuts modal",
+        "Rank numbers update immediately after keyboard-based reordering"
+      ]
+    },
+    {
+      "id": "PR-006",
+      "title": "Bulk Reorder Teams by Criteria",
+      "user": "League Commissioner",
+      "goal": "quickly reorder teams based on standings, points, or previous rankings as a starting point",
+      "benefit": "I can use data-driven sorting as a foundation before making manual adjustments",
+      "acceptanceCriteria": [
+        "System provides 'Sort By' dropdown with options: Current Standings, Points For, Points Against, Previous Rankings, Custom",
+        "Selecting a sort option immediately reorders teams based on chosen criteria",
+        "Sort operation preserves any existing commentary for each team",
+        "System displays confirmation message indicating teams were reordered by selected criteria",
+        "User can undo bulk sort operation and return to previous order",
+        "Manual drag-and-drop or keyboard reordering overrides any bulk sort"
+      ]
+    },
+    {
+      "id": "PR-007",
+      "title": "Preview Power Rankings Before Publishing",
+      "user": "League Commissioner",
+      "goal": "see how the rankings will appear on the power rankings page and in the feed moment",
+      "benefit": "I can verify the layout, order, and commentary are correct before making them public",
+      "acceptanceCriteria": [
+        "System provides 'Preview Rankings' button within Power Rankings section",
+        "Preview displays rankings in read-only format matching public page layout with team order, logos, and commentary",
+        "Preview shows approximate feed moment appearance with ranking highlights and top teams featured",
+        "User can toggle between edit and preview modes without losing unsaved changes",
+        "Preview mode is clearly indicated with banner stating 'Preview Mode - Not Yet Published'",
+        "System highlights incomplete or missing elements (e.g., teams without commentary if desired)"
+      ]
+    },
+    {
+      "id": "PR-008",
+      "title": "Validate Rankings Completeness",
+      "user": "League Commissioner",
+      "goal": "receive clear feedback if my rankings are incomplete or have errors before attempting to publish",
+      "benefit": "I can address any issues before publishing and avoid incomplete content going live",
+      "acceptanceCriteria": [
+        "System validates that all non-skipped teams are ranked in sequential order (1, 2, 3... without gaps)",
+        "Validation checks that commentary fields meet minimum length requirements if specified by league settings",
+        "System displays specific error messages for each validation failure with guidance on how to fix",
+        "Publish button remains disabled until all validation criteria are met or user explicitly skips validation checks",
+        "Validation occurs in real-time as user makes changes with visual indicators on problematic items",
+        "User can save incomplete rankings as draft even if validation fails, blocking only publishing action"
+      ]
+    },
+    {
+      "id": "PR-009",
+      "title": "Skip Power Rankings for Week",
+      "user": "League Commissioner",
+      "goal": "choose not to publish power rankings for the selected week without affecting other content sections",
+      "benefit": "I have flexibility to skip weeks when power rankings don't make sense (e.g., playoff weeks, league inactivity)",
+      "acceptanceCriteria": [
+        "Power Rankings section includes prominent 'Skip Power Rankings This Week' toggle or checkbox",
+        "Enabling skip option collapses ranking interface and displays confirmation message",
+        "Skipped rankings are excluded from publish validation requirements",
+        "Publishing Commissioner Desk does not create power rankings feed moment for skipped weeks",
+        "Power Rankings page shows 'No rankings published for this week' message for skipped weeks",
+        "User can un-skip and resume creating rankings for the week without losing any saved draft data"
+      ]
+    },
+    {
+      "id": "PR-010",
+      "title": "Publish Power Rankings to Feed and Page",
+      "user": "League Commissioner",
+      "goal": "make my completed power rankings visible on the power rankings page and create a feed moment",
+      "benefit": "League members can view my rankings and engage with them through comments and reactions",
+      "acceptanceCriteria": [
+        "Publishing Commissioner Desk updates power rankings page with new week's rankings immediately",
+        "System creates feed moment titled 'Week X Power Rankings' with top 3-5 teams previewed",
+        "Feed moment includes link to full power rankings page and enables comments and reactions",
+        "Published rankings are locked from editing; system creates new draft version for any subsequent changes",
+        "Rank changes from previous week are calculated and displayed (e.g., 'Up 3', 'Down 1', 'No change')",
+        "System records publication timestamp and publisher user ID for audit trail",
+        "Power Rankings page defaults to most recently published week for easy member access"
+      ]
+    },
+    {
+      "id": "PR-011",
+      "title": "Update Published Power Rankings",
+      "user": "League Commissioner",
+      "goal": "correct errors or update commentary in already-published power rankings",
+      "benefit": "I can fix mistakes or add new information without losing the original publication record",
+      "acceptanceCriteria": [
+        "System provides 'Edit Published Rankings' button for weeks with published power rankings",
+        "Editing creates new draft version while keeping original publication visible to members",
+        "Draft changes are not visible to league members until republished",
+        "Republishing displays 'Updated' badge on power rankings page and feed moment with update timestamp",
+        "System maintains version history showing original publication and all subsequent updates with change log",
+        "Republishing bumps feed moment to top of feed with 'Updated' indicator to notify members of changes"
+      ]
+    },
+    {
+      "id": "PR-012",
+      "title": "Copy Previous Week Rankings as Template",
+      "user": "League Commissioner",
+      "goal": "start with last week's rankings and commentary as a baseline for this week",
+      "benefit": "I can work more efficiently by making incremental changes rather than starting from scratch",
+      "acceptanceCriteria": [
+        "System provides 'Copy From Previous Week' button when starting new week's rankings",
+        "Copying imports team order and commentary from most recent published rankings",
+        "Imported rankings are clearly marked as draft and not yet published for current week",
+        "User can modify copied rankings order and commentary independently without affecting source week",
+        "System displays notification confirming rankings were copied from specific previous week",
+        "Copy operation respects skip status but allows user to override on per-team basis"
+      ]
+    }
+  ]
+}

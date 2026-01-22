@@ -1,0 +1,151 @@
+{
+  "subcomponentId": "content-schema",
+  "componentId": "data-persistence",
+  "tracesTo": [
+    "SOW: Tech Stack - Supabase (PostgreSQL)",
+    "SOW: Newsfeed & Moments",
+    "SOW: Commissioner Desk"
+  ],
+  "stories": [
+    {
+      "id": "CONT-001",
+      "title": "Design Moments Table Schema",
+      "user": "System",
+      "goal": "define a moments table that stores all feed moment types with polymorphic relationships",
+      "benefit": "unified feed display with consistent moment handling regardless of source or type",
+      "acceptanceCriteria": [
+        "Moments table includes id (UUID, primary key), league_id (foreign key to leagues), moment_type (enum), created_at, updated_at timestamps",
+        "Moment_type enum includes: 'trade', 'match_result', 'power_rankings', 'matchup_prediction', 'commissioner_post', 'user_post', 'transaction'",
+        "Table includes last_activity_at timestamp for engagement-based sorting and feed bumping",
+        "Schema includes is_pinned boolean and pinned_by_user_id for admin content moderation",
+        "Table includes reference fields (power_ranking_id, matchup_id, post_id, etc.) for linking to specific content records"
+      ]
+    },
+    {
+      "id": "CONT-002",
+      "title": "Design Posts Table Schema",
+      "user": "System",
+      "goal": "define a posts table for user-generated and commissioner text content",
+      "benefit": "league members can create and share text-based content with proper attribution and moderation",
+      "acceptanceCriteria": [
+        "Posts table includes id (UUID, primary key), league_id (foreign key to leagues), author_user_id (foreign key to users), created_at, updated_at",
+        "Table stores post_type (enum: 'user_post', 'commissioner_post') for differentiating content sources",
+        "Schema includes content (text), is_deleted boolean, and deleted_at timestamp for soft deletion support",
+        "Table includes edited_at timestamp to track post modifications and display 'edited' indicator",
+        "Foreign key constraints ensure posts are deleted/hidden when author user or league is removed"
+      ]
+    },
+    {
+      "id": "CONT-003",
+      "title": "Design Comments Table Schema",
+      "user": "System",
+      "goal": "define a comments table for threaded discussions on all moment types",
+      "benefit": "league members can engage in conversations on any feed moment with proper threading",
+      "acceptanceCriteria": [
+        "Comments table includes id (UUID, primary key), moment_id (foreign key to moments), author_user_id (foreign key to users), created_at, updated_at",
+        "Table stores comment_text (text), parent_comment_id (self-referencing foreign key) for threading support",
+        "Schema includes is_deleted boolean and deleted_at for soft deletion while maintaining thread structure",
+        "Table includes edited_at timestamp for tracking modifications",
+        "Cascade delete ensures comments are removed when associated moment or author is deleted"
+      ]
+    },
+    {
+      "id": "CONT-004",
+      "title": "Design Reactions Table Schema",
+      "user": "System",
+      "goal": "define a reactions table for emoji-based engagement on moments and comments",
+      "benefit": "league members can express reactions quickly without text comments, enhancing engagement",
+      "acceptanceCriteria": [
+        "Reactions table includes id (UUID, primary key), user_id (foreign key to users), created_at timestamp",
+        "Table includes polymorphic references: reactable_type (enum: 'moment', 'comment'), reactable_id (UUID)",
+        "Schema stores emoji (string) for the specific emoji reaction selected by user",
+        "Composite unique index on (user_id, reactable_type, reactable_id, emoji) prevents duplicate reactions",
+        "Delete cascade ensures reactions are removed when user, moment, or comment is deleted"
+      ]
+    },
+    {
+      "id": "CONT-005",
+      "title": "Design Power Rankings Table Schema",
+      "user": "System",
+      "goal": "define a power_rankings table for storing commissioner weekly team rankings",
+      "benefit": "rankings data persists for historical tracking and trajectory visualization across weeks",
+      "acceptanceCriteria": [
+        "Power_rankings table includes id (UUID, primary key), league_id (foreign key to leagues), season, week_number, created_at, updated_at",
+        "Table stores status (enum: 'draft', 'published'), published_at timestamp, and published_by_user_id",
+        "Schema includes is_skipped boolean for weeks where commissioner chose not to publish rankings",
+        "Composite unique index on (league_id, season, week_number) ensures one ranking record per week",
+        "Foreign key to leagues ensures rankings are deleted when league is removed"
+      ]
+    },
+    {
+      "id": "CONT-006",
+      "title": "Design Power Ranking Entries Table Schema",
+      "user": "System",
+      "goal": "define a power_ranking_entries table for individual team rankings within weekly power rankings",
+      "benefit": "each team's rank and commentary is stored separately for flexible querying and historical analysis",
+      "acceptanceCriteria": [
+        "Power_ranking_entries table includes id (UUID, primary key), power_ranking_id (foreign key to power_rankings), team_id (foreign key to teams)",
+        "Table stores rank (integer), commentary (text), created_at, updated_at timestamps",
+        "Schema enforces rank uniqueness within a power ranking through composite unique index (power_ranking_id, rank)",
+        "Table links to stable_fantasy_user_id through teams table for dynasty league continuity",
+        "Cascade delete removes entries when parent power ranking is deleted"
+      ]
+    },
+    {
+      "id": "CONT-007",
+      "title": "Design Matchups Table Schema",
+      "user": "System",
+      "goal": "define a matchups table for storing weekly team matchups and results",
+      "benefit": "matchup data supports commissioner predictions, pick'ems game, and historical record tracking",
+      "acceptanceCriteria": [
+        "Matchups table includes id (UUID, primary key), league_id (foreign key to leagues), season, week_number, created_at, updated_at",
+        "Table stores team1_id and team2_id (foreign keys to teams) for the competing teams",
+        "Schema includes team1_score, team2_score (decimal), winner_team_id (foreign key to teams) for result tracking",
+        "Table includes matchup_type (enum: 'regular_season', 'playoff', 'toilet_bowl') for different bracket contexts",
+        "Table includes external_matchup_id for syncing with fantasy platform API data"
+      ]
+    },
+    {
+      "id": "CONT-008",
+      "title": "Design Matchup Predictions Table Schema",
+      "user": "System",
+      "goal": "define a matchup_predictions table for commissioner weekly matchup predictions",
+      "benefit": "prediction data enables feed moments, grading after results, and commissioner track record analysis",
+      "acceptanceCriteria": [
+        "Matchup_predictions table includes id (UUID, primary key), league_id (foreign key to leagues), season, week_number",
+        "Table stores matchup_id (foreign key to matchups), predicted_winner_team_id (foreign key to teams)",
+        "Schema includes prediction_commentary (text), status (enum: 'draft', 'published'), published_at timestamp",
+        "Table includes is_correct boolean and graded_at timestamp for post-stat-correction grading",
+        "Table includes is_featured boolean to mark 'Matchup of the Week' for prominent feed display"
+      ]
+    },
+    {
+      "id": "CONT-009",
+      "title": "Design Engagement Metrics Aggregation Schema",
+      "user": "System",
+      "goal": "define a moment_engagement_metrics table for efficient feed sorting and analytics",
+      "benefit": "feed sorting queries execute efficiently without counting reactions and comments on every load",
+      "acceptanceCriteria": [
+        "Moment_engagement_metrics table includes id (UUID, primary key), moment_id (foreign key to moments, unique)",
+        "Table stores comment_count (integer), reaction_count (integer), last_comment_at, last_reaction_at timestamps",
+        "Schema includes engagement_score (decimal) calculated from recency and volume for sorting algorithms",
+        "Table updates via database triggers when comments or reactions are added/removed",
+        "Index on engagement_score enables efficient feed queries for engagement-aware sorting"
+      ]
+    },
+    {
+      "id": "CONT-010",
+      "title": "Implement Content Foreign Key Relationships",
+      "user": "System",
+      "goal": "establish all foreign key constraints and cascade behaviors for content data consistency",
+      "benefit": "database maintains referential integrity and prevents orphaned content records",
+      "acceptanceCriteria": [
+        "Moments.league_id references leagues.id with ON DELETE CASCADE to remove moments when league deleted",
+        "Posts.author_user_id references users.id with ON DELETE CASCADE for user content cleanup",
+        "Comments.moment_id references moments.id with ON DELETE CASCADE to remove comments when moment deleted",
+        "Reactions.user_id references users.id with ON DELETE CASCADE for user reaction cleanup",
+        "Power_ranking_entries.team_id references teams.id with ON DELETE CASCADE for team data integrity"
+      ]
+    }
+  ]
+}

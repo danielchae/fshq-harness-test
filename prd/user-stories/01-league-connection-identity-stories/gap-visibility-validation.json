@@ -1,0 +1,273 @@
+{
+  "id": "US-1.7",
+  "title": "Access Control Validation After Visibility Changes (SECURITY)",
+  "epic": "League Connection & Identity",
+  "priority": "P2",
+  "status": "draft",
+  "batch": "1 of 2",
+  "category": "quality-enhancement",
+  "story_type": "gap-filling",
+  "user_role": "League Commissioner & System Administrator",
+  "user_story": "As a League Commissioner, I want the system to immediately enforce updated access control rules when I change league visibility settings (public to private or vice versa), so that unauthorized users cannot access content they shouldn't see, and previously cached data is purged to prevent stale access.",
+  "problem_statement": "When league visibility changes from public to private (or vice versa), there is risk of access control gaps due to cached data, stale URL access, or delayed Row-Level Security (RLS) policy updates. Users who previously had access (e.g., public viewers of a now-private league) may retain cached content or working URLs, creating security vulnerabilities. Affected users must be notified of access changes, and all enforcement mechanisms (URL validation, cache purging, RLS updates) must execute atomically to prevent unauthorized access windows.",
+  "business_value": {
+    "security": "Eliminate access control vulnerabilities during visibility transitions (critical for private leagues)",
+    "compliance": "Ensure data privacy compliance by preventing unauthorized data retention",
+    "user_trust": "Demonstrate robust security practices to commissioners and league members",
+    "liability_reduction": "Reduce legal/reputational risk from accidental data exposure"
+  },
+  "acceptance_criteria": [
+    {
+      "id": "AC-1.7.1",
+      "description": "Atomic Visibility Change Transaction",
+      "criteria": [
+        "GIVEN commissioner changes league visibility from public to private (or vice versa)",
+        "WHEN submitting visibility change form",
+        "THEN system executes atomic transaction containing: (1) Update 'leagues.visibility' field, (2) Update RLS policies for league_id, (3) Invalidate all cached league data, (4) Revoke active shareable URLs, (5) Queue notifications to affected users",
+        "AND transaction commits only if ALL steps succeed (rollback on any failure)",
+        "AND database-level constraint prevents partial updates (e.g., visibility changed but RLS policies not updated)",
+        "AND transaction completes in <2 seconds (performance requirement)"
+      ]
+    },
+    {
+      "id": "AC-1.7.2",
+      "description": "Immediate RLS Policy Update",
+      "criteria": [
+        "GIVEN league visibility changes from public to private",
+        "WHEN RLS policy update executes",
+        "THEN Supabase RLS policies immediately restrict access to league_id for non-members",
+        "AND any active database connections with cached RLS policy refresh within 1 second (connection pool reset)",
+        "AND subsequent API calls with invalid credentials receive 403 Forbidden (not cached 200 OK)",
+        "AND RLS policy update is logged to audit trail with timestamp and user_id"
+      ]
+    },
+    {
+      "id": "AC-1.7.3",
+      "description": "Cache Purging Across All Layers",
+      "criteria": [
+        "GIVEN league visibility changes",
+        "WHEN cache invalidation executes",
+        "THEN system purges: (1) API response cache (Redis/in-memory), (2) CDN cache for league pages, (3) Browser cache via cache-busting headers (ETags updated), (4) External RSS feed cache",
+        "AND purge completes within 5 seconds across all layers",
+        "AND subsequent requests fetch fresh data with updated visibility rules",
+        "AND cache purge success/failure is logged to monitoring service"
+      ]
+    },
+    {
+      "id": "AC-1.7.4",
+      "description": "Shareable URL Revocation",
+      "criteria": [
+        "GIVEN league changes from public to private",
+        "WHEN shareable URLs exist for league content",
+        "THEN all active shareable URLs are immediately revoked (marked 'revoked' in database)",
+        "AND subsequent access to revoked URLs returns 403 Forbidden with message: 'This league is now private. Access removed due to visibility change.'",
+        "AND commissioners receive notification listing revoked URLs with original expiration dates",
+        "AND system provides option to regenerate new private shareable URLs (with authentication required)"
+      ]
+    },
+    {
+      "id": "AC-1.7.5",
+      "description": "URL Enforcement: Direct Link Access Prevention",
+      "criteria": [
+        "GIVEN user has direct URL to private league content (e.g., bookmarked page from when league was public)",
+        "WHEN attempting to access URL after visibility change",
+        "THEN system returns 403 Forbidden (not 404 Not Found - avoid information disclosure)",
+        "AND error page displays: 'This league is private. Please log in if you are a member.'",
+        "AND login redirect preserves original URL (after successful auth, user lands on requested page if authorized)",
+        "AND failed access attempts are logged with user_id (if authenticated) or IP address (if anonymous)"
+      ]
+    },
+    {
+      "id": "AC-1.7.6",
+      "description": "Notification to Affected Users",
+      "criteria": [
+        "GIVEN league visibility changes",
+        "WHEN change impacts user access (e.g., public viewers losing access, or members gaining public profile)",
+        "THEN system sends notifications via: (1) In-app notification, (2) Email (if user has email notifications enabled)",
+        "AND notification includes: League name, visibility change description ('now private' or 'now public'), action required (if any), timestamp of change",
+        "AND for public-to-private: 'You no longer have access to [League Name]. Contact the commissioner for membership.'",
+        "AND for private-to-public: '[League Name] is now publicly visible. Your profile and content may be visible to non-members.'",
+        "AND notification is delivered within 30 seconds of visibility change"
+      ]
+    },
+    {
+      "id": "AC-1.7.7",
+      "description": "Audit Trail: Visibility Change Logging",
+      "criteria": [
+        "GIVEN any visibility change occurs",
+        "WHEN transaction completes",
+        "THEN audit log records: (1) Timestamp (ISO8601), (2) Commissioner user_id, (3) League_id, (4) Old visibility value, (5) New visibility value, (6) Affected user count (users losing or gaining access), (7) RLS policy update status, (8) Cache purge status",
+        "AND audit log is immutable (append-only, no updates/deletes)",
+        "AND log entries are retained for minimum 2 years (compliance requirement)",
+        "AND administrators can query audit log via dashboard for security review"
+      ]
+    },
+    {
+      "id": "AC-1.7.8",
+      "description": "Error Handling: Partial Transaction Failure",
+      "criteria": [
+        "GIVEN visibility change transaction fails at any step (e.g., RLS update fails, cache purge times out)",
+        "WHEN error occurs",
+        "THEN entire transaction is rolled back (visibility field NOT updated)",
+        "AND commissioner receives error message: 'Visibility change failed. Please try again. If issue persists, contact support.'",
+        "AND detailed error is logged to monitoring service with step-by-step status (which step failed)",
+        "AND system prevents partial state (e.g., visibility=private but RLS still allows public access)",
+        "AND commissioner can retry change after investigating failure"
+      ]
+    },
+    {
+      "id": "AC-1.7.9",
+      "description": "Edge Case: Concurrent Visibility Changes",
+      "criteria": [
+        "GIVEN two commissioners attempt to change visibility simultaneously (race condition)",
+        "WHEN both submit visibility change requests within <1 second window",
+        "THEN database-level optimistic locking prevents concurrent updates (use 'updated_at' timestamp or version number)",
+        "AND first transaction to acquire lock succeeds, second receives error: 'Visibility was just updated by another commissioner. Refresh and try again.'",
+        "AND both transactions log attempts to audit trail with outcome (success/conflict)",
+        "AND UI auto-refreshes visibility value to show latest state after conflict"
+      ]
+    },
+    {
+      "id": "AC-1.7.10",
+      "description": "Edge Case: Public-to-Private with Active RSS Subscribers",
+      "criteria": [
+        "GIVEN league has RSS feed with active subscribers (external feed readers)",
+        "WHEN league changes from public to private",
+        "THEN RSS feed immediately returns 403 Forbidden (or removes league-specific items from feed)",
+        "AND RSS feed XML includes <ttl> tag with value 0 (Time To Live: immediate refresh required)",
+        "AND feed description updates to: 'This league is now private. RSS feed disabled.'",
+        "AND commissioners receive notification: 'X external RSS subscribers will lose access due to visibility change.'",
+        "AND system provides option to whitelist specific RSS reader IPs (advanced feature)"
+      ]
+    },
+    {
+      "id": "AC-1.7.11",
+      "description": "Edge Case: Private-to-Public with SEO Indexing",
+      "criteria": [
+        "GIVEN league changes from private to public",
+        "WHEN search engine crawlers access newly public content",
+        "THEN robots.txt and meta tags allow indexing (remove 'noindex' directives)",
+        "AND system generates sitemap.xml entry for league (submitted to search engines)",
+        "AND commissioners receive notification: 'League is now publicly visible and may appear in search results within 24-48 hours.'",
+        "AND privacy-sensitive fields (e.g., email addresses) remain hidden even in public mode (field-level access control)"
+      ]
+    }
+  ],
+  "technical_considerations": {
+    "database_schema": [
+      "Add 'version' INTEGER column to 'leagues' table for optimistic locking (increments on each update)",
+      "Create 'visibility_change_audit' table with columns: id, timestamp, league_id, commissioner_id, old_visibility, new_visibility, rls_update_status, cache_purge_status, affected_user_count",
+      "Add database trigger to auto-log visibility changes to audit table",
+      "Ensure RLS policies use 'leagues.visibility' field directly (no cached lookups)"
+    ],
+    "api_changes": [
+      "Update PUT /leagues/:id/visibility endpoint to execute atomic transaction",
+      "Add POST /leagues/:id/visibility/validate endpoint to check for potential access control gaps before change",
+      "Modify authentication middleware to check RLS policies on every request (no request-level caching)",
+      "Add GET /leagues/:id/visibility/audit endpoint for administrators to review change history"
+    ],
+    "caching_strategy": [
+      "Implement cache key pattern: 'league:{league_id}:visibility:{visibility_value}' (cache invalidation via key rotation)",
+      "Use Redis PUBLISH/SUBSCRIBE to notify all API instances of visibility changes (distributed cache invalidation)",
+      "Set CDN cache TTL to 60 seconds maximum for league pages (allows fast invalidation)",
+      "Add cache-busting query parameter to CSS/JS assets after visibility change (e.g., ?v={timestamp})"
+    ],
+    "security_considerations": [
+      "Use database-level RLS policies (not application-level checks alone) to prevent bypass via direct DB access",
+      "Implement rate limiting on visibility change endpoint (max 5 changes per hour per league to prevent abuse)",
+      "Log all 403 Forbidden responses from revoked URLs (monitor for suspicious access patterns)",
+      "Encrypt audit log entries containing user_ids and IP addresses (GDPR compliance)"
+    ],
+    "notification_system": [
+      "Queue notifications via background job (don't block visibility change transaction)",
+      "Use exponential backoff for failed notification deliveries (retry up to 3 times over 10 minutes)",
+      "Batch notifications for leagues with >100 affected users (send in groups of 50 to avoid email rate limits)"
+    ]
+  },
+  "dependencies": {
+    "requires": [
+      "US-1.4 (League visibility settings - establishes visibility field and toggle UI)"
+    ],
+    "blocks": [],
+    "relates_to": [
+      "US-3.4 (Shareable URLs for public leagues - visibility changes must revoke URLs)",
+      "US-2.1 (League member roles - RLS policies must respect member roles for private leagues)"
+    ]
+  },
+  "testing_strategy": {
+    "unit_tests": [
+      "Test atomic transaction rollback on RLS policy update failure",
+      "Verify cache purge logic for all layers (Redis, CDN, browser)",
+      "Test optimistic locking for concurrent visibility changes",
+      "Verify audit log entry creation for successful visibility change"
+    ],
+    "integration_tests": [
+      "Test full visibility change flow: public-to-private with active users, verify immediate 403 Forbidden on subsequent requests",
+      "Test private-to-public with RSS feed subscribers, verify feed becomes accessible",
+      "Test shareable URL revocation after public-to-private change",
+      "Test notification delivery to affected users (in-app + email)"
+    ],
+    "security_tests": [
+      "Test direct URL access to private league content after visibility change (verify 403 Forbidden)",
+      "Test cached data access after visibility change (verify no stale data served)",
+      "Test RLS policy enforcement with concurrent requests during visibility change",
+      "Test rate limiting on visibility change endpoint (verify 429 Too Many Requests after 5 changes/hour)"
+    ],
+    "edge_case_tests": [
+      "Test concurrent visibility changes by two commissioners (verify optimistic locking)",
+      "Test visibility change with 1000+ affected users (verify notification batching)",
+      "Test visibility change with active RSS feed subscribers (verify feed access revocation)",
+      "Test partial transaction failure (e.g., cache purge timeout) and verify rollback"
+    ],
+    "performance_tests": [
+      "Measure transaction completion time for visibility change (target: <2 seconds)",
+      "Test cache purge latency across all layers (target: <5 seconds)",
+      "Measure notification delivery time to 500+ affected users (target: <60 seconds for all notifications queued)"
+    ]
+  },
+  "non_functional_requirements": {
+    "performance": [
+      "Visibility change transaction completes in <2 seconds (includes DB update, RLS refresh, cache purge)",
+      "Cache purge across all layers completes in <5 seconds",
+      "Notifications delivered to affected users within 30 seconds"
+    ],
+    "security": [
+      "Zero unauthorized access window during visibility transitions (atomic enforcement)",
+      "Audit log retention: minimum 2 years, encrypted at rest",
+      "Rate limiting: max 5 visibility changes per hour per league",
+      "Failed access attempts logged with user_id/IP for security monitoring"
+    ],
+    "reliability": [
+      "Transaction rollback on any failure (no partial states)",
+      "Notification delivery: 99.9% success rate with retries",
+      "RLS policy updates: 100% immediate enforcement (no cached stale policies)"
+    ]
+  },
+  "definition_of_done": [
+    "All 11 acceptance criteria pass automated tests",
+    "Atomic transaction executes successfully (DB update, RLS refresh, cache purge, URL revocation, notifications)",
+    "Immediate RLS policy enforcement verified (no unauthorized access after visibility change)",
+    "Cache purging works across all layers (Redis, CDN, browser, RSS)",
+    "Shareable URLs revoked for public-to-private changes",
+    "Affected users receive notifications within 30 seconds",
+    "Audit trail logs all visibility changes with immutable records",
+    "Optimistic locking prevents concurrent visibility change conflicts",
+    "Security tests confirm no access control gaps during transitions",
+    "Performance tests validate <2 second transaction completion",
+    "Documentation updated with visibility change security model"
+  ],
+  "notes": [
+    "CRITICAL SECURITY GAP: Visibility changes create access control vulnerabilities if not enforced atomically",
+    "Atomic transaction is key: DB update + RLS policy + cache purge + URL revocation must all succeed or all rollback",
+    "Cached data is major risk: must purge Redis, CDN, browser cache, and RSS feeds simultaneously",
+    "RLS policy updates must be immediate (no connection pool caching of old policies)",
+    "Shareable URL revocation prevents access via bookmarked/shared links",
+    "Notifications to affected users improve transparency and reduce support inquiries",
+    "Optimistic locking prevents race conditions with concurrent visibility changes",
+    "Audit trail critical for compliance and security reviews (2-year retention)",
+    "Edge cases: RSS subscribers, SEO indexing, concurrent changes all require specific handling"
+  ],
+  "created_date": "2025-12-05",
+  "updated_date": "2025-12-05",
+  "estimated_effort": "13 story points"
+}

@@ -1,0 +1,173 @@
+{
+  "subcomponentId": "gap-stat-correction-cascade",
+  "componentId": "data-sync-automation",
+  "tracesTo": [
+    "SOW: Data Sync & Automation",
+    "SOW: Commissioner Desk & Weekly Content Publishing",
+    "Gap Analysis: Multi-step coordination stories"
+  ],
+  "dependencies": [
+    "sleeper-integration",
+    "data-sync-scheduler",
+    "automated-moments",
+    "pickems-grading",
+    "weekly-publishing"
+  ],
+  "stories": [
+    {
+      "id": "SCC-001",
+      "title": "Detect NFL Stat Corrections via Scheduled Data Sync",
+      "user": "System",
+      "goal": "automatically detect when NFL stat corrections occur that change fantasy matchup outcomes",
+      "benefit": "predictions and pick'ems are regraded with accurate final results after official stat corrections",
+      "acceptanceCriteria": [
+        "System runs stat correction detection job every 4 hours during NFL season (Sunday through Wednesday)",
+        "Detection job calls Sleeper API GET /league/{league_id}/matchups/{week} and compares with previously stored scores",
+        "System identifies stat corrections by detecting score changes for matchups that already had 'final' status",
+        "Detection algorithm calculates score differentials and determines if winner changed due to stat correction",
+        "System flags affected matchups with 'stat_corrected' status and creates stat_correction_log entry with before/after scores",
+        "Detection only processes weeks within 72-hour stat correction window (current week and previous 2 weeks)",
+        "System triggers immediate cascade workflow when stat corrections detected affecting graded content",
+        "Detection logs include timestamp, affected matchup IDs, score changes (before → after), winner changes (if any)",
+        "System sends internal notification to admin dashboard when stat corrections detected for monitoring",
+        "Detection respects Sleeper API rate limits with exponential backoff and request queuing"
+      ]
+    },
+    {
+      "id": "SCC-002",
+      "title": "Automatically Regrade Commissioner Predictions After Stat Corrections",
+      "user": "System",
+      "goal": "regrade all commissioner predictions when stat corrections change matchup outcomes",
+      "benefit": "commissioner prediction statistics remain accurate and reflect true final results",
+      "acceptanceCriteria": [
+        "System initiates regrading workflow automatically when stat corrections detected via cascade trigger",
+        "Regrading process fetches all commissioner predictions for affected matchups from predictions table",
+        "System compares predicted winner with corrected actual winner from stat_correction_log",
+        "System updates prediction records with new grading: correct → incorrect or incorrect → correct",
+        "Updated predictions receive 'regraded' flag and stat_correction_timestamp for tracking",
+        "System recalculates commissioner's weekly prediction accuracy percentage with corrected grades",
+        "Cumulative season and all-time prediction stats are recalculated automatically after regrading",
+        "Regrading creates audit trail entries: prediction_id, old_grade, new_grade, reason: 'stat_correction', timestamp",
+        "System handles edge case of multiple stat corrections for same matchup with version tracking",
+        "Regrading is atomic: all affected predictions updated in single transaction or none are updated"
+      ]
+    },
+    {
+      "id": "SCC-003",
+      "title": "Regrade Pick'em Submissions After Stat Corrections",
+      "user": "System",
+      "goal": "regrade all league member pick'em predictions when stat corrections change matchup outcomes",
+      "benefit": "pick'em leaderboards reflect accurate results and member prediction stats are correct",
+      "acceptanceCriteria": [
+        "System fetches all pick'em submissions for affected matchups from pickems table",
+        "Regrading compares each member's predicted winner with corrected actual winner",
+        "System updates pick'em records with new grades and 'regraded' flag",
+        "Pick'em points are recalculated if confidence-weighted scoring is enabled in league settings",
+        "System recalculates weekly pick'em leaderboard rankings with corrected grades",
+        "Member's season-long pick'em stats (total correct, accuracy %) updated automatically",
+        "If regrading changes leaderboard positions, system generates position_change events for notifications",
+        "System handles bracket pick'ems separately: regrading affects bracket progression if correction changes playoff outcomes",
+        "Regrading respects pick'em submission deadlines: only regrades submitted picks, not missed picks",
+        "System creates bulk audit trail for all regraded pick'ems with batch_id for tracking related changes"
+      ]
+    },
+    {
+      "id": "SCC-004",
+      "title": "Update Leaderboards and Rankings After Stat Correction Cascade",
+      "user": "System",
+      "goal": "update all affected leaderboards and rankings to reflect regraded predictions and pick'ems",
+      "benefit": "league members see accurate standings based on final official results",
+      "acceptanceCriteria": [
+        "System recalculates commissioner prediction leaderboard with updated accuracy stats after regrading",
+        "Pick'em leaderboard is regenerated with new point totals and accuracy percentages",
+        "Weekly leaderboard for affected week is updated with new rankings and position changes",
+        "Season-long leaderboard is recalculated incorporating corrected weekly results",
+        "System identifies members whose leaderboard position changed due to stat corrections",
+        "Position changes are tracked with previous_rank and new_rank for notification generation",
+        "Leaderboard updates include 'last_updated' timestamp and 'stat_correction' update_reason",
+        "If multiple stat corrections occur for same week, leaderboards update after each correction with versioning",
+        "System invalidates leaderboard caches across all pages to ensure immediate visibility of changes",
+        "Leaderboard update operation is atomic: all related leaderboards updated in single transaction"
+      ]
+    },
+    {
+      "id": "SCC-005",
+      "title": "Generate Stat Correction Notifications for Affected Users",
+      "user": "League Member",
+      "goal": "receive notification when stat corrections affect my predictions or leaderboard position",
+      "benefit": "I understand why my stats or position changed and can review the correction details",
+      "acceptanceCriteria": [
+        "System generates notifications for all users with regraded predictions affected by stat correction",
+        "Notification content includes: affected week, matchup details, score change (before → after), grade change",
+        "Users whose leaderboard position changed receive separate position change notification with rank movement",
+        "Commissioner receives notification summarizing all stat corrections and regrading impact for their published predictions",
+        "Notifications link directly to affected content: matchup page, prediction history, leaderboard",
+        "System batches notifications by user: single notification covering all affected predictions rather than multiple notifications",
+        "Notification preferences respected: users can opt out of stat correction notifications in settings",
+        "In-app notifications appear in notification center with 'Stat Correction' badge for easy identification",
+        "Email notifications sent only for significant changes: leaderboard position change > 2 ranks or prediction grade flip affecting prizes",
+        "Notification includes explanation of stat correction process and link to help article for user education"
+      ]
+    },
+    {
+      "id": "SCC-006",
+      "title": "Display Stat Correction Indicators in Feed and History",
+      "user": "League Member",
+      "goal": "see visual indicators on content that has been affected by stat corrections",
+      "benefit": "I understand that results have been updated and can distinguish original from corrected results",
+      "acceptanceCriteria": [
+        "Feed moments for predictions and matchups display 'Stat Corrected' badge when affected by corrections",
+        "Badge shows tooltip on hover: 'Results updated due to official NFL stat correction on [date]'",
+        "Commissioner prediction feed moments show updated grading with 'Regraded' indicator",
+        "Matchup results on Matchups page display stat correction icon next to final scores",
+        "Pick'em history page shows 'Regraded' column indicating which picks were affected by corrections",
+        "Leaderboard displays 'Updated [timestamp]' with stat correction explanation when positions change",
+        "Stat correction details modal accessible from indicators showing before/after scores and affected players",
+        "System maintains version history: users can view original grading and corrected grading side-by-side",
+        "Stat correction log page (admin/commissioner view) lists all corrections with full audit trail",
+        "Visual indicators automatically remove after 7 days to avoid cluttering historical content",
+        "System provides RSS feed or webhook for external tools to track stat corrections"
+      ]
+    },
+    {
+      "id": "SCC-007",
+      "title": "Handle Cascading Stat Corrections Across Multiple Systems",
+      "user": "System",
+      "goal": "coordinate stat correction impact across all dependent systems and data structures",
+      "benefit": "entire application remains consistent when stat corrections propagate through related features",
+      "acceptanceCriteria": [
+        "System uses event-driven architecture with 'stat_correction_detected' event triggering cascade workflow",
+        "Cascade workflow orchestrates sequential updates: detect → regrade predictions → regrade pick'ems → update leaderboards → generate notifications",
+        "Each cascade step validates completion before proceeding to next step with rollback capability on failure",
+        "System maintains cascade_execution_log with step completion status and timestamps for monitoring",
+        "If any cascade step fails, system retries up to 3 times with exponential backoff before alerting admin",
+        "Cascade updates are idempotent: can be safely retried without duplicate updates or data corruption",
+        "System locks affected matchups during cascade to prevent concurrent modifications from manual edits",
+        "Cascade completion generates 'stat_correction_cascade_complete' event for dependent systems",
+        "System provides admin dashboard showing cascade execution status with step-by-step progress",
+        "Cascade metrics tracked: total duration, step durations, affected records count, notification count",
+        "System supports manual cascade triggering from admin panel for testing or missed automatic triggers"
+      ]
+    },
+    {
+      "id": "SCC-008",
+      "title": "Audit and Report Stat Correction Impact",
+      "user": "League Commissioner / System Administrator",
+      "goal": "view comprehensive report of stat correction impact on league activities",
+      "benefit": "I can communicate changes to league members and verify system correctly processed corrections",
+      "acceptanceCriteria": [
+        "System generates stat correction impact report accessible from Commissioner Desk and admin panel",
+        "Report includes summary: number of corrections, affected matchups, total predictions regraded, total pick'ems regraded",
+        "Detailed section shows each correction with before/after scores, winner changes, and cascade timeline",
+        "Report lists all affected users with their grade changes and leaderboard position movements",
+        "Commissioner predictions section shows updated accuracy stats with comparison to pre-correction stats",
+        "Pick'em leaderboard changes highlighted with position movement visualization (up/down arrows with magnitude)",
+        "Report includes audit trail with all system actions: detection timestamp, regrading timestamps, notification timestamps",
+        "System provides downloadable CSV export of stat correction report for record-keeping",
+        "Report tracks historical stat corrections across entire season with trend analysis",
+        "Commissioners can share report link with league members for transparency on correction handling",
+        "Report generation respects data privacy: only shows aggregated data for non-commissioners"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,122 @@
+{
+  "subcomponentId": "league-linking",
+  "componentId": "league-connection-identity",
+  "tracesTo": [
+    "SOW: League Connection & Identity",
+    "UserFlow: Commissioner League Linking & Admin Creation"
+  ],
+  "stories": [
+    {
+      "id": "LL-001",
+      "title": "Connect Sleeper League by Username",
+      "user": "League Commissioner",
+      "goal": "connect my Sleeper league to FSHQ by entering my Sleeper username",
+      "benefit": "I can quickly link my league without needing to find league IDs or navigate complex settings",
+      "acceptanceCriteria": [
+        "User can enter their Sleeper username in a text input field",
+        "System fetches all active leagues for that username via Sleeper API GET /user/{username}/leagues/nfl/{season}",
+        "System displays a list of user's leagues with league name, team count, and season",
+        "User can select which league(s) to connect to FSHQ",
+        "System handles invalid usernames with clear error messaging"
+      ]
+    },
+    {
+      "id": "LL-002",
+      "title": "Connect Sleeper League by League ID",
+      "user": "League Commissioner",
+      "goal": "connect my Sleeper league directly using the league ID",
+      "benefit": "I have an alternative method if username lookup fails or if I already have my league ID",
+      "acceptanceCriteria": [
+        "User can enter a Sleeper league ID directly in a text input field",
+        "System validates league ID format before making API call",
+        "System fetches league details via Sleeper API GET /league/{league_id}",
+        "System displays league information (name, teams, season) for confirmation",
+        "System provides clear error message if league ID is invalid or not found"
+      ]
+    },
+    {
+      "id": "LL-003",
+      "title": "Fetch League Metadata from Sleeper",
+      "user": "System",
+      "goal": "retrieve complete league configuration and metadata from Sleeper API",
+      "benefit": "FSHQ has all necessary league information to create a league space and display league details",
+      "acceptanceCriteria": [
+        "System fetches league settings via GET /league/{league_id} including name, avatar, scoring rules, roster positions, playoff settings",
+        "System fetches league rosters via GET /league/{league_id}/rosters including team records, points, and owner IDs",
+        "System fetches league users via GET /league/{league_id}/users including display names and avatars",
+        "System fetches current season state via GET /state/nfl to determine current week and season type",
+        "System stores fetched metadata in database with timestamps for tracking sync freshness"
+      ]
+    },
+    {
+      "id": "LL-004",
+      "title": "Detect Existing FSHQ League Instance",
+      "user": "System",
+      "goal": "check if a Sleeper league has already been connected to FSHQ",
+      "benefit": "prevents duplicate league creation and allows users to rejoin existing league spaces",
+      "acceptanceCriteria": [
+        "System queries database for existing league record matching Sleeper league ID",
+        "If existing league found, system displays message indicating league already exists with option to join",
+        "If no existing league found, system proceeds to create new FSHQ league space",
+        "System handles race conditions where multiple users attempt to create same league simultaneously",
+        "Detection occurs before any league creation or URL slug generation"
+      ]
+    },
+    {
+      "id": "LL-005",
+      "title": "Create FSHQ League Space from Sleeper Data",
+      "user": "System",
+      "goal": "create a new FSHQ league space with data from connected Sleeper league",
+      "benefit": "establishes the foundational league record in FSHQ with all necessary configuration",
+      "acceptanceCriteria": [
+        "System creates league record in database with Sleeper league ID as external reference",
+        "System stores league name, team count, season, scoring format, and playoff structure",
+        "System generates initial unique URL slug for league based on league name",
+        "System sets league creator as initial admin with full permissions",
+        "System initializes default league settings (visibility: private, join rule: approval required)"
+      ]
+    },
+    {
+      "id": "LL-006",
+      "title": "Import Team and Roster Data",
+      "user": "System",
+      "goal": "import all teams and roster information from Sleeper into FSHQ",
+      "benefit": "teams and rosters are available for user claiming and league display",
+      "acceptanceCriteria": [
+        "System creates team records for each roster in Sleeper league",
+        "System stores team names, logos, win-loss records, and points scored",
+        "System maps Sleeper roster IDs to FSHQ team IDs for future sync operations",
+        "System stores Sleeper owner IDs for each team to facilitate later user claiming",
+        "System handles teams without owners (orphaned teams) appropriately"
+      ]
+    },
+    {
+      "id": "LL-007",
+      "title": "Handle Multiple Seasons for Dynasty Leagues",
+      "user": "League Commissioner",
+      "goal": "connect multiple seasons of my dynasty league to maintain historical continuity",
+      "benefit": "I can preserve league history and track team evolution across multiple years",
+      "acceptanceCriteria": [
+        "System detects if connected league is dynasty format based on Sleeper settings",
+        "User can optionally connect previous seasons of same league using league ID",
+        "System creates season records linked to parent league entity",
+        "System maintains team continuity across seasons using stable fantasy user ID anchoring",
+        "System allows viewing historical data while keeping current season as primary view"
+      ]
+    },
+    {
+      "id": "LL-008",
+      "title": "Display League Connection Status and Sync Information",
+      "user": "League Admin",
+      "goal": "see the current connection status and last sync time for my league",
+      "benefit": "I can verify that my league is properly connected and data is up-to-date",
+      "acceptanceCriteria": [
+        "System displays connection status (connected, syncing, error) on league admin page",
+        "System shows last successful sync timestamp and next scheduled sync time",
+        "System displays any sync errors or warnings with actionable guidance",
+        "Admin can manually trigger a sync to refresh league data immediately",
+        "System provides link to Sleeper league for reference and verification"
+      ]
+    }
+  ]
+}

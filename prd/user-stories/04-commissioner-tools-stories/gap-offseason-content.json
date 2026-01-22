@@ -1,0 +1,224 @@
+{
+  "id": "US-4.6",
+  "title": "Offseason Commissioner Content Creation",
+  "epic": "Commissioner Tools & Content Management",
+  "priority": "P2",
+  "status": "draft",
+  "batch": "1 of 2",
+  "category": "quality-enhancement",
+  "story_type": "gap-filling",
+  "user_role": "League Commissioner",
+  "user_story": "As a League Commissioner, I want to create and publish custom content during the offseason (when no active matchups exist), so that I can maintain league engagement year-round with recaps, awards, draft preparation content, and preseason previews.",
+  "problem_statement": "Current system assumes active fantasy season with matchup-driven content. Offseason periods (weeks with no external fantasy data) lack flexible content creation tools. Commissioners need ability to create standalone content without matchup context, handle preseason week numbering differently, and maintain historical narrative during non-competitive periods.",
+  "business_value": {
+    "user_engagement": "Maintain league engagement during 6+ month offseason periods",
+    "retention": "Reduce league abandonment between seasons with year-round content",
+    "differentiation": "Unique offseason content capabilities not available in standard fantasy platforms",
+    "commissioner_satisfaction": "Enable creative storytelling beyond week-to-week game results"
+  },
+  "acceptance_criteria": [
+    {
+      "id": "AC-4.6.1",
+      "description": "Offseason Content Creation Mode",
+      "criteria": [
+        "GIVEN commissioner accesses content editor during offseason (no active NFL week)",
+        "WHEN selecting 'Create Content' option",
+        "THEN system provides 'Offseason Content' template with fields: Title, Content Type (Recap/Awards/Preview/Custom), Season Reference (YYYY), Custom Week Label (optional), Body Text, Media Attachments",
+        "AND system does NOT require matchup selection or external fantasy data connection",
+        "AND content is tagged as 'offseason' in metadata"
+      ]
+    },
+    {
+      "id": "AC-4.6.2",
+      "description": "Preseason Week Numbering and Display",
+      "criteria": [
+        "GIVEN commissioner creates content for preseason weeks (NFL weeks 1-3 of calendar year)",
+        "WHEN assigning week number to content",
+        "THEN system automatically prefixes with 'Preseason Week X' label in UI",
+        "AND historical views distinguish preseason weeks with visual badge/icon",
+        "AND week selectors show 'Preseason Weeks 1-3' as separate category from 'Regular Season Weeks 1-17'",
+        "AND API responses include 'season_type' field ('preseason' | 'regular' | 'playoff' | 'offseason')"
+      ]
+    },
+    {
+      "id": "AC-4.6.3",
+      "description": "Flexible Content Types Without Matchups",
+      "criteria": [
+        "GIVEN commissioner selects offseason content type",
+        "WHEN choosing from predefined templates",
+        "THEN system provides: 'Season Recap' (full season summary), 'League Awards' (MVP, championships, records), 'Draft Preview' (player rankings, strategies), 'Offseason Moves' (keeper decisions, trades), 'Custom Article' (freeform)",
+        "AND each template includes suggested structure but allows full customization",
+        "AND media library supports unlimited image/video attachments without matchup context",
+        "AND content can reference multiple seasons/years for historical comparisons"
+      ]
+    },
+    {
+      "id": "AC-4.6.4",
+      "description": "Publishing and Visibility Controls",
+      "criteria": [
+        "GIVEN commissioner creates offseason content",
+        "WHEN selecting publish options",
+        "THEN system allows: Immediate Publish, Schedule for Future Date, Save as Draft",
+        "AND content respects league visibility settings (public leagues show offseason content to guests)",
+        "AND RSS feeds include offseason content with appropriate season/week metadata",
+        "AND notification system sends alerts to league members for new offseason posts"
+      ]
+    },
+    {
+      "id": "AC-4.6.5",
+      "description": "Historical Integration and Navigation",
+      "criteria": [
+        "GIVEN offseason content is published",
+        "WHEN viewing league history or timeline",
+        "THEN offseason content appears in chronological order between seasons",
+        "AND filtering options include 'Show Offseason Content' toggle (default: ON)",
+        "AND season navigation UI clearly delineates season boundaries (e.g., '2023 Season Recap' between '2023 Playoffs' and '2024 Preseason')",
+        "AND search functionality indexes offseason content with season tags"
+      ]
+    },
+    {
+      "id": "AC-4.6.6",
+      "description": "Error Handling: Missing Season Context",
+      "criteria": [
+        "GIVEN commissioner attempts to create content without specifying season reference",
+        "WHEN submitting offseason content form",
+        "THEN system displays error: 'Season reference required for offseason content. Please select a year.'",
+        "AND form highlights missing 'Season Reference' field in red",
+        "AND provides auto-suggestion based on most recent completed season"
+      ]
+    },
+    {
+      "id": "AC-4.6.7",
+      "description": "Error Handling: Invalid Week Assignment",
+      "criteria": [
+        "GIVEN commissioner assigns week number to preseason content",
+        "WHEN week number conflicts with existing regular season weeks (e.g., 'Week 1' already exists for regular season)",
+        "THEN system prevents submission with error: 'Week number conflicts with regular season. Use preseason-specific numbering or custom labels.'",
+        "AND provides option to auto-convert to 'Preseason Week X' format",
+        "AND displays preview of how week label will appear in UI"
+      ]
+    },
+    {
+      "id": "AC-4.6.8",
+      "description": "Edge Case: Transition Between Seasons",
+      "criteria": [
+        "GIVEN league transitions from playoffs to offseason (no active matchups)",
+        "WHEN commissioner accesses content editor immediately after season end",
+        "THEN system automatically detects offseason state (no external fantasy data for current week)",
+        "AND displays prominent banner: 'Offseason Mode Active - Create recaps, awards, and preview content'",
+        "AND provides quick-start wizard for common offseason content types",
+        "AND maintains access to previous season's matchup-based content for reference"
+      ]
+    },
+    {
+      "id": "AC-4.6.9",
+      "description": "Edge Case: Multiple Offseason Posts Same Week",
+      "criteria": [
+        "GIVEN commissioner creates multiple offseason posts for same custom week (e.g., 'Draft Day')",
+        "WHEN publishing multiple posts with identical week labels",
+        "THEN system allows multiple posts (no uniqueness constraint on offseason weeks)",
+        "AND sorts posts by publish timestamp within same week",
+        "AND provides optional sub-numbering in UI (e.g., 'Draft Day - Post 1 of 3')",
+        "AND RSS feed includes all posts in chronological order"
+      ]
+    }
+  ],
+  "technical_considerations": {
+    "database_schema": [
+      "Add 'season_type' ENUM column to 'commissioner_content' table ('preseason' | 'regular' | 'playoff' | 'offseason')",
+      "Add 'season_reference_year' INTEGER column for offseason content (nullable for regular season)",
+      "Add 'custom_week_label' VARCHAR(50) column for flexible week naming",
+      "Modify uniqueness constraints to allow multiple offseason posts per week",
+      "Add indexes on 'season_type' and 'season_reference_year' for efficient queries"
+    ],
+    "api_changes": [
+      "Add 'season_type' parameter to GET /commissioner-content endpoint",
+      "Update POST /commissioner-content to accept offseason-specific fields",
+      "Modify week selector API to return preseason weeks separately",
+      "Add GET /commissioner-content/offseason endpoint for offseason-only content"
+    ],
+    "ui_components": [
+      "Create 'OffseasonContentEditor' component with template selector",
+      "Add 'SeasonTypeBadge' component for visual distinction in lists",
+      "Update 'WeekNavigator' to show preseason/offseason sections",
+      "Create 'OffseasonWizard' component for quick-start content creation"
+    ],
+    "external_dependencies": [
+      "No external fantasy data API calls for offseason content",
+      "Ensure media upload service handles offseason content without matchup IDs",
+      "Verify notification service supports offseason content alerts"
+    ]
+  },
+  "dependencies": {
+    "requires": [
+      "US-4.1 (Basic commissioner content creation functionality)",
+      "US-4.2 (Media upload and management)"
+    ],
+    "blocks": [],
+    "relates_to": [
+      "US-4.4 (Content history and editing - offseason content must integrate with history views)",
+      "US-1.4 (League visibility settings - offseason content respects public/private rules)"
+    ]
+  },
+  "testing_strategy": {
+    "unit_tests": [
+      "Test offseason content creation without matchup context",
+      "Verify season_type field validation and storage",
+      "Test preseason week numbering logic and display formatting",
+      "Verify custom week label handling and uniqueness constraints"
+    ],
+    "integration_tests": [
+      "Test full offseason content workflow: create -> publish -> view",
+      "Verify transition between regular season and offseason modes",
+      "Test multiple offseason posts with same week label",
+      "Verify historical integration (offseason content appears in timeline)"
+    ],
+    "edge_case_tests": [
+      "Test creating offseason content immediately after season ends",
+      "Verify behavior when external fantasy API returns no data (offseason detection)",
+      "Test preseason week numbering conflicts with regular season",
+      "Test offseason content with season_reference_year spanning multiple years"
+    ],
+    "accessibility_tests": [
+      "Verify screen readers announce season_type badges correctly",
+      "Test keyboard navigation in offseason content wizard",
+      "Verify color contrast for preseason/offseason visual indicators"
+    ]
+  },
+  "non_functional_requirements": {
+    "performance": [
+      "Offseason content creation completes in <500ms (no external API calls)",
+      "Historical views load offseason content with <100ms incremental overhead",
+      "Week selector renders preseason/offseason sections in <200ms"
+    ],
+    "security": [
+      "Only league commissioners can create offseason content (role-based access control)",
+      "Offseason content respects league visibility settings (RLS policies apply)",
+      "XSS protection for custom week labels and freeform content"
+    ],
+    "usability": [
+      "Offseason content wizard reduces creation time by 60% vs manual form entry",
+      "Preseason week labels clearly distinguish from regular season (visual differentiation)",
+      "Error messages provide actionable guidance for season/week conflicts"
+    ]
+  },
+  "definition_of_done": [
+    "All 9 acceptance criteria pass automated tests",
+    "Offseason content creation works without external fantasy API dependency",
+    "Preseason weeks display with correct numbering and visual badges",
+    "Multiple offseason posts with same week label function correctly",
+    "Offseason content integrates seamlessly into historical timeline views",
+    "Documentation updated with offseason content creation guide",
+    "Commissioner feedback collected on offseason template usefulness"
+  ],
+  "notes": [
+    "Key gap: Current system assumes active season with matchup data. Offseason periods (6+ months/year) lack flexible content tools.",
+    "Preseason numbering distinction critical for user clarity (Preseason Week 1 vs Regular Season Week 1)",
+    "Custom week labels enable creative content (e.g., 'Draft Day', 'Trade Deadline Recap', 'End of Season Awards')",
+    "Historical integration ensures offseason content doesn't create timeline gaps",
+    "No external API dependency for offseason content improves performance and reliability"
+  ],
+  "created_date": "2025-12-05",
+  "updated_date": "2025-12-05",
+  "estimated_effort": "8 story points"
+}

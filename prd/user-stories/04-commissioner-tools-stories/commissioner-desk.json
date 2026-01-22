@@ -1,0 +1,157 @@
+{
+  "subcomponentId": "commissioner-desk",
+  "componentId": "commissioner-tools",
+  "tracesTo": [
+    "SOW: Commissioner Desk & Weekly Content Publishing",
+    "UserFlow: Weekly Commissioner Desk → Optional Content Creation & Publishing to Feed"
+  ],
+  "stories": [
+    {
+      "id": "CD-001",
+      "title": "Access Weekly Commissioner Desk Interface",
+      "user": "League Commissioner",
+      "goal": "access the unified weekly content creation hub from the league navigation menu",
+      "benefit": "I can manage all my weekly content creation tasks in one centralized location",
+      "acceptanceCriteria": [
+        "Commissioner Desk menu item appears in left-side navigation for users with Commissioner or Admin role",
+        "Desk interface loads with current season and most recent week pre-selected by default",
+        "System displays three content creation sections: Power Rankings, Matchup of the Week, and Predictions",
+        "Any existing draft content for the selected week is automatically loaded and displayed",
+        "System restricts access to Commissioner Desk for Manager and Fan roles with appropriate error message"
+      ]
+    },
+    {
+      "id": "CD-002",
+      "title": "Navigate Between Seasons and Weeks",
+      "user": "League Commissioner",
+      "goal": "select different seasons and weeks to create or edit content for any time period",
+      "benefit": "I can manage content for past, current, and future weeks without losing my work",
+      "acceptanceCriteria": [
+        "Season selector dropdown displays all seasons associated with the league (dynasty continuity or redraft mapping)",
+        "Week selector displays weeks 1-N based on league schedule length, plus playoff weeks",
+        "System preserves any unsaved draft content when switching between weeks with confirmation prompt",
+        "Selected season/week context persists across browser sessions via local storage",
+        "Visual indicator shows which weeks have published content vs drafts vs no content",
+        "System defaults to current week for current season, or most recent week for past seasons"
+      ]
+    },
+    {
+      "id": "CD-003",
+      "title": "Create New Content Draft",
+      "user": "League Commissioner",
+      "goal": "start creating new weekly content from a blank state or previous week's template",
+      "benefit": "I can begin my weekly content creation process efficiently with helpful starting points",
+      "acceptanceCriteria": [
+        "System provides 'Create New Draft' button for weeks with no existing draft or published content",
+        "User can optionally copy previous week's structure (power rankings order, matchup predictions format) as starting template",
+        "New draft is created in database with status 'draft' and timestamp",
+        "All three content sections (rankings, matchup, predictions) initialize in empty/unpublished state",
+        "System displays clear indication that content is in draft mode with 'Last saved' timestamp"
+      ]
+    },
+    {
+      "id": "CD-004",
+      "title": "Autosave Draft Content Continuously",
+      "user": "League Commissioner",
+      "goal": "have my work automatically saved as I create content without manual save actions",
+      "benefit": "I don't lose any work if my browser crashes or I navigate away accidentally",
+      "acceptanceCriteria": [
+        "System autosaves all draft changes every 30 seconds while user is actively editing",
+        "Autosave triggers immediately after user stops typing for 3 seconds (debounced save)",
+        "Visual indicator shows 'Saving...' during save operation and 'All changes saved' with timestamp after completion",
+        "System handles offline scenarios by queueing changes and syncing when connection restored",
+        "Autosave preserves incomplete content (e.g., partially filled rankings, empty commentary fields)",
+        "System displays error notification if autosave fails and allows manual retry"
+      ]
+    },
+    {
+      "id": "CD-005",
+      "title": "Edit Existing Draft Content",
+      "user": "League Commissioner",
+      "goal": "modify and refine draft content across multiple editing sessions before publishing",
+      "benefit": "I can work on my weekly content over several days without losing progress",
+      "acceptanceCriteria": [
+        "System loads most recent saved draft when Commissioner accesses a week with existing draft",
+        "All content sections display saved draft data with edit controls enabled",
+        "User can switch between content sections (rankings, matchup, predictions) without losing changes",
+        "System tracks draft version history with 'Last modified' timestamp and modifier user",
+        "Draft remains in 'draft' status until explicitly published by user"
+      ]
+    },
+    {
+      "id": "CD-006",
+      "title": "Preview Draft Content Before Publishing",
+      "user": "League Commissioner",
+      "goal": "see exactly how my content will appear to league members before making it public",
+      "benefit": "I can catch errors and verify formatting before publishing to avoid embarrassment",
+      "acceptanceCriteria": [
+        "System provides 'Preview' button that renders content in read-only view matching public display",
+        "Preview shows how power rankings, matchup of the week, and predictions will appear on respective pages",
+        "Preview displays how feed moments will appear in the newsfeed timeline",
+        "User can return to edit mode from preview without losing unsaved changes",
+        "Preview mode is clearly indicated with visual banner stating 'Preview Mode - Not Published'"
+      ]
+    },
+    {
+      "id": "CD-007",
+      "title": "Publish Weekly Content to Feed and Pages",
+      "user": "League Commissioner",
+      "goal": "publish completed weekly content with a single action that updates all relevant pages and creates feed moments",
+      "benefit": "I can share my content with the league efficiently without manual multi-step processes",
+      "acceptanceCriteria": [
+        "System provides prominent 'Publish' button that is disabled until all required content sections are complete",
+        "Publish action validates all content sections and displays specific error messages for incomplete or invalid data",
+        "Single publish operation updates power rankings page, matchup page, predictions data, and creates feed moments atomically",
+        "System creates separate feed moment for each content type published (rankings moment, matchup moment, predictions moment)",
+        "Published content status changes from 'draft' to 'published' with publication timestamp and publisher user ID",
+        "System displays success confirmation with links to view published content and feed moments",
+        "User cannot edit published content directly; system creates new draft version for edits with 'Updated' indicator"
+      ]
+    },
+    {
+      "id": "CD-008",
+      "title": "Skip Optional Content Sections",
+      "user": "League Commissioner",
+      "goal": "choose not to create certain weekly content types without being blocked from publishing others",
+      "benefit": "I have flexibility to publish only the content I want for a given week",
+      "acceptanceCriteria": [
+        "Each content section (Power Rankings, Matchup of the Week, Predictions) has explicit 'Skip This Week' toggle",
+        "Skipped sections are excluded from validation requirements for publishing",
+        "System clearly indicates skipped sections with visual styling and explanatory text",
+        "Publish action creates feed moments only for non-skipped content sections",
+        "User can un-skip a section later and add content without affecting already-published sections",
+        "System tracks skip status in database with week association for historical reference"
+      ]
+    },
+    {
+      "id": "CD-009",
+      "title": "Manage Draft State Across Multiple Weeks",
+      "user": "League Commissioner",
+      "goal": "see which weeks have drafts, published content, or no content at a glance",
+      "benefit": "I can stay organized and know which weeks need my attention",
+      "acceptanceCriteria": [
+        "Week selector displays status badges for each week: 'Published', 'Draft', or 'Empty'",
+        "Published weeks show green checkmark icon with publication date on hover",
+        "Draft weeks show orange clock icon with 'Last edited' timestamp on hover",
+        "Empty weeks show gray icon indicating no content created yet",
+        "System provides quick navigation to 'Next unpublished week' for efficient workflow",
+        "Week list scrolls to current week on initial load for temporal context"
+      ]
+    },
+    {
+      "id": "CD-010",
+      "title": "Update Previously Published Content",
+      "user": "League Commissioner",
+      "goal": "correct errors or add updates to already-published weekly content",
+      "benefit": "I can fix mistakes or add new information without losing the original publication",
+      "acceptanceCriteria": [
+        "System provides 'Edit Published Content' button for weeks with published content",
+        "Editing published content creates new draft version while preserving original publication",
+        "Draft edits are not visible to league members until republished",
+        "Republishing displays 'Updated' badge on feed moments and pages with update timestamp",
+        "System maintains version history showing original publication and all subsequent updates",
+        "Feed moment bumping occurs only if republished content has significant changes (configurable threshold)"
+      ]
+    }
+  ]
+}

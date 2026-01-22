@@ -1,0 +1,16 @@
+{
+  "name": "FSHQ.gg",
+  "short_name": "FSHQ",
+  "description": "Your Fantasy Sports Clubhouse - Connect leagues, track pick'ems, and compete on leaderboards",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#000000",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "48x48",
+      "type": "image/x-icon"
+    }
+  ]
+}

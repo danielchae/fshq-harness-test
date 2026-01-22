@@ -1,0 +1,202 @@
+{
+  "subcomponentId": "desk-components",
+  "componentId": "ui-components",
+  "tracesTo": [
+    "SOW: Commissioner Desk & Weekly Content Publishing",
+    "SOW: UI / Visuals Guidelines"
+  ],
+  "stories": [
+    {
+      "id": "DSK-001",
+      "title": "Build Drag-and-Drop Rankings Builder Component",
+      "user": "Frontend Developer",
+      "goal": "implement an interactive drag-and-drop interface for ordering teams in power rankings",
+      "benefit": "commissioners can intuitively reorder teams without manual input of rank numbers",
+      "acceptanceCriteria": [
+        "Component uses react-beautiful-dnd or @dnd-kit for drag-and-drop functionality",
+        "Component displays all league teams in draggable list items with team logos and names",
+        "Component provides visual feedback during drag operations with hover states and drop zones",
+        "Component updates team order state immediately on drop with smooth animations",
+        "Component triggers autosave callback after drag operation completes",
+        "Component handles touch interactions for mobile devices with appropriate gestures",
+        "Component maintains accessibility with keyboard navigation support for reordering"
+      ]
+    },
+    {
+      "id": "DSK-002",
+      "title": "Create Team Commentary Input Fields in Rankings Builder",
+      "user": "Frontend Developer",
+      "goal": "provide text input fields for per-team commentary alongside each team in rankings",
+      "benefit": "commissioners can add personalized commentary for each team's ranking",
+      "acceptanceCriteria": [
+        "Component includes textarea or rich text input field for each team position",
+        "Input fields support markdown formatting or rich text editing for formatted commentary",
+        "Input fields show character count with soft limit warnings and hard limits",
+        "Input fields trigger debounced autosave (3 seconds after typing stops)",
+        "Input fields display saved state indicator ('Saved', 'Saving...', 'Error')",
+        "Input fields expand vertically to accommodate multi-line content without scrolling",
+        "Input fields preserve cursor position and selection during autosave operations"
+      ]
+    },
+    {
+      "id": "DSK-003",
+      "title": "Build Matchup Selector Dropdown Component",
+      "user": "Frontend Developer",
+      "goal": "create dropdown selector for choosing featured matchup from weekly schedule",
+      "benefit": "commissioners can easily select matchup of the week from available games",
+      "acceptanceCriteria": [
+        "Component fetches and displays all matchups for selected week from schedule API",
+        "Component shows both teams in each matchup option with logos and names",
+        "Component displays current scores if games are in progress or completed",
+        "Component highlights currently selected matchup with distinct styling",
+        "Component updates form state immediately on selection change",
+        "Component provides 'No featured matchup this week' option for skipping",
+        "Component uses Shadcn UI Select component for consistent dropdown behavior"
+      ]
+    },
+    {
+      "id": "DSK-004",
+      "title": "Create Matchup Hype Text Input Component",
+      "user": "Frontend Developer",
+      "goal": "provide rich text input for adding hype text to featured matchup",
+      "benefit": "commissioners can write engaging descriptions for matchup of the week",
+      "acceptanceCriteria": [
+        "Component provides textarea or rich text editor for matchup commentary",
+        "Component supports markdown or basic formatting (bold, italic, links)",
+        "Component displays live preview of formatted text alongside editor",
+        "Component includes character count with recommended length guidance (100-500 chars)",
+        "Component triggers autosave callback with debounce (3 seconds after typing stops)",
+        "Component shows save status indicator visible to user",
+        "Component validates input length and displays error messages for violations"
+      ]
+    },
+    {
+      "id": "DSK-005",
+      "title": "Build Structured Winner Prediction Form Component",
+      "user": "Frontend Developer",
+      "goal": "create form for commissioners to predict winners of each matchup",
+      "benefit": "commissioners can record predictions that will be graded after stat corrections",
+      "acceptanceCriteria": [
+        "Component displays all matchups for selected week in structured list format",
+        "Component provides radio buttons or toggle controls for selecting winner of each matchup",
+        "Component shows team logos, names, and current records alongside each matchup",
+        "Component calculates and displays total number of predictions made vs total matchups",
+        "Component highlights incomplete predictions with visual indicators",
+        "Component updates form state immediately on selection with autosave trigger",
+        "Component allows commissioners to skip predictions with explicit 'No prediction' option"
+      ]
+    },
+    {
+      "id": "DSK-006",
+      "title": "Implement Autosave UI Feedback Component",
+      "user": "Frontend Developer",
+      "goal": "display real-time autosave status indicators across all desk components",
+      "benefit": "commissioners have confidence their work is being saved automatically",
+      "acceptanceCriteria": [
+        "Component displays 'All changes saved' with timestamp when save succeeds",
+        "Component displays 'Saving...' spinner during active save operations",
+        "Component displays 'Error saving changes' with retry button on save failures",
+        "Component displays 'Offline - changes queued' when network connection lost",
+        "Component shows last successful save timestamp formatted as relative time",
+        "Component positions save indicator in consistent, visible location (top-right corner)",
+        "Component includes appropriate ARIA live regions for screen reader announcements"
+      ]
+    },
+    {
+      "id": "DSK-007",
+      "title": "Create Publish Button Component with Validation",
+      "user": "Frontend Developer",
+      "goal": "build publish button that validates content and triggers publishing workflow",
+      "benefit": "commissioners can publish content with confidence that all required fields are complete",
+      "acceptanceCriteria": [
+        "Component displays prominent primary action button labeled 'Publish' or 'Publish Weekly Content'",
+        "Component disables button when required content sections are incomplete or invalid",
+        "Component shows tooltip or popover explaining why button is disabled when hovered",
+        "Component triggers validation function that checks all non-skipped content sections",
+        "Component displays confirmation modal before publishing with content summary preview",
+        "Component shows loading spinner and disables button during publish operation",
+        "Component displays success notification with links to published content on completion"
+      ]
+    },
+    {
+      "id": "DSK-008",
+      "title": "Build Skip Content Section Toggle Component",
+      "user": "Frontend Developer",
+      "goal": "create toggle controls for marking content sections as skipped for the week",
+      "benefit": "commissioners can skip optional content without being blocked from publishing",
+      "acceptanceCriteria": [
+        "Component displays toggle switch or checkbox for each content section (Rankings, Matchup, Predictions)",
+        "Component shows 'Skip This Week' label with explanatory tooltip on toggle",
+        "Component applies visual styling to skipped sections (dimmed, collapsed, or hidden content)",
+        "Component excludes skipped sections from publish validation requirements",
+        "Component updates form state immediately on toggle with autosave trigger",
+        "Component displays confirmation modal when toggling skip on sections with existing content",
+        "Component allows un-skipping sections to re-enable content creation"
+      ]
+    },
+    {
+      "id": "DSK-009",
+      "title": "Create Rankings Order Reset and Undo Component",
+      "user": "Frontend Developer",
+      "goal": "provide controls for resetting rankings to default order or undoing recent changes",
+      "benefit": "commissioners can quickly recover from mistakes or start over without manual reordering",
+      "acceptanceCriteria": [
+        "Component displays 'Reset to Default Order' button that restores original team order",
+        "Component displays 'Undo' button that reverts last drag-and-drop operation",
+        "Component shows confirmation modal before executing reset to prevent accidental data loss",
+        "Component maintains undo history stack for multiple levels of undo (at least 10 operations)",
+        "Component disables undo button when no history is available",
+        "Component triggers autosave after reset or undo operations complete",
+        "Component provides keyboard shortcuts for undo (Ctrl+Z / Cmd+Z) functionality"
+      ]
+    },
+    {
+      "id": "DSK-010",
+      "title": "Build Preview Mode Component for Draft Content",
+      "user": "Frontend Developer",
+      "goal": "create preview interface that shows how content will appear when published",
+      "benefit": "commissioners can verify content appearance before publishing to avoid errors",
+      "acceptanceCriteria": [
+        "Component displays 'Preview' button that switches interface to read-only preview mode",
+        "Component renders power rankings, matchup of the week, and predictions in published format",
+        "Component shows how feed moments will appear in newsfeed timeline",
+        "Component applies all production styling and formatting to preview content",
+        "Component displays 'Preview Mode' banner at top of interface with 'Exit Preview' button",
+        "Component preserves all draft data when exiting preview mode without saving",
+        "Component handles empty or incomplete content gracefully with placeholder messages"
+      ]
+    },
+    {
+      "id": "DSK-011",
+      "title": "Create Week Status Indicator Component",
+      "user": "Frontend Developer",
+      "goal": "display visual indicators showing which weeks have drafts, published content, or no content",
+      "benefit": "commissioners can quickly see their progress across all weeks at a glance",
+      "acceptanceCriteria": [
+        "Component displays badge or icon for each week in week selector dropdown",
+        "Component shows green checkmark icon for weeks with published content",
+        "Component shows orange clock icon for weeks with saved drafts",
+        "Component shows gray or empty icon for weeks with no content created",
+        "Component displays tooltip on hover showing publication date or last edit timestamp",
+        "Component updates status indicators immediately after publish or save operations",
+        "Component provides visual distinction between partially complete and fully complete drafts"
+      ]
+    },
+    {
+      "id": "DSK-012",
+      "title": "Build Mobile-Responsive Desk Layout Component",
+      "user": "Frontend Developer",
+      "goal": "ensure Commissioner Desk interface adapts properly to mobile and tablet viewports",
+      "benefit": "commissioners can create content on any device with appropriate touch interactions",
+      "acceptanceCriteria": [
+        "Component uses responsive grid or flexbox layout that adapts to screen sizes",
+        "Component stacks content sections vertically on mobile devices (< 768px width)",
+        "Component adjusts drag-and-drop interface for touch interactions on mobile",
+        "Component enlarges touch targets for buttons and controls to minimum 44x44px",
+        "Component collapses or simplifies secondary UI elements on small screens",
+        "Component maintains all functionality on mobile without requiring horizontal scrolling",
+        "Component uses mobile-optimized modals and dropdowns (full-screen or bottom sheets)"
+      ]
+    }
+  ]
+}

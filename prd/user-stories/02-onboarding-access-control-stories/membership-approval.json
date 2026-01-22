@@ -1,0 +1,154 @@
+{
+  "subcomponentId": "membership-approval",
+  "componentId": "onboarding-access-control",
+  "tracesTo": [
+    "SOW: Onboarding, Roles & Access Control",
+    "UserFlow: Manager / Fan Onboarding, Claiming & Role Assignment"
+  ],
+  "stories": [
+    {
+      "id": "membership-approval-001",
+      "title": "Admin Views Pending Membership Requests",
+      "user": "League Admin",
+      "goal": "view all pending membership requests in a centralized queue",
+      "benefit": "I can efficiently review and manage users waiting to join the league",
+      "acceptanceCriteria": [
+        "Admin can access a dedicated membership approval queue from their admin dashboard",
+        "Queue displays pending user requests with username, requested role, team preference (if applicable), and request timestamp",
+        "Queue shows claim validation status for manager requests",
+        "Admin can filter pending requests by role type (manager/fan) and sort by date"
+      ]
+    },
+    {
+      "id": "membership-approval-002",
+      "title": "Admin Approves Member Request",
+      "user": "League Admin",
+      "goal": "approve a pending membership request",
+      "benefit": "I can grant access to legitimate users who want to join our league",
+      "acceptanceCriteria": [
+        "Admin can click an 'Approve' action on any pending request",
+        "System creates the membership record with the approved role and team assignment",
+        "Approved user receives notification and gains access to league clubhouse",
+        "Request is removed from pending queue and logged in approval history",
+        "System validates team assignment is still available for manager claims before approval"
+      ]
+    },
+    {
+      "id": "membership-approval-003",
+      "title": "Admin Denies Member Request",
+      "user": "League Admin",
+      "goal": "deny a pending membership request with optional reason",
+      "benefit": "I can reject inappropriate or suspicious requests and maintain league quality",
+      "acceptanceCriteria": [
+        "Admin can click a 'Deny' action on any pending request",
+        "Admin can optionally provide a reason for denial",
+        "Denied user receives notification with reason if provided",
+        "Request is removed from pending queue and logged in denial history",
+        "User can submit a new request after denial"
+      ]
+    },
+    {
+      "id": "membership-approval-004",
+      "title": "Auto-Join for Open Leagues",
+      "user": "New User",
+      "goal": "automatically join a league without admin approval when auto-join is enabled",
+      "benefit": "I can immediately access the league clubhouse without waiting for approval",
+      "acceptanceCriteria": [
+        "When league visibility rules allow auto-join, user is immediately granted membership upon registration/claiming",
+        "User bypasses approval queue entirely and gains instant access",
+        "Role and team assignments are applied immediately based on claim selection",
+        "System logs auto-join event in membership history",
+        "Admin can view auto-joined members in membership roster"
+      ]
+    },
+    {
+      "id": "membership-approval-005",
+      "title": "Manual Approval for Restricted Leagues",
+      "user": "New User",
+      "goal": "submit a membership request and wait for admin approval in restricted leagues",
+      "benefit": "I can express interest in joining the league and understand my request is being reviewed",
+      "acceptanceCriteria": [
+        "When league visibility rules require approval, user enters approval queue after registration/claiming",
+        "User sees a confirmation message explaining their request is pending admin review",
+        "User receives notification when request is approved or denied",
+        "User cannot access league clubhouse content until approved",
+        "User can cancel their pending request if desired"
+      ]
+    },
+    {
+      "id": "membership-approval-006",
+      "title": "Admin Releases Team Claim",
+      "user": "League Admin",
+      "goal": "release a manager's team claim and make it available for reassignment",
+      "benefit": "I can handle situations where a manager is inactive or needs to be removed from a team",
+      "acceptanceCriteria": [
+        "Admin can select a manager and release their team claim",
+        "System prompts for confirmation before releasing claim",
+        "Released team becomes available for other users to claim",
+        "Original manager is demoted to fan role or removed from league based on admin choice",
+        "System notifies the affected user of the claim release",
+        "Action is logged in league admin history"
+      ]
+    },
+    {
+      "id": "membership-approval-007",
+      "title": "Admin Reassigns Team Claim",
+      "user": "League Admin",
+      "goal": "transfer a team claim from one user to another",
+      "benefit": "I can correct mistakes or handle ownership changes for teams",
+      "acceptanceCriteria": [
+        "Admin can select a team and reassign it to a different user",
+        "System validates the target user is a league member",
+        "Original manager is demoted to fan role or maintains membership based on admin choice",
+        "New manager gains full access to their team's history and identity",
+        "Both users are notified of the reassignment",
+        "Reassignment is logged with reason if provided"
+      ]
+    },
+    {
+      "id": "membership-approval-008",
+      "title": "Admin Promotes Fan to Manager",
+      "user": "League Admin",
+      "goal": "promote a fan to manager role by assigning them an available team",
+      "benefit": "I can give existing fans ownership of teams when needed",
+      "acceptanceCriteria": [
+        "Admin can select a fan member and choose 'Promote to Manager' action",
+        "System displays available unclaimed teams for assignment",
+        "Admin selects a team to assign to the fan",
+        "User's role changes from fan to manager with team assignment",
+        "User is notified of the promotion",
+        "Promotion is logged in admin history"
+      ]
+    },
+    {
+      "id": "membership-approval-009",
+      "title": "Admin Demotes Manager to Fan",
+      "user": "League Admin",
+      "goal": "demote a manager to fan role and release their team claim",
+      "benefit": "I can adjust user roles when team ownership changes or managers become inactive",
+      "acceptanceCriteria": [
+        "Admin can select a manager and choose 'Demote to Fan' action",
+        "System prompts for confirmation and optional reason",
+        "Manager's team claim is released and becomes available",
+        "User's role changes to fan but maintains league membership",
+        "User can optionally select a favorite team as a fan",
+        "User is notified of the demotion with reason if provided",
+        "Demotion is logged in admin history"
+      ]
+    },
+    {
+      "id": "membership-approval-010",
+      "title": "User Views Their Membership Status",
+      "user": "League Member",
+      "goal": "see my current membership status, role, and team assignment",
+      "benefit": "I understand my access level and team affiliation in the league",
+      "acceptanceCriteria": [
+        "User can view their membership details in account/profile settings",
+        "Display shows current role (manager/fan), team assignment, and membership date",
+        "If pending approval, display shows 'Pending Approval' status with request date",
+        "User can see which leagues they are a member of and their role in each",
+        "User can access this information from league switcher or profile menu"
+      ]
+    }
+  ]
+}

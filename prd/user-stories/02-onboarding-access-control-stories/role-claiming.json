@@ -1,0 +1,202 @@
+{
+  "subcomponentId": "role-claiming",
+  "componentId": "onboarding-access-control",
+  "tracesTo": [
+    "SOW: Onboarding, Roles & Access Control",
+    "UserFlow: Manager / Fan Onboarding, Claiming & Role Assignment"
+  ],
+  "stories": [
+    {
+      "id": "RC-001",
+      "title": "Manager Claims Team by Platform Username",
+      "user": "Manager (Team Owner)",
+      "goal": "claim my fantasy team by matching my platform username to a team in the league",
+      "benefit": "I can establish my identity as the manager of my specific team",
+      "acceptanceCriteria": [
+        "System displays list of unclaimed teams from connected fantasy league",
+        "User can view team details including platform username/ID for each team",
+        "User can select their team from the list based on matching username",
+        "System validates that selected team's platform username matches user's platform identity",
+        "System creates manager role assignment linking user to selected team",
+        "System marks team as claimed and removes it from unclaimed teams list",
+        "User receives confirmation of successful team claim"
+      ]
+    },
+    {
+      "id": "RC-002",
+      "title": "Manager Claims Team by Platform User ID",
+      "user": "Manager (Team Owner)",
+      "goal": "claim my fantasy team by verifying my platform user ID when username matching fails",
+      "benefit": "I can still claim my team even if username has changed or doesn't match exactly",
+      "acceptanceCriteria": [
+        "System provides alternative claim method using platform user ID",
+        "User can view their platform user ID from their profile or external platform",
+        "System fetches and compares platform user IDs from fantasy league data",
+        "System validates user's platform ID matches team owner ID from external platform",
+        "System completes team claim if ID verification succeeds",
+        "System provides clear error message if ID verification fails with retry option",
+        "System logs claim attempts for security and audit purposes"
+      ]
+    },
+    {
+      "id": "RC-003",
+      "title": "Fan Selects Fan Role Without Team Support",
+      "user": "Fan (Non-team Owner)",
+      "goal": "join the league as a fan without being tied to a specific team",
+      "benefit": "I can participate in league activities as a neutral observer",
+      "acceptanceCriteria": [
+        "System displays role selection interface for users who don't own teams",
+        "User can explicitly select 'Fan' role option",
+        "System allows fan role selection without requiring team association",
+        "User can optionally skip team support selection during initial onboarding",
+        "System creates league membership with fan role and no team association",
+        "User is directed to appropriate fan experience after role selection",
+        "System tracks fan role for access control and feature availability"
+      ]
+    },
+    {
+      "id": "RC-004",
+      "title": "Fan Selects Favorite Team to Support",
+      "user": "Fan (Non-team Owner)",
+      "goal": "choose a favorite team in the league to follow and support",
+      "benefit": "I can show my allegiance and receive team-specific content and notifications",
+      "acceptanceCriteria": [
+        "System displays list of all teams in league during fan onboarding",
+        "User can select one team as their favorite/supported team",
+        "System stores fan's team preference in user profile",
+        "System allows fans to support teams that are already claimed by managers",
+        "System allows fans to support teams that are not yet claimed",
+        "User can see their selected team displayed in their profile and feed interactions",
+        "System uses team preference to personalize fan's experience"
+      ]
+    },
+    {
+      "id": "RC-005",
+      "title": "Support Multiple Users Claiming Same Team",
+      "user": "Team Manager or Fan",
+      "goal": "have multiple people associated with my team (co-managers, supporters)",
+      "benefit": "multiple people can collaborate or support the same team without conflicts",
+      "acceptanceCriteria": [
+        "System allows one primary manager claim per team",
+        "System allows additional users to request secondary manager status for same team",
+        "System allows unlimited fans to support the same team",
+        "System clearly differentiates between primary manager, secondary managers, and fans in UI",
+        "System maintains team's primary manager identity for official actions",
+        "Secondary managers and fans see team-specific content and can interact with team posts",
+        "System tracks all user-team relationships for access control and features"
+      ]
+    },
+    {
+      "id": "RC-006",
+      "title": "Validate Team Claim Against Platform Data",
+      "user": "System",
+      "goal": "ensure team claims are legitimate and match external fantasy platform data",
+      "benefit": "only legitimate team owners can claim manager roles preventing impersonation",
+      "acceptanceCriteria": [
+        "System fetches current team ownership data from external fantasy platform API",
+        "System compares claim attempt against current platform owner username or ID",
+        "System blocks claim if username/ID does not match platform data",
+        "System provides clear rejection message explaining validation failure",
+        "System allows claim if platform data confirms ownership",
+        "System handles edge cases where platform data is temporarily unavailable",
+        "System logs all claim validation attempts for security audit"
+      ]
+    },
+    {
+      "id": "RC-007",
+      "title": "View Available Teams Before Claiming",
+      "user": "New User During Onboarding",
+      "goal": "see which teams are available to claim and which are already taken",
+      "benefit": "I can quickly identify my team or decide to join as a fan",
+      "acceptanceCriteria": [
+        "System displays all teams from connected fantasy league",
+        "System clearly indicates which teams are already claimed vs available",
+        "System shows team name, logo, and platform username for each team",
+        "System displays current record and basic team info to help identification",
+        "System allows user to search or filter teams by name or username",
+        "Claimed teams show 'Claimed' status but still allow fan support selection",
+        "Unclaimed teams show 'Available to Claim' option for managers"
+      ]
+    },
+    {
+      "id": "RC-008",
+      "title": "Handle Team Claim Conflicts",
+      "user": "User Attempting to Claim Team",
+      "goal": "understand why my claim was rejected and what my options are",
+      "benefit": "I can resolve claim conflicts or choose an alternative role",
+      "acceptanceCriteria": [
+        "System detects if team is already claimed by another user before processing new claim",
+        "System displays clear message that team is already claimed with claimant's basic info",
+        "System offers option to request secondary manager status if team is claimed",
+        "System offers option to join as fan supporting that team",
+        "System offers option to contact admins if user believes they are legitimate owner",
+        "System prevents duplicate primary manager claims for same team",
+        "System logs claim conflicts for admin review and dispute resolution"
+      ]
+    },
+    {
+      "id": "RC-009",
+      "title": "Change or Update Team Support Preference",
+      "user": "Fan",
+      "goal": "change which team I support after initial selection",
+      "benefit": "I can update my preferences if my allegiance changes or I made a mistake",
+      "acceptanceCriteria": [
+        "User can access team preference settings from profile or settings page",
+        "User can view current team support selection",
+        "User can select a different team to support from available teams",
+        "System updates team preference immediately upon confirmation",
+        "System maintains history of team support changes for analytics",
+        "System updates user's feed and notifications to reflect new team preference",
+        "System allows user to remove team support and become neutral fan"
+      ]
+    },
+    {
+      "id": "RC-010",
+      "title": "Request Secondary Manager Status for Team",
+      "user": "User (Potential Co-Manager)",
+      "goal": "request to be added as a secondary manager for a team that's already claimed",
+      "benefit": "I can collaborate with the primary manager if they approve my request",
+      "acceptanceCriteria": [
+        "User can view claimed teams and see option to 'Request Co-Manager Access'",
+        "User can submit request with optional message explaining relationship to team",
+        "System notifies primary manager and league admins of secondary manager request",
+        "Request enters admin approval queue for review",
+        "User receives confirmation that request was submitted",
+        "System tracks pending secondary manager requests for admin processing",
+        "User can cancel pending request if needed"
+      ]
+    },
+    {
+      "id": "RC-011",
+      "title": "Display Role and Team in User Profile",
+      "user": "League Member",
+      "goal": "see my role and team association displayed in my profile",
+      "benefit": "other members can identify my role and team affiliation in the league",
+      "acceptanceCriteria": [
+        "User profile displays role badge (Manager, Fan, Admin)",
+        "User profile shows associated team logo and name if applicable",
+        "Manager profiles display 'Manager of [Team Name]' designation",
+        "Fan profiles display 'Fan of [Team Name]' or 'Neutral Fan' if no team selected",
+        "Secondary managers show 'Co-Manager of [Team Name]' designation",
+        "Role and team info appears in user's posts, comments, and interactions",
+        "System uses role for styling and visual differentiation in UI"
+      ]
+    },
+    {
+      "id": "RC-012",
+      "title": "Prevent Claiming After Initial Onboarding",
+      "user": "System",
+      "goal": "prevent users from claiming teams after they've already joined as fans",
+      "benefit": "role assignments remain stable and prevent confusion about team ownership",
+      "acceptanceCriteria": [
+        "System locks role selection after user completes initial onboarding",
+        "Users who joined as fans cannot later claim manager role for same league",
+        "System provides clear message if user attempts to claim after joining",
+        "Admin users can manually reassign roles if legitimate ownership needs change",
+        "System allows users to join as fans of teams they don't own without locking out legitimate owners",
+        "System tracks when role was initially assigned for audit purposes",
+        "System allows role changes through admin approval process only"
+      ]
+    }
+  ]
+}

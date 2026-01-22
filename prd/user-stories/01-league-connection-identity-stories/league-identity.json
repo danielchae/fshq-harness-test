@@ -1,0 +1,122 @@
+{
+  "subcomponentId": "league-identity",
+  "componentId": "league-connection-identity",
+  "tracesTo": [
+    "SOW: League Connection & Identity",
+    "UserFlow: Commissioner League Linking & Admin Creation"
+  ],
+  "stories": [
+    {
+      "id": "LI-001",
+      "title": "Generate Unique League Slug from League Name",
+      "user": "System",
+      "goal": "automatically generate a unique URL slug based on the league name during league creation",
+      "benefit": "leagues receive a clean, readable URL (fshq.gg/LEAGUESLUG) without manual input",
+      "acceptanceCriteria": [
+        "System converts league name to lowercase and replaces spaces with hyphens",
+        "System removes special characters and non-alphanumeric characters except hyphens",
+        "System limits slug length to maximum 50 characters, trimming from end if necessary",
+        "System queries database to verify slug uniqueness before assignment",
+        "Generated slug adheres to URL-safe character requirements (a-z, 0-9, hyphens)"
+      ]
+    },
+    {
+      "id": "LI-002",
+      "title": "Handle Slug Collisions with Numeric Suffix",
+      "user": "System",
+      "goal": "resolve slug conflicts when multiple leagues have similar names",
+      "benefit": "every league receives a unique URL even if league names are identical or very similar",
+      "acceptanceCriteria": [
+        "When slug collision detected, system appends -2 to slug and checks uniqueness",
+        "If collision persists, system increments suffix (-3, -4, etc.) until unique slug found",
+        "System attempts up to 100 suffix iterations before throwing error",
+        "Original slug without suffix is always attempted first before adding suffixes",
+        "Collision detection occurs atomically to prevent race conditions during simultaneous league creation"
+      ]
+    },
+    {
+      "id": "LI-003",
+      "title": "Display League URL to Admin After Creation",
+      "user": "League Admin",
+      "goal": "immediately see my league's unique URL after connecting my league",
+      "benefit": "I can share the league URL with members and verify it's correct",
+      "acceptanceCriteria": [
+        "System displays full league URL (fshq.gg/LEAGUESLUG) prominently on league creation success page",
+        "URL is displayed as clickable link that opens league page in new tab",
+        "System provides copy-to-clipboard button next to URL for easy sharing",
+        "URL display includes visual confirmation when copied successfully",
+        "League URL is also visible in league settings/admin panel"
+      ]
+    },
+    {
+      "id": "LI-004",
+      "title": "Edit League Slug as Admin",
+      "user": "League Admin",
+      "goal": "change my league's URL slug to something more meaningful or branded",
+      "benefit": "I can customize the URL to match my league's identity or fix awkward auto-generated slugs",
+      "acceptanceCriteria": [
+        "Admin can access slug editing field in league settings page",
+        "System validates new slug follows same format rules as auto-generation (lowercase, hyphens, no special chars)",
+        "System checks uniqueness of new slug before allowing save",
+        "System displays clear error if new slug is already taken or invalid format",
+        "System requires admin confirmation before saving slug changes with warning about broken links"
+      ]
+    },
+    {
+      "id": "LI-005",
+      "title": "Prevent Slug Changes After League is Active",
+      "user": "System",
+      "goal": "limit slug changes to protect member access and prevent confusion",
+      "benefit": "league members don't lose access due to URL changes and bookmarks remain valid",
+      "acceptanceCriteria": [
+        "System allows slug editing only within first 24 hours of league creation OR if no members have joined yet",
+        "After restriction period, slug field becomes read-only in admin settings",
+        "System displays explanatory message why slug cannot be changed after activation period",
+        "Exception: Site administrators can override restriction with special permissions",
+        "System logs all slug change attempts and history for audit purposes"
+      ]
+    },
+    {
+      "id": "LI-006",
+      "title": "Set League Display Name and Avatar",
+      "user": "League Admin",
+      "goal": "customize my league's display name and avatar to reflect league identity",
+      "benefit": "my league has unique branding separate from the URL slug and external platform name",
+      "acceptanceCriteria": [
+        "Admin can edit league display name independently from URL slug in league settings",
+        "Admin can upload custom league avatar image (JPEG/PNG, max 2MB, min 200x200px)",
+        "System displays avatar in navigation header, feed moments, and league pages",
+        "Display name defaults to external platform name but can be customized",
+        "Changes to display name do NOT affect URL slug"
+      ]
+    },
+    {
+      "id": "LI-007",
+      "title": "Route to League via Unique Slug",
+      "user": "League Member or Visitor",
+      "goal": "access a league's home page directly using its unique URL slug",
+      "benefit": "I can navigate to the league with a simple, memorable URL",
+      "acceptanceCriteria": [
+        "GET request to fshq.gg/{slug} resolves to correct league's home page",
+        "System returns 404 page with helpful message if slug does not exist",
+        "Invalid slug formats redirect to general error page with navigation options",
+        "Slug routing works regardless of user authentication state (respects league visibility rules)",
+        "System logs 404s on slug lookups to identify potential typos or removed leagues"
+      ]
+    },
+    {
+      "id": "LI-008",
+      "title": "Display League Branding on All League Pages",
+      "user": "League Member",
+      "goal": "see consistent league branding across all pages when navigating my league",
+      "benefit": "I have clear visual context of which league I'm viewing and feel immersed in league identity",
+      "acceptanceCriteria": [
+        "League avatar appears in header/navigation on all league pages",
+        "League display name appears next to avatar in header",
+        "Feed moments tagged with league show league avatar and name",
+        "Public league pages show branding to visitors before login",
+        "Branding persists when switching between Feed, Matchups, Rankings, and other league sections"
+      ]
+    }
+  ]
+}

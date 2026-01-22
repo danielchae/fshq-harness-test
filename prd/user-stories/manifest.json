@@ -1,0 +1,394 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "project": "FSHQ.gg - Fantasy Sports Clubhouse Platform",
+  "version": "1.0.0",
+  "components": [
+    {
+      "id": "league-connection-identity",
+      "name": "League Connection & Identity Management",
+      "description": "Core system for connecting external fantasy leagues to FSHQ, creating league spaces, managing unique URLs, and establishing league identity and visibility settings",
+      "priority": "P0",
+      "subcomponents": [
+        {
+          "id": "league-linking",
+          "name": "Fantasy League Integration & Detection",
+          "description": "Connect external fantasy platforms (Sleeper), fetch league metadata, detect existing FSHQ instances, and establish league connections",
+          "estimatedStories": 8,
+          "tracesTo": ["SOW: League Connection & Identity", "UserFlow: Commissioner League Linking & Admin Creation"]
+        },
+        {
+          "id": "league-identity",
+          "name": "League URL & Branding",
+          "description": "Generate unique league slugs (fshq.gg/LEAGUESLUG), handle collisions, support admin edits, and manage league branding/identity",
+          "estimatedStories": 5,
+          "tracesTo": ["SOW: League Connection & Identity", "UserFlow: Commissioner League Linking & Admin Creation"]
+        },
+        {
+          "id": "league-settings",
+          "name": "League Configuration & Visibility",
+          "description": "Manage league visibility rules (public/private), join rules (auto-join/approval), fan access settings, and league-level configuration",
+          "estimatedStories": 6,
+          "tracesTo": ["SOW: League Connection & Identity", "SOW: Public vs Private Presentation"]
+        }
+      ]
+    },
+    {
+      "id": "onboarding-access-control",
+      "name": "User Onboarding & Access Control",
+      "description": "Complete user authentication, role assignment, team claiming, membership approval, and multi-league navigation system",
+      "priority": "P0",
+      "subcomponents": [
+        {
+          "id": "user-authentication",
+          "name": "User Registration & Login",
+          "description": "Email/password authentication via Supabase Auth, session management, and account creation flows",
+          "estimatedStories": 5,
+          "tracesTo": ["SOW: Onboarding, Roles & Access Control", "UserFlow: Manager / Fan Onboarding, Claiming & Role Assignment"]
+        },
+        {
+          "id": "role-claiming",
+          "name": "Team Claiming & Role Selection",
+          "description": "Manager team claiming by platform username/ID, fan role selection with optional team support, multi-user per team support, and claim validation",
+          "estimatedStories": 9,
+          "tracesTo": ["SOW: Onboarding, Roles & Access Control", "UserFlow: Manager / Fan Onboarding, Claiming & Role Assignment"]
+        },
+        {
+          "id": "membership-approval",
+          "name": "Membership Approval Workflows",
+          "description": "Admin approval queues, auto-join vs manual approval based on league rules, claim release/reassignment, and role promotion/demotion",
+          "estimatedStories": 7,
+          "tracesTo": ["SOW: Onboarding, Roles & Access Control", "UserFlow: Manager / Fan Onboarding, Claiming & Role Assignment"]
+        },
+        {
+          "id": "league-navigation",
+          "name": "Multi-League Switcher & Navigation",
+          "description": "League switcher for users in multiple leagues, direct routing for single-league users, and league context management",
+          "estimatedStories": 4,
+          "tracesTo": ["SOW: League Clubhouse & Navigation", "UserFlow: League Access, Switching & Role-Based Experience"]
+        }
+      ]
+    },
+    {
+      "id": "social-feed-engagement",
+      "name": "Social Feed & Community Engagement",
+      "description": "Central newsfeed with league moments, user posts, engagement mechanics (comments/reactions), and content moderation tools",
+      "priority": "P0",
+      "subcomponents": [
+        {
+          "id": "newsfeed-moments",
+          "name": "Newsfeed & Moment Generation",
+          "description": "Chronological engagement-aware feed, automated league moments (trades, results), commissioner posts, user-generated content, and feed sorting/bumping",
+          "estimatedStories": 10,
+          "tracesTo": ["SOW: Newsfeed & Moments", "UserFlow: Weekly Member Engagement, Feed Interaction, Pick'ems & History Browsing"]
+        },
+        {
+          "id": "content-interaction",
+          "name": "Comments & Reactions System",
+          "description": "Comment threading, emoji reactions, engagement bumping, and interaction tracking on all moment types",
+          "estimatedStories": 6,
+          "tracesTo": ["SOW: Newsfeed & Moments", "SOW: User Interactions - Content Creation & Engagement"]
+        },
+        {
+          "id": "user-posts",
+          "name": "User-Generated Posts",
+          "description": "Create text posts, add media (future), polls (future), memes, links, and basic post formatting",
+          "estimatedStories": 5,
+          "tracesTo": ["SOW: Newsfeed & Moments", "SOW: User Interactions - Content Creation & Engagement"]
+        },
+        {
+          "id": "content-moderation",
+          "name": "Admin Content Moderation",
+          "description": "Pin moments to top of feed, hide/remove problematic content, and manage feed quality",
+          "estimatedStories": 4,
+          "tracesTo": ["SOW: Newsfeed & Moments", "UserFlow: League Access, Switching & Role-Based Experience"]
+        }
+      ]
+    },
+    {
+      "id": "commissioner-tools",
+      "name": "Commissioner Content & Publishing Tools",
+      "description": "Unified Commissioner Desk for creating and publishing weekly power rankings, matchup features, predictions, and automated grading after stat corrections",
+      "priority": "P0",
+      "subcomponents": [
+        {
+          "id": "commissioner-desk",
+          "name": "Commissioner Desk Interface",
+          "description": "Unified weekly content creation hub, season/week selectors, autosave drafts, and publishing workflow",
+          "estimatedStories": 7,
+          "tracesTo": ["SOW: Commissioner Desk & Weekly Content Publishing", "UserFlow: Weekly Commissioner Desk → Optional Content Creation & Publishing to Feed"]
+        },
+        {
+          "id": "power-rankings-creation",
+          "name": "Power Rankings Builder",
+          "description": "Drag-and-drop team ordering, per-team commentary, skip option, and rankings publishing",
+          "estimatedStories": 8,
+          "tracesTo": ["SOW: Commissioner Desk & Weekly Content Publishing", "UserFlow: Weekly Commissioner Desk → Optional Content Creation & Publishing to Feed"]
+        },
+        {
+          "id": "matchup-features",
+          "name": "Matchup of the Week & Predictions",
+          "description": "Select featured matchups from schedule, add hype text, structured winner predictions, and skip option",
+          "estimatedStories": 6,
+          "tracesTo": ["SOW: Commissioner Desk & Weekly Content Publishing", "UserFlow: Weekly Commissioner Desk → Optional Content Creation & Publishing to Feed"]
+        },
+        {
+          "id": "weekly-publishing",
+          "name": "Weekly Publishing & Grading",
+          "description": "Single publish action, create feed moments, update pages, post-stat-correction grading of predictions, and stats updates",
+          "estimatedStories": 9,
+          "tracesTo": ["SOW: Commissioner Desk & Weekly Content Publishing", "UserFlow: Weekly Commissioner Desk → Optional Content Creation & Publishing to Feed"]
+        }
+      ]
+    },
+    {
+      "id": "power-rankings-history",
+      "name": "Power Rankings Display & Historical Tracking",
+      "description": "Dedicated power rankings page with weekly views, season selectors, and persistent trajectory visualization across time",
+      "priority": "P0",
+      "subcomponents": [
+        {
+          "id": "rankings-display",
+          "name": "Weekly Rankings Table View",
+          "description": "Season and week selectors, table display of rankings and commentary, default to most recent published week",
+          "estimatedStories": 6,
+          "tracesTo": ["SOW: Power Rankings View & History", "UserFlow: Weekly Member Engagement, Feed Interaction, Pick'ems & History Browsing"]
+        },
+        {
+          "id": "rankings-visualization",
+          "name": "Historical Rankings Trajectory Chart",
+          "description": "Multi-line chart showing rank progression over time, stable fantasy user ID anchoring, team logo/color visualization, time window selection",
+          "estimatedStories": 8,
+          "tracesTo": ["SOW: Power Rankings View & History", "UserFlow: Weekly Member Engagement, Feed Interaction, Pick'ems & History Browsing"]
+        }
+      ]
+    },
+    {
+      "id": "matchups-pickems-brackets",
+      "name": "Matchups, Pick'ems & Playoff Brackets",
+      "description": "Comprehensive matchup display with regular season and playoff views, weekly pick'ems game with grading, and multi-role leaderboards",
+      "priority": "P0",
+      "subcomponents": [
+        {
+          "id": "matchups-display",
+          "name": "Matchups Page & Week Navigation",
+          "description": "Season selector, continuous horizontal week selector, regular season matchup blocks, featured matchup highlighting, and score display",
+          "estimatedStories": 7,
+          "tracesTo": ["SOW: Matchups, Playoff Brackets & Pick'ems", "UserFlow: Weekly Member Engagement, Feed Interaction, Pick'ems & History Browsing"]
+        },
+        {
+          "id": "playoff-brackets",
+          "name": "Playoff Bracket Visualization",
+          "description": "Dynamic bracket layout based on league settings, winners and losers/toilet brackets, forward-looking placeholders, automatic round progression",
+          "estimatedStories": 10,
+          "tracesTo": ["SOW: Matchups, Playoff Brackets & Pick'ems", "UserFlow: Weekly Member Engagement, Feed Interaction, Pick'ems & History Browsing"]
+        },
+        {
+          "id": "pickems-submission",
+          "name": "Weekly Pick'ems Submission",
+          "description": "Pick winners for all matchups before lock time, edit picks until lock, non-participation allowed, hide others' picks until lock, reveal after lock",
+          "estimatedStories": 9,
+          "tracesTo": ["SOW: Matchups, Playoff Brackets & Pick'ems", "UserFlow: Weekly Member Engagement, Feed Interaction, Pick'ems & History Browsing"]
+        },
+        {
+          "id": "pickems-grading",
+          "name": "Pick'ems Grading & Stats",
+          "description": "Post-stat-correction grading, per-user weekly/season/all-time stats, separate Manager and Fan leaderboards, cumulative records",
+          "estimatedStories": 8,
+          "tracesTo": ["SOW: Matchups, Playoff Brackets & Pick'ems", "UserFlow: Weekly Member Engagement, Feed Interaction, Pick'ems & History Browsing"]
+        }
+      ]
+    },
+    {
+      "id": "transactions-history",
+      "name": "Transactions & League History",
+      "description": "Aggregated transaction feed with filtering, engagement-based promotion to newsfeed, and comprehensive league history views",
+      "priority": "P1",
+      "subcomponents": [
+        {
+          "id": "transactions-page",
+          "name": "Transactions Aggregation & Display",
+          "description": "Aggregate trades, waivers, free agent pickups, filter/sort/search capabilities, and transaction detail views",
+          "estimatedStories": 7,
+          "tracesTo": ["SOW: Transactions & League History", "UserFlow: Weekly Member Engagement, Feed Interaction, Pick'ems & History Browsing"]
+        },
+        {
+          "id": "transaction-engagement",
+          "name": "Transaction Engagement & Promotion",
+          "description": "Comments and reactions on transactions, automatic promotion to newsfeed when engaged, and engagement-based visibility",
+          "estimatedStories": 5,
+          "tracesTo": ["SOW: Transactions & League History", "SOW: Newsfeed & Moments"]
+        },
+        {
+          "id": "league-history",
+          "name": "League History & Season Archives",
+          "description": "Season summaries, champions and runner-ups, historical week links, dynasty continuity, and redraft season mapping",
+          "estimatedStories": 6,
+          "tracesTo": ["SOW: Transactions & League History", "UserFlow: Weekly Member Engagement, Feed Interaction, Pick'ems & History Browsing"]
+        }
+      ]
+    },
+    {
+      "id": "data-sync-automation",
+      "name": "External Data Sync & Automation",
+      "description": "Scheduled polling of fantasy platform APIs, data synchronization, stat correction handling, and automated event processing",
+      "priority": "P1",
+      "subcomponents": [
+        {
+          "id": "sleeper-integration",
+          "name": "Sleeper API Integration",
+          "description": "Fetch league data, teams, schedules, rosters, transactions, match results, and handle API rate limits",
+          "estimatedStories": 10,
+          "tracesTo": ["SOW: Tech Stack - Sleeper public API", "SOW: League Connection & Identity"]
+        },
+        {
+          "id": "data-sync-scheduler",
+          "name": "Scheduled Data Synchronization",
+          "description": "Periodic polling for league updates, differential sync, stat correction detection, and sync status tracking",
+          "estimatedStories": 8,
+          "tracesTo": ["SOW: Edge Cases - NFL stat corrections", "UserFlow: Weekly Commissioner Desk → Optional Content Creation & Publishing to Feed"]
+        },
+        {
+          "id": "automated-moments",
+          "name": "Automated Moment Generation",
+          "description": "Detect and create moments for trades, match results, transactions, and other league events from external data",
+          "estimatedStories": 7,
+          "tracesTo": ["SOW: Newsfeed & Moments", "UserFlow: Weekly Member Engagement, Feed Interaction, Pick'ems & History Browsing"]
+        }
+      ]
+    },
+    {
+      "id": "data-persistence",
+      "name": "Database Schema & Data Management",
+      "description": "PostgreSQL database schema via Supabase, data models for all entities, relationships, and persistence layer",
+      "priority": "P1",
+      "subcomponents": [
+        {
+          "id": "core-schema",
+          "name": "Core Database Schema",
+          "description": "Users, leagues, teams, roles, memberships, league settings, and URL slugs tables and relationships",
+          "estimatedStories": 9,
+          "tracesTo": ["SOW: Tech Stack - Supabase (PostgreSQL)", "SOW: Core Functionality"]
+        },
+        {
+          "id": "content-schema",
+          "name": "Content & Engagement Schema",
+          "description": "Moments, posts, comments, reactions, power rankings, matchups, predictions, and engagement tables",
+          "estimatedStories": 10,
+          "tracesTo": ["SOW: Tech Stack - Supabase (PostgreSQL)", "SOW: Newsfeed & Moments", "SOW: Commissioner Desk"]
+        },
+        {
+          "id": "pickems-transactions-schema",
+          "name": "Pick'ems & Transactions Schema",
+          "description": "Pick'ems entries, grading results, stats, leaderboards, transactions, and historical data tables",
+          "estimatedStories": 8,
+          "tracesTo": ["SOW: Tech Stack - Supabase (PostgreSQL)", "SOW: Matchups, Playoff Brackets & Pick'ems", "SOW: Transactions & League History"]
+        },
+        {
+          "id": "data-queries",
+          "name": "Database Queries & API Routes",
+          "description": "Next.js API routes, server actions, database queries, data validation, and error handling",
+          "estimatedStories": 11,
+          "tracesTo": ["SOW: Tech Stack - Next.js API routes", "SOW: Core Functionality"]
+        }
+      ]
+    },
+    {
+      "id": "ui-components",
+      "name": "Frontend UI Components & Layouts",
+      "description": "React components, page layouts, responsive design, and Shadcn UI + Tailwind CSS implementation",
+      "priority": "P1",
+      "subcomponents": [
+        {
+          "id": "layout-navigation",
+          "name": "Layout & Global Navigation",
+          "description": "Clubhouse layout, left-side menu, league switcher header, responsive mobile navigation, and consistent UI structure",
+          "estimatedStories": 7,
+          "tracesTo": ["SOW: League Clubhouse & Navigation", "SOW: UI / Visuals Guidelines"]
+        },
+        {
+          "id": "feed-components",
+          "name": "Feed & Moment Components",
+          "description": "Feed item cards, moment types rendering, comment threads, reaction controls, and infinite scroll",
+          "estimatedStories": 9,
+          "tracesTo": ["SOW: Newsfeed & Moments", "SOW: User Interactions - Content Consumption"]
+        },
+        {
+          "id": "desk-components",
+          "name": "Commissioner Desk Components",
+          "description": "Drag-and-drop rankings builder, matchup selector, prediction forms, autosave UI, and publish controls",
+          "estimatedStories": 10,
+          "tracesTo": ["SOW: Commissioner Desk & Weekly Content Publishing", "SOW: UI / Visuals Guidelines"]
+        },
+        {
+          "id": "visualization-components",
+          "name": "Charts & Visualization Components",
+          "description": "Rankings trajectory chart, playoff brackets, calendar views, and data visualization libraries integration",
+          "estimatedStories": 9,
+          "tracesTo": ["SOW: Power Rankings View & History", "SOW: Matchups, Playoff Brackets & Pick'ems"]
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "totalComponents": 10,
+    "totalSubcomponents": 35,
+    "estimatedTotalStories": 263
+  },
+  "storyFiles": [
+    "index.md",
+    "prd-summary.md",
+    "01-league-connection-identity-stories/gap-concurrent-settings.json",
+    "01-league-connection-identity-stories/gap-public-content-routing.json",
+    "01-league-connection-identity-stories/gap-visibility-validation.json",
+    "01-league-connection-identity-stories/league-linking.json",
+    "01-league-connection-identity-stories/league-identity.json",
+    "01-league-connection-identity-stories/league-settings.json",
+    "02-onboarding-access-control-stories/gap-claim-release-grace.json",
+    "02-onboarding-access-control-stories/gap-comanager-consistency.json",
+    "02-onboarding-access-control-stories/gap-concurrent-claims.json",
+    "02-onboarding-access-control-stories/gap-invitation-links.json",
+    "02-onboarding-access-control-stories/gap-invitation-processing.json",
+    "02-onboarding-access-control-stories/gap-invitation-tracking.json",
+    "02-onboarding-access-control-stories/gap-onboarding-journey.json",
+    "02-onboarding-access-control-stories/gap-public-conversion.json",
+    "02-onboarding-access-control-stories/gap-public-viewing.json",
+    "02-onboarding-access-control-stories/user-authentication.json",
+    "02-onboarding-access-control-stories/role-claiming.json",
+    "02-onboarding-access-control-stories/membership-approval.json",
+    "02-onboarding-access-control-stories/league-navigation.json",
+    "03-social-feed-engagement-stories/gap-transaction-signal-config.json",
+    "03-social-feed-engagement-stories/newsfeed-moments.json",
+    "03-social-feed-engagement-stories/content-interaction.json",
+    "03-social-feed-engagement-stories/user-posts.json",
+    "03-social-feed-engagement-stories/content-moderation.json",
+    "04-commissioner-tools-stories/commissioner-desk.json",
+    "04-commissioner-tools-stories/gap-offseason-content.json",
+    "04-commissioner-tools-stories/gap-preseason-display.json",
+    "04-commissioner-tools-stories/gap-week-transition.json",
+    "04-commissioner-tools-stories/power-rankings-creation.json",
+    "04-commissioner-tools-stories/matchup-features.json",
+    "04-commissioner-tools-stories/weekly-publishing.json",
+    "05-power-rankings-history-stories/rankings-display.json",
+    "05-power-rankings-history-stories/rankings-visualization.json",
+    "06-matchups-pickems-brackets-stories/gap-concurrent-picks.json",
+    "06-matchups-pickems-brackets-stories/matchups-display.json",
+    "06-matchups-pickems-brackets-stories/playoff-brackets.json",
+    "06-matchups-pickems-brackets-stories/pickems-submission.json",
+    "06-matchups-pickems-brackets-stories/pickems-grading.json",
+    "07-transactions-history-stories/transactions-page.json",
+    "07-transactions-history-stories/transaction-engagement.json",
+    "07-transactions-history-stories/league-history.json",
+    "08-data-sync-automation-stories/gap-stat-correction-cascade.json",
+    "08-data-sync-automation-stories/sleeper-integration.json",
+    "08-data-sync-automation-stories/data-sync-scheduler.json",
+    "08-data-sync-automation-stories/automated-moments.json",
+    "09-data-persistence-stories/core-schema.json",
+    "09-data-persistence-stories/content-schema.json",
+    "09-data-persistence-stories/pickems-transactions-schema.json",
+    "09-data-persistence-stories/data-queries.json",
+    "10-ui-components-stories/layout-navigation.json",
+    "10-ui-components-stories/feed-components.json",
+    "10-ui-components-stories/desk-components.json",
+    "10-ui-components-stories/visualization-components.json"
+  ]
+}

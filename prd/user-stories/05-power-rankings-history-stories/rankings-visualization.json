@@ -1,0 +1,160 @@
+{
+  "subcomponentId": "rankings-visualization",
+  "componentId": "power-rankings-history",
+  "tracesTo": [
+    "SOW: Power Rankings View & History",
+    "UserFlow: Weekly Member Engagement, Feed Interaction, Pick'ems & History Browsing"
+  ],
+  "stories": [
+    {
+      "id": "RV-001",
+      "title": "Display Multi-Line Chart for Rankings Progression",
+      "user": "League Member",
+      "goal": "see a visual chart showing how all teams' rankings have changed over time",
+      "benefit": "I can quickly understand ranking trends and see which teams are rising or falling throughout the season",
+      "acceptanceCriteria": [
+        "Chart displays one line per team showing rank position over published weeks",
+        "Y-axis shows rank positions (1 at top, N at bottom) with inverted scale",
+        "X-axis shows week labels for all weeks with published rankings in selected time window",
+        "Each line is visually distinct with team colors or differentiated styling",
+        "Chart updates automatically when season or time window selection changes",
+        "Chart handles gaps in data when rankings are skipped for certain weeks"
+      ]
+    },
+    {
+      "id": "RV-002",
+      "title": "Anchor Team Lines Using Stable Fantasy User IDs",
+      "user": "Dynasty League Member",
+      "goal": "track the same team/owner across multiple seasons even if team names change",
+      "benefit": "I can see long-term trends for team managers rather than team entities that may get renamed",
+      "acceptanceCriteria": [
+        "System uses fantasy user ID from external platform as stable identifier for team tracking",
+        "Team lines maintain continuity across seasons in dynasty leagues",
+        "If team name changes between seasons, line continues for same fantasy user ID",
+        "Hovering over line shows current team name and historical names if changed",
+        "System handles cases where fantasy user ID ownership changes (trade of team)",
+        "For redraft leagues, system anchors by team slot rather than user ID"
+      ]
+    },
+    {
+      "id": "RV-003",
+      "title": "Display Team Logos and Colors on Chart",
+      "user": "League Member",
+      "goal": "easily identify which line represents which team using familiar visual elements",
+      "benefit": "I can quickly find my team and rivals without reading labels, making the chart more intuitive",
+      "acceptanceCriteria": [
+        "Each line uses team's primary color from league settings or sensible default",
+        "Team logo appears in chart legend next to team name",
+        "Team logo appears at line endpoints (first and last week) on the chart",
+        "On hover/tap, team logo and name appear in tooltip at cursor position",
+        "Colors are sufficiently distinct to differentiate all teams even with 12+ lines",
+        "System provides fallback colors if teams don't have custom colors defined"
+      ]
+    },
+    {
+      "id": "RV-004",
+      "title": "Select Time Window for Rankings Display",
+      "user": "League Member",
+      "goal": "choose which portion of the season or history to view on the chart",
+      "benefit": "I can focus on specific time periods without cluttering the chart with too much data",
+      "acceptanceCriteria": [
+        "User can select from preset time windows: Current Season, Last 4 Weeks, Last 8 Weeks, Season to Date, All Time",
+        "Custom date range selector allows choosing specific start and end weeks",
+        "Time window selection filters chart data to only show selected period",
+        "X-axis adjusts to show appropriate week labels for selected time window",
+        "System defaults to 'Current Season' view on initial page load",
+        "Selected time window persists across page refreshes via URL parameters or local storage"
+      ]
+    },
+    {
+      "id": "RV-005",
+      "title": "Interact with Chart Data Points",
+      "user": "League Member",
+      "goal": "click or hover on specific data points to see detailed information",
+      "benefit": "I can explore specific weeks and understand exact rank changes and context",
+      "acceptanceCriteria": [
+        "Hovering over a data point shows tooltip with team name, rank, and week label",
+        "Tooltip includes rank change from previous week (+2, -1, etc.)",
+        "Clicking on data point navigates to that week's full rankings table view",
+        "Tooltip shows commissioner commentary excerpt for that team in that week if available",
+        "Touch devices show tooltip on tap with dismiss button or tap-away behavior",
+        "Hovering over a line highlights that specific team's line for easier tracking"
+      ]
+    },
+    {
+      "id": "RV-006",
+      "title": "Toggle Team Visibility on Chart",
+      "user": "League Member",
+      "goal": "show or hide specific teams to reduce visual clutter and focus on teams of interest",
+      "benefit": "I can compare specific teams directly without distraction from other lines",
+      "acceptanceCriteria": [
+        "Chart legend includes checkboxes or toggle buttons for each team",
+        "Clicking team name or checkbox in legend toggles that team's line visibility",
+        "User can select/deselect multiple teams simultaneously",
+        "System remembers visibility preferences during session or across time window changes",
+        "Chart automatically rescales if focusing on subset of teams improves readability",
+        "Option to 'Show All' or 'Hide All' teams with single action"
+      ]
+    },
+    {
+      "id": "RV-007",
+      "title": "Highlight My Team on Chart",
+      "user": "League Member with Claimed Team",
+      "goal": "easily identify my own team's line among all teams",
+      "benefit": "I can quickly focus on my team's trajectory without searching through the legend",
+      "acceptanceCriteria": [
+        "If user has claimed team, their team's line is visually emphasized (thicker, brighter, or pulsing)",
+        "User's team appears first in the legend and is checked by default",
+        "Option to 'Focus on My Team' dims all other teams while keeping user's team prominent",
+        "My team's line remains visible even when other teams are toggled off",
+        "System identifies user's team based on authenticated user's team claim",
+        "Works correctly for users who manage multiple teams in league"
+      ]
+    },
+    {
+      "id": "RV-008",
+      "title": "Display Chart on Mobile Devices",
+      "user": "League Member using Mobile",
+      "goal": "view the rankings trajectory chart on my phone with usable interactions",
+      "benefit": "I can check rankings trends on the go without needing a desktop computer",
+      "acceptanceCriteria": [
+        "Chart is responsive and adapts to mobile screen widths",
+        "Touch interactions work smoothly for tapping data points and toggling teams",
+        "Legend is scrollable or collapsible to save screen space on mobile",
+        "Chart is readable in both portrait and landscape orientations",
+        "Pinch-to-zoom allows closer inspection of crowded chart areas on mobile",
+        "Mobile view may use simplified visualization if full chart is too complex"
+      ]
+    },
+    {
+      "id": "RV-009",
+      "title": "Handle Missing or Incomplete Rankings Data",
+      "user": "League Member",
+      "goal": "understand how the chart displays weeks where rankings were not published",
+      "benefit": "I can interpret gaps in the chart correctly and understand when data is unavailable",
+      "acceptanceCriteria": [
+        "Chart shows dashed or dotted line segments when rankings data is missing for intermediate weeks",
+        "Missing weeks are indicated on X-axis with visual distinction (grayed out label)",
+        "Tooltip on missing week segment explains that rankings were not published that week",
+        "Chart connects available data points with interpolation line when gaps exist",
+        "If no rankings data exists for time window, chart displays informative message",
+        "System handles partial season data gracefully for new leagues with limited history"
+      ]
+    },
+    {
+      "id": "RV-010",
+      "title": "Compare Rankings Across Multiple Seasons",
+      "user": "Dynasty League Member",
+      "goal": "view rankings trajectory spanning multiple seasons to see long-term trends",
+      "benefit": "I can understand multi-year performance patterns and identify consistently strong or weak teams",
+      "acceptanceCriteria": [
+        "Time window selector includes 'All Seasons' option for dynasty leagues",
+        "Chart X-axis displays season breaks or labels when showing multi-season data",
+        "Lines maintain continuity for same fantasy user ID across season boundaries",
+        "Chart visually indicates season transitions (vertical separator line, color shading)",
+        "System handles cases where team changes fantasy user ID ownership between seasons",
+        "Performance remains acceptable with large datasets spanning multiple years"
+      ]
+    }
+  ]
+}

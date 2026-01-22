@@ -1,0 +1,137 @@
+{
+  "subcomponentId": "league-navigation",
+  "componentId": "onboarding-access-control",
+  "tracesTo": [
+    "SOW: Public League Support - Conversion flows for public league visitors",
+    "UserFlow: Visitor to Registered User Conversion",
+    "Gap Analysis: Priority 1 - Public league signup prompts and conversion (0% coverage)"
+  ],
+  "stories": [
+    {
+      "id": "PC-001",
+      "title": "Display Contextual Sign-Up Prompts for Public League Visitors",
+      "user": "Non-authenticated Public Visitor",
+      "goal": "receive relevant prompts to create an account when interacting with gated features",
+      "benefit": "I understand the value of creating an account and can easily sign up",
+      "acceptanceCriteria": [
+        "System displays 'Login to Participate' overlay when visitor attempts to interact with disabled features (post, comment, trade)",
+        "Sign-up prompts are contextual and explain the specific feature requiring authentication (e.g., 'Login to add your own power rankings')",
+        "Visitor sees subtle persistent sign-up CTA in navigation or header (e.g., 'Join League' button)",
+        "System shows modal or tooltip prompts after visitor has viewed multiple pages without signing up",
+        "Sign-up prompts include benefits tailored to public league context (e.g., 'Create account to join this league')",
+        "Prompts are non-intrusive and dismissible without blocking content viewing",
+        "System tracks visitor engagement and shows progressive prompts based on time spent or pages viewed",
+        "Each prompt includes both 'Sign Up' and 'Login' options for returning users",
+        "System uses clear visual hierarchy with primary CTA for sign-up and secondary for login",
+        "Prompts are mobile-responsive and don't cover critical content on small screens",
+        "System avoids showing same prompt repeatedly within single session (frequency capping)",
+        "Exit-intent modal triggers when visitor attempts to leave site from public league page"
+      ]
+    },
+    {
+      "id": "PC-002",
+      "title": "Complete Seamless Sign-Up Flow from Public League Page",
+      "user": "Public League Visitor Ready to Join",
+      "goal": "create an account without losing my place in the league I'm viewing",
+      "benefit": "I can quickly sign up and return to the league content that interested me",
+      "acceptanceCriteria": [
+        "Visitor can initiate sign-up from any public league page via contextual CTA",
+        "System opens registration form as modal overlay without full page navigation (preserving context)",
+        "Registration form is streamlined with minimal required fields (email, password, display name)",
+        "System pre-populates league context in registration flow (e.g., 'Join [League Name]')",
+        "Visitor can complete entire registration process without leaving league page",
+        "System sends verification email immediately upon account creation",
+        "System provides option to verify email later to reduce friction in initial sign-up",
+        "Form includes clear password requirements and real-time validation feedback",
+        "System offers social login options (Google, Apple) as alternatives to email/password",
+        "Error messages are inline and specific to help visitor correct issues quickly",
+        "System includes privacy policy and terms of service links in registration form",
+        "Registration form is mobile-optimized with appropriate keyboard types and autofill support"
+      ]
+    },
+    {
+      "id": "PC-003",
+      "title": "Route Newly Registered User to Appropriate Post-Signup Destination",
+      "user": "Newly Registered User from Public League",
+      "goal": "land on the right page after signing up based on my original intent",
+      "benefit": "I can immediately engage with the feature or content that prompted me to sign up",
+      "acceptanceCriteria": [
+        "System returns user to original public league page after successful registration",
+        "User sees confirmation message acknowledging successful sign-up",
+        "System automatically displays 'Join League' or 'Request to Join' prompt based on league type",
+        "If user was viewing specific content (post, matchup, team), system returns to that exact view",
+        "System activates previously disabled interactive features (comment, like, post) after authentication",
+        "User sees brief onboarding tooltip highlighting now-available features (e.g., 'You can now participate in discussions')",
+        "System preserves any scroll position or filter/sort settings from pre-registration view",
+        "If email verification is required, system displays prominent banner with verification status and resend option",
+        "User can seamlessly join the public league without additional navigation steps",
+        "System tracks conversion source (which prompt or page led to sign-up) for analytics",
+        "First-time user experience guide is available but optional to prevent signup-to-engagement friction",
+        "System provides quick profile completion prompt (avatar, bio) without blocking league access"
+      ]
+    },
+    {
+      "id": "PC-004",
+      "title": "Handle Returning User Login from Public League Context",
+      "user": "Returning User Without Active Session",
+      "goal": "quickly log in and access the public league I was viewing",
+      "benefit": "I can authenticate efficiently and resume my league exploration",
+      "acceptanceCriteria": [
+        "System provides 'Login' option alongside 'Sign Up' in all conversion prompts",
+        "Login form opens as modal overlay preserving league page context",
+        "Form includes 'Remember Me' option for persistent session across visits",
+        "System supports password autofill from browser password managers",
+        "User can access 'Forgot Password' flow without leaving public league page",
+        "Login form includes social login options (Google, Apple) for faster authentication",
+        "System returns user to original league page view after successful login",
+        "Previously disabled features become immediately available after authentication",
+        "System handles login errors gracefully with clear actionable guidance",
+        "User can toggle between login and sign-up forms without losing league context",
+        "System redirects to email verification if account exists but is unverified",
+        "Login flow is optimized for mobile with appropriate keyboard and input types"
+      ]
+    },
+    {
+      "id": "PC-005",
+      "title": "Track and Optimize Public League Conversion Funnel",
+      "user": "System",
+      "goal": "measure conversion rates from public league visitors to registered users",
+      "benefit": "product team can optimize sign-up experience and increase user acquisition",
+      "acceptanceCriteria": [
+        "System tracks unique visitors to public league pages with anonymous analytics",
+        "System records engagement metrics (page views, time on page, sections viewed) for visitors",
+        "System logs conversion funnel stages (visitor → prompt shown → sign-up initiated → account created)",
+        "System tracks which prompts and CTAs lead to highest conversion rates",
+        "System records bounce rate and exit pages for visitors who don't convert",
+        "System measures time from first visit to sign-up completion",
+        "Analytics dashboard shows conversion rate by traffic source (direct link, search, referral)",
+        "System tracks sign-up abandonment points (which form fields cause drop-off)",
+        "System records post-signup engagement (did user join league, post content, return to site)",
+        "System A/B tests different prompt timing, messaging, and designs for conversion optimization",
+        "System provides cohort analysis comparing public league visitors vs. other acquisition channels",
+        "All tracking complies with privacy regulations with appropriate consent mechanisms"
+      ]
+    },
+    {
+      "id": "PC-006",
+      "title": "Provide Social Proof and League Highlights to Drive Conversion",
+      "user": "Public League Visitor Considering Sign-Up",
+      "goal": "see evidence of active engaged community before committing to sign up",
+      "benefit": "I can make informed decision about joining based on league quality and activity",
+      "acceptanceCriteria": [
+        "System displays league activity metrics on public pages (active members, posts this week, trades completed)",
+        "Visitor can see recent activity feed showing community engagement without detailed content access",
+        "System highlights league size and how long league has been active (e.g., '3rd season, 12 active managers')",
+        "Visitor sees anonymous testimonials or quotes from league members (if available)",
+        "System displays league competitiveness indicators (tight standings, active waiver wire, trade volume)",
+        "Public league pages show league commissioner name/profile (if public) to establish credibility",
+        "System highlights unique league features or rules that differentiate this league",
+        "Visitor can see how many users have joined in recent period (e.g., '5 new members this week')",
+        "System displays league engagement score or activity rating if calculated",
+        "Public pages include trust indicators (verified league, years active, platform badges)",
+        "System shows upcoming league events or milestones (draft date, playoffs starting, championship)",
+        "Social proof elements are dynamic and update regularly to reflect current activity"
+      ]
+    }
+  ]
+}

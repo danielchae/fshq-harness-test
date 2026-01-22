@@ -1,0 +1,178 @@
+{
+  "subcomponentId": "transaction-engagement",
+  "componentId": "transactions-history",
+  "tracesTo": [
+    "SOW: Transactions & League History",
+    "SOW: Newsfeed & Moments"
+  ],
+  "stories": [
+    {
+      "id": "TE-001",
+      "title": "Add Comments to Transaction Details",
+      "user": "League Member",
+      "goal": "add comments directly to specific transactions to discuss or react to roster moves",
+      "benefit": "I can share my thoughts on trades and roster moves with context specific to each transaction",
+      "acceptanceCriteria": [
+        "Comment input field appears on transaction detail view or expanded transaction card",
+        "User can write multi-line text comments with basic formatting preserved",
+        "Comments display below transaction with author name, role, team affiliation, and timestamp",
+        "Comment submission immediately shows comment with author attribution",
+        "Character limit enforced with counter display (e.g., 2000 character maximum)"
+      ]
+    },
+    {
+      "id": "TE-002",
+      "title": "Reply to Transaction Comments",
+      "user": "League Member",
+      "goal": "reply to specific comments on transactions to maintain conversation threads",
+      "benefit": "I can have focused discussions about specific transactions and respond directly to other members",
+      "acceptanceCriteria": [
+        "Reply button appears on each transaction comment enabling threaded responses",
+        "Replies appear indented below parent comment with visual connection indicator",
+        "Threading supports at least 2 levels deep (comment → reply → nested reply)",
+        "Reply interface clearly shows which comment user is responding to",
+        "Collapsed/expanded state manageable for long conversation threads"
+      ]
+    },
+    {
+      "id": "TE-003",
+      "title": "Add Emoji Reactions to Transactions",
+      "user": "League Member",
+      "goal": "quickly react to transactions with emoji without writing full comments",
+      "benefit": "I can express sentiment about roster moves with minimal effort and see community reaction at a glance",
+      "acceptanceCriteria": [
+        "Reaction picker button appears on each transaction with emoji icon",
+        "Clicking picker displays panel with common emoji options (like, fire, thinking, shocked, laughing, etc.)",
+        "User can select emoji which displays immediately on transaction card",
+        "Reactions show emoji with count and hovering reveals who reacted",
+        "User can only add one reaction of each emoji type per transaction"
+      ]
+    },
+    {
+      "id": "TE-004",
+      "title": "Remove Own Reactions from Transactions",
+      "user": "League Member",
+      "goal": "remove emoji reactions I added to transactions if my sentiment changes",
+      "benefit": "I can update my reactions without permanent commitment",
+      "acceptanceCriteria": [
+        "User can click on emoji they previously added to remove their reaction",
+        "Reaction count decrements immediately and emoji removed if count reaches zero",
+        "Visual indicator shows which reactions current user has added (e.g., highlighted border)",
+        "Removing reaction updates engagement metrics for promotion logic",
+        "User can remove and re-add same reaction multiple times"
+      ]
+    },
+    {
+      "id": "TE-005",
+      "title": "Display Transaction Engagement Indicators",
+      "user": "League Member",
+      "goal": "see comment counts and reaction summaries on transactions in the feed",
+      "benefit": "I can identify which transactions have generated discussion and gauge community interest",
+      "acceptanceCriteria": [
+        "Comment count badge displays on each transaction card showing total comments",
+        "Reaction summary displays top 3-5 most used emoji with counts",
+        "Engagement indicators visible on both transaction page and promoted newsfeed moments",
+        "Zero-engagement transactions show 'Be the first to comment/react' prompts",
+        "Clicking engagement indicators expands or navigates to transaction detail"
+      ]
+    },
+    {
+      "id": "TE-006",
+      "title": "Automatically Promote Engaged Transactions to Newsfeed",
+      "user": "System",
+      "goal": "create newsfeed moments for transactions that receive significant engagement",
+      "benefit": "interesting transactions gain broader visibility beyond the transactions page",
+      "acceptanceCriteria": [
+        "System monitors transaction engagement (comments and reactions) in real-time",
+        "Transaction automatically promoted to newsfeed when engagement threshold met (e.g., 3+ comments or 5+ reactions)",
+        "Promoted transaction appears as moment in newsfeed with 'Transaction' type indicator",
+        "Moment includes transaction details and engagement summary in card",
+        "Promotion occurs only once per transaction regardless of continued engagement"
+      ]
+    },
+    {
+      "id": "TE-007",
+      "title": "Configure Transaction Promotion Thresholds",
+      "user": "League Admin",
+      "goal": "adjust the engagement thresholds that trigger automatic transaction promotion to newsfeed",
+      "benefit": "I can control the balance between transaction visibility and newsfeed noise based on league activity levels",
+      "acceptanceCriteria": [
+        "Admin settings page includes transaction promotion configuration section",
+        "Admin can set minimum comment count threshold for promotion (0-10 range)",
+        "Admin can set minimum reaction count threshold for promotion (0-20 range)",
+        "Admin can disable automatic promotion entirely if desired",
+        "Changes to thresholds apply immediately to new engagement without retroactive promotion"
+      ]
+    },
+    {
+      "id": "TE-008",
+      "title": "Link Promoted Transaction Moments to Transaction Page",
+      "user": "League Member",
+      "goal": "navigate from promoted transaction moment in newsfeed to full transaction detail page",
+      "benefit": "I can see complete transaction context and participate in discussion from newsfeed",
+      "acceptanceCriteria": [
+        "Promoted transaction moment in newsfeed includes 'View Transaction' link or card is clickable",
+        "Clicking navigates to transaction detail page or opens transaction modal",
+        "Navigation preserves context so user can return to newsfeed position",
+        "Transaction detail page shows all engagement (comments/reactions) consolidated",
+        "Link remains functional even if transaction later filtered from transactions page"
+      ]
+    },
+    {
+      "id": "TE-009",
+      "title": "Track Engagement Metrics for Transaction Analytics",
+      "user": "System",
+      "goal": "record all engagement activity on transactions for analytics and visibility algorithms",
+      "benefit": "transaction engagement data can inform future features and help identify league activity patterns",
+      "acceptanceCriteria": [
+        "System logs timestamp for every comment and reaction on transactions",
+        "Engagement metrics include unique commenters, total comments, unique reactors, and reaction breakdown",
+        "Transaction 'last activity' timestamp updates with each new engagement event",
+        "Metrics persist across sessions for historical analysis",
+        "Data structure supports future analytics queries (most engaged trades, active traders, etc.)"
+      ]
+    },
+    {
+      "id": "TE-010",
+      "title": "Display Engagement Activity in Transaction Detail View",
+      "user": "League Member",
+      "goal": "see all comments and reactions when viewing a transaction in detail",
+      "benefit": "I can read full discussions and see community sentiment about specific roster moves",
+      "acceptanceCriteria": [
+        "Transaction detail view shows complete comment thread with all replies",
+        "Reactions displayed prominently with emoji counts and reactor list on hover",
+        "Comments sorted by timestamp (oldest first) with option to sort by most reacted",
+        "New comment input field prominently placed for easy participation",
+        "Engagement section scrollable independently if transaction details are long"
+      ]
+    },
+    {
+      "id": "TE-011",
+      "title": "Filter Transactions by Engagement Level",
+      "user": "League Member",
+      "goal": "filter transaction feed to show only highly engaged or discussed transactions",
+      "benefit": "I can focus on controversial or interesting moves that generated community discussion",
+      "acceptanceCriteria": [
+        "Transaction page includes engagement filter option (All, Commented, Highly Engaged)",
+        "'Commented' filter shows only transactions with at least one comment",
+        "'Highly Engaged' filter shows only transactions meeting promotion threshold",
+        "Engagement filter works in combination with existing type, team, and time filters",
+        "Filter state indicated clearly in UI and persists during session"
+      ]
+    },
+    {
+      "id": "TE-012",
+      "title": "Notification for Comments on My Team's Transactions",
+      "user": "Manager",
+      "goal": "receive notifications when league members comment on my team's transactions",
+      "benefit": "I can defend my roster moves or participate in discussions about my trades and pickups",
+      "acceptanceCriteria": [
+        "Manager receives notification when comment added to transaction involving their team",
+        "Notification includes transaction type, teams involved, and comment snippet",
+        "Notification links directly to transaction detail with engagement section",
+        "User can control notification preferences for transaction engagement alerts",
+        "Notification marks as read when user views the transaction comments"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,91 @@
+{
+  "subcomponentId": "invitation-links",
+  "componentId": "onboarding-access-control",
+  "tracesTo": [
+    "SOW: Onboarding, Roles & Access Control - Custom invite links created by the FSHQ League Admin",
+    "UserFlow: Manager / Fan Onboarding, Claiming & Role Assignment",
+    "Research: Discord-style instant join via invite links (slack-communities.md, discord-communities.md)"
+  ],
+  "stories": [
+    {
+      "id": "INV-001",
+      "title": "Admin Creates Custom League Invite Link",
+      "user": "League Admin",
+      "goal": "generate a custom invite link for my league",
+      "benefit": "I can easily share league access with prospective members without manual approval for each person",
+      "acceptanceCriteria": [
+        "Admin can access invite link generation from league admin dashboard",
+        "Admin can configure invite link options: expiration date, max uses, and default role assignment (manager/fan)",
+        "System generates unique, secure invite URL with random token (e.g., https://fshq.gg/invite/abc123xyz)",
+        "Admin can set invite link to auto-approve or require manual approval after acceptance",
+        "System displays generated invite link with copy-to-clipboard functionality",
+        "Admin can preview what new users will see when accessing the invite link",
+        "System validates that invite link configuration complies with league visibility rules"
+      ]
+    },
+    {
+      "id": "INV-002",
+      "title": "Admin Shares Invite Link via Multiple Channels",
+      "user": "League Admin",
+      "goal": "distribute my league invite link through email, messaging apps, and social media",
+      "benefit": "I can reach potential members through their preferred communication channels",
+      "acceptanceCriteria": [
+        "Admin can send invite link via email through integrated SendGrid email interface with customizable message",
+        "System provides shareable text template including invite link and league description for copy-paste sharing",
+        "Admin can generate QR code for invite link for in-person sharing or print materials",
+        "System tracks invite link shares by method (email sent count, copy actions, QR code generations)",
+        "Admin can preview email invitation before sending with dynamic template showing league name and inviter details",
+        "System integrates with league's configured email domain for professional appearance",
+        "Admin can send bulk invitations to multiple email addresses simultaneously with personalization"
+      ]
+    },
+    {
+      "id": "INV-003",
+      "title": "Admin Views Active Invite Links",
+      "user": "League Admin",
+      "goal": "see all active invite links for my league with their usage statistics",
+      "benefit": "I can monitor which invite links are performing well and manage outdated or compromised links",
+      "acceptanceCriteria": [
+        "Admin can access invite link management dashboard from league admin area",
+        "Dashboard displays all active invite links with creation date, expiration date, and creator name",
+        "System shows usage metrics for each link: total clicks, successful registrations, and remaining available uses",
+        "Admin can filter invite links by status (active, expired, fully-used, revoked)",
+        "Dashboard shows conversion funnel: link clicks → account creations → league joins for each invite",
+        "System highlights invite links approaching expiration or use limits with visual indicators",
+        "Admin can sort invite links by creation date, usage count, or expiration date"
+      ]
+    },
+    {
+      "id": "INV-004",
+      "title": "Admin Revokes or Extends Invite Link",
+      "user": "League Admin",
+      "goal": "deactivate a compromised invite link or extend the expiration of a popular link",
+      "benefit": "I can maintain control over league access and respond to changing invitation needs",
+      "acceptanceCriteria": [
+        "Admin can revoke any active invite link immediately from invite management dashboard",
+        "System displays confirmation prompt before revoking with option to provide reason for audit trail",
+        "Revoked invite links show 'This invitation is no longer valid' message when accessed",
+        "Admin can extend expiration date of active invite link without changing the URL",
+        "Admin can increase max usage limit for invite link that is approaching its cap",
+        "System logs all revocation and modification actions in league admin history",
+        "Admin can optionally notify users who joined via specific link when it's being revoked"
+      ]
+    },
+    {
+      "id": "INV-005",
+      "title": "Admin Creates Role-Specific Invite Links",
+      "user": "League Admin",
+      "goal": "generate separate invite links that automatically assign users to specific roles or teams",
+      "benefit": "I can streamline onboarding for different types of members without manual role assignment",
+      "acceptanceCriteria": [
+        "Admin can create invite link pre-configured for 'Manager' role with available team selection during registration",
+        "Admin can create invite link pre-configured for 'Fan' role with optional favorite team selection",
+        "System validates team availability for manager invite links before allowing creation",
+        "Invite link URL contains role indication for tracking (e.g., /invite/managers/abc123 vs /invite/fans/xyz789)",
+        "System enforces role-specific constraints during registration (team claiming for managers, no claim for fans)",
+        "Admin can set invite link to assign users to specific team automatically without user selection",
+        "Role-specific invite links display appropriate onboarding flow based on configured role"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,94 @@
+{
+  "subcomponentId": "content-moderation",
+  "componentId": "social-feed-engagement",
+  "tracesTo": [
+    "SOW: Newsfeed & Moments",
+    "UserFlow: League Access, Switching & Role-Based Experience"
+  ],
+  "stories": [
+    {
+      "id": "CM-001",
+      "title": "Pin Moments to Top of Feed",
+      "user": "League Admin",
+      "goal": "pin important moments to the top of the feed so they remain visible to all members",
+      "benefit": "critical announcements and featured content stay prominent regardless of new activity",
+      "acceptanceCriteria": [
+        "Admin can select any moment in feed and choose 'Pin to Top' action",
+        "Pinned moments appear above all other content in feed with visual indicator showing pinned status",
+        "Multiple moments can be pinned simultaneously with clear ordering control",
+        "Admin can unpin moments to return them to normal feed position based on timestamp/engagement",
+        "Pinned status persists across all user sessions and devices"
+      ]
+    },
+    {
+      "id": "CM-002",
+      "title": "Hide Problematic Content from Feed",
+      "user": "League Admin",
+      "goal": "temporarily hide inappropriate or problematic moments from the feed without permanent deletion",
+      "benefit": "I can quickly moderate content while preserving it for review or potential restoration",
+      "acceptanceCriteria": [
+        "Admin can select any moment and choose 'Hide from Feed' moderation action",
+        "Hidden moments are immediately removed from public feed view for all members",
+        "Hidden content remains accessible to admins through dedicated moderation queue",
+        "Admin can unhide moments to restore them to feed at their original position",
+        "System logs hide/unhide actions with admin user and timestamp for audit trail"
+      ]
+    },
+    {
+      "id": "CM-003",
+      "title": "Permanently Delete Inappropriate Content",
+      "user": "League Admin",
+      "goal": "permanently remove content that violates league standards or community guidelines",
+      "benefit": "I can maintain feed quality and remove content that should not be preserved",
+      "acceptanceCriteria": [
+        "Admin can select hidden moments and choose 'Delete Permanently' action with confirmation prompt",
+        "Deleted moments are removed from database and cannot be recovered",
+        "All associated comments and reactions are also deleted with the parent moment",
+        "System logs deletion action with admin user, timestamp, and optional reason note",
+        "Deletion action includes confirmation dialog warning admin of permanent nature"
+      ]
+    },
+    {
+      "id": "CM-004",
+      "title": "View Moderation Queue of Hidden Content",
+      "user": "League Admin",
+      "goal": "access a dedicated interface showing all currently hidden moments for review and management",
+      "benefit": "I can review moderated content, track moderation history, and make informed decisions about restoration or deletion",
+      "acceptanceCriteria": [
+        "Admin menu includes 'Moderation Queue' link accessible only to admin role",
+        "Moderation queue displays all hidden moments with reason for hiding and admin who performed action",
+        "Queue interface shows moment preview, hide timestamp, and quick actions for unhide or delete",
+        "Admins can filter queue by content type, date range, or moderating admin",
+        "Queue displays empty state with helpful message when no content is currently hidden"
+      ]
+    },
+    {
+      "id": "CM-005",
+      "title": "Set Pin Priority Order for Multiple Pinned Moments",
+      "user": "League Admin",
+      "goal": "control the display order of multiple pinned moments at top of feed",
+      "benefit": "I can ensure the most important announcement appears first among pinned content",
+      "acceptanceCriteria": [
+        "Admin can access pin management interface showing all currently pinned moments",
+        "Interface provides drag-and-drop or numbered ordering to set pin priority",
+        "Changes to pin order take effect immediately for all users viewing the feed",
+        "System enforces reasonable limit on total pinned moments (e.g., maximum 5 pinned at once)",
+        "Pin order persists across sessions and is consistent for all league members"
+      ]
+    },
+    {
+      "id": "CM-006",
+      "title": "Access Moderation Actions from Feed Interface",
+      "user": "League Admin",
+      "goal": "perform moderation actions directly from feed without navigating to separate admin panel",
+      "benefit": "I can quickly moderate content as I browse the feed during normal league engagement",
+      "acceptanceCriteria": [
+        "Each moment card displays admin-only moderation menu icon when viewed by admin user",
+        "Moderation menu includes options: Pin/Unpin, Hide, and Delete (for hidden content)",
+        "Actions execute with inline confirmation and immediate visual feedback",
+        "Non-admin users do not see moderation controls or menu options",
+        "Moderation menu adapts based on current moment state (e.g., shows 'Unpin' for pinned moments)"
+      ]
+    }
+  ]
+}

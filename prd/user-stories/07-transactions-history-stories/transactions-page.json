@@ -1,0 +1,178 @@
+{
+  "subcomponentId": "transactions-page",
+  "componentId": "transactions-history",
+  "tracesTo": [
+    "SOW: Transactions & League History",
+    "UserFlow: Weekly Member Engagement, Feed Interaction, Pick'ems & History Browsing"
+  ],
+  "stories": [
+    {
+      "id": "TP-001",
+      "title": "Display Aggregated Transaction Feed",
+      "user": "League Member",
+      "goal": "view all recent league transactions in a single chronological feed",
+      "benefit": "I can quickly see all league activity including trades, waivers, and free agent moves in one place",
+      "acceptanceCriteria": [
+        "System displays transactions in reverse chronological order (newest first)",
+        "Feed includes trades, waiver claims, free agent pickups, and drops",
+        "Each transaction shows transaction type, involved teams, players, and timestamp",
+        "Feed supports infinite scroll or pagination for older transactions",
+        "System fetches transactions from database with efficient queries"
+      ]
+    },
+    {
+      "id": "TP-002",
+      "title": "Display Trade Transaction Details",
+      "user": "League Member",
+      "goal": "see complete details of trade transactions including all teams and players involved",
+      "benefit": "I can understand the full scope of multi-player or multi-team trades at a glance",
+      "acceptanceCriteria": [
+        "Trade transactions show all teams involved in the trade",
+        "System displays all players and draft picks exchanged in each direction",
+        "Trade status (accepted, pending, vetoed) is clearly indicated",
+        "Trade timestamp shows when trade was completed or proposed",
+        "System handles complex multi-team trades with clear visual organization"
+      ]
+    },
+    {
+      "id": "TP-003",
+      "title": "Display Waiver Claim Transactions",
+      "user": "League Member",
+      "goal": "see which teams claimed players off waivers and who was dropped",
+      "benefit": "I can track waiver wire activity and see which teams are actively managing their rosters",
+      "acceptanceCriteria": [
+        "Waiver transactions show team making claim, player added, and player dropped (if any)",
+        "System displays waiver priority or FAAB amount spent if applicable",
+        "Waiver claim timestamp indicates when claim was processed",
+        "Failed waiver claims are not displayed in main feed (successful claims only)",
+        "System distinguishes between waiver claims and free agent pickups"
+      ]
+    },
+    {
+      "id": "TP-004",
+      "title": "Display Free Agent Pickup and Drop Transactions",
+      "user": "League Member",
+      "goal": "see free agent additions and drops made outside the waiver period",
+      "benefit": "I can track roster moves and see which players are being picked up or dropped",
+      "acceptanceCriteria": [
+        "Free agent transactions show team, player added, and player dropped (if any)",
+        "System distinguishes free agent moves from waiver claims visually",
+        "Timestamp shows when free agent transaction occurred",
+        "Add-only transactions (no corresponding drop) are properly displayed",
+        "Drop-only transactions (cutting players) are included in feed"
+      ]
+    },
+    {
+      "id": "TP-005",
+      "title": "Filter Transactions by Type",
+      "user": "League Member",
+      "goal": "filter the transaction feed to show only specific transaction types",
+      "benefit": "I can focus on particular transaction types like trades or waivers without other noise",
+      "acceptanceCriteria": [
+        "User can select filters for trades, waivers, free agent adds, and drops independently",
+        "Multiple transaction types can be selected simultaneously",
+        "Filter state persists during browsing session",
+        "System updates feed immediately when filters change",
+        "Clear visual indication shows which filters are currently active"
+      ]
+    },
+    {
+      "id": "TP-006",
+      "title": "Filter Transactions by Team",
+      "user": "League Member",
+      "goal": "view transactions for a specific team or set of teams",
+      "benefit": "I can analyze roster management patterns for particular teams or track my own team's moves",
+      "acceptanceCriteria": [
+        "User can select one or more teams from dropdown or team list",
+        "Feed shows only transactions involving selected teams",
+        "Team filter works in combination with transaction type filters",
+        "System displays team logo/name in filter indicator",
+        "User can easily clear team filters to return to full feed"
+      ]
+    },
+    {
+      "id": "TP-007",
+      "title": "Filter Transactions by Time Period",
+      "user": "League Member",
+      "goal": "view transactions from specific weeks or date ranges",
+      "benefit": "I can analyze transaction activity during particular periods or review historical moves",
+      "acceptanceCriteria": [
+        "User can filter by NFL week number for current season",
+        "User can select custom date range with calendar picker",
+        "Common presets available (this week, last 7 days, this season, all time)",
+        "Time filter works in combination with other filters",
+        "System displays date range in filter summary"
+      ]
+    },
+    {
+      "id": "TP-008",
+      "title": "Search Transactions by Player Name",
+      "user": "League Member",
+      "goal": "find all transactions involving a specific player",
+      "benefit": "I can track a player's movement through the league or see their transaction history",
+      "acceptanceCriteria": [
+        "Search input accepts player name with autocomplete suggestions",
+        "Search returns all transactions where player was added, dropped, or traded",
+        "Search results show transaction type and teams involved",
+        "Search works in combination with other filters",
+        "System handles partial name matches and common misspellings"
+      ]
+    },
+    {
+      "id": "TP-009",
+      "title": "Sort Transaction Feed",
+      "user": "League Member",
+      "goal": "sort transactions by different criteria beyond chronological order",
+      "benefit": "I can organize transaction data to identify patterns or highlight specific aspects",
+      "acceptanceCriteria": [
+        "User can sort by date (newest/oldest first)",
+        "User can sort by transaction type (alphabetically or grouped)",
+        "User can sort by team name",
+        "Sort selection is clearly indicated in UI",
+        "Default sort is newest first (reverse chronological)"
+      ]
+    },
+    {
+      "id": "TP-010",
+      "title": "View Transaction Detail Modal",
+      "user": "League Member",
+      "goal": "click on a transaction to see expanded details and context",
+      "benefit": "I can get complete information about a transaction including timing, players, and any associated commentary",
+      "acceptanceCriteria": [
+        "Clicking any transaction opens detail modal or expands inline",
+        "Detail view shows complete transaction information including all players/picks",
+        "Modal displays transaction timestamp with week and exact time",
+        "Detail view includes links to team pages for involved teams",
+        "Modal includes player positions, teams (NFL), and relevant stats context"
+      ]
+    },
+    {
+      "id": "TP-011",
+      "title": "Display Player Position and NFL Team in Transactions",
+      "user": "League Member",
+      "goal": "see player position and NFL team alongside player names in transaction feed",
+      "benefit": "I can quickly identify players and understand roster construction impacts without additional lookups",
+      "acceptanceCriteria": [
+        "Each player displays position (QB, RB, WR, etc.) next to name",
+        "Player's NFL team is shown with logo or abbreviation",
+        "Position and team info is concise and doesn't clutter transaction display",
+        "Info is consistent across all transaction types",
+        "System handles players who changed NFL teams during season"
+      ]
+    },
+    {
+      "id": "TP-012",
+      "title": "Display Empty State When No Transactions Match Filters",
+      "user": "League Member",
+      "goal": "see helpful message when filters return no results",
+      "benefit": "I understand that there are no matching transactions rather than thinking the system is broken",
+      "acceptanceCriteria": [
+        "System displays clear empty state message when no transactions match filters",
+        "Message suggests adjusting filters or expanding search criteria",
+        "Empty state shows which filters are currently active",
+        "User can quickly clear filters from empty state",
+        "Empty state is visually distinct from loading state"
+      ]
+    }
+  ]
+}

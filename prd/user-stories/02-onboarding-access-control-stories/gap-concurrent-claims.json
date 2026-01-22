@@ -1,0 +1,247 @@
+{
+  "story_id": "US-OAC-GAP-001",
+  "epic": "Onboarding & Access Control",
+  "title": "Concurrent Team Claim Prevention with Database Locking",
+  "priority": "P1 - Critical",
+  "story_type": "Quality/Edge Case",
+  "gap_category": "Concurrent Operations Safety",
+  "as_a": "System",
+  "i_want": "To prevent multiple users from claiming the same team simultaneously using database-level locking mechanisms",
+  "so_that": "Data integrity is maintained and exactly one user successfully claims each team, even under high concurrency",
+
+  "acceptance_criteria": [
+    {
+      "scenario": "Concurrent claim attempts with pessimistic locking",
+      "given": [
+        "Team 'Raiders' is unclaimed in league 'NFL2025'",
+        "User A and User B submit claim requests within 50ms of each other",
+        "System uses SELECT FOR UPDATE (PostgreSQL) or row-level locking"
+      ],
+      "when": [
+        "Both requests attempt to acquire lock on team record",
+        "First request (User A) acquires lock successfully",
+        "Second request (User B) waits for lock or times out"
+      ],
+      "then": [
+        "User A's transaction commits successfully with team claimed",
+        "User B's request fails with HTTP 409 Conflict",
+        "Error message: 'Team was just claimed by another user. Please select a different team.'",
+        "Database maintains exactly one claim record",
+        "No orphaned or duplicate claims exist",
+        "Lock is released within 5 seconds maximum"
+      ]
+    },
+    {
+      "scenario": "Optimistic locking with version-based conflict detection",
+      "given": [
+        "Team record has version number field (e.g., version=1)",
+        "System uses optimistic locking for read-heavy operations",
+        "Two users load the same team data simultaneously"
+      ],
+      "when": [
+        "User A submits claim with version=1",
+        "User A's update succeeds, incrementing version to 2",
+        "User B submits claim with stale version=1",
+        "Database detects version mismatch"
+      ],
+      "then": [
+        "User B's request returns HTTP 409 Conflict",
+        "Error includes: 'This team was just claimed. Refresh to see current availability.'",
+        "Retry-After header suggests 1-second delay",
+        "Client auto-refreshes team list on conflict",
+        "Audit log records both attempts with timestamps",
+        "No data corruption occurs"
+      ]
+    },
+    {
+      "scenario": "Transaction isolation level enforcement",
+      "given": [
+        "Database uses SERIALIZABLE or REPEATABLE READ isolation",
+        "Multiple concurrent transactions accessing same team records"
+      ],
+      "when": [
+        "Transaction A reads available teams",
+        "Transaction B reads same teams before A commits",
+        "Transaction A claims team and commits",
+        "Transaction B attempts to claim same team"
+      ],
+      "then": [
+        "Transaction B detects serialization failure",
+        "System retries Transaction B automatically (max 3 attempts)",
+        "If retry fails, return HTTP 409 with clear message",
+        "No dirty reads or phantom reads occur",
+        "ACID properties are maintained",
+        "Performance impact < 200ms for conflict resolution"
+      ]
+    },
+    {
+      "scenario": "Distributed lock with Redis for horizontal scaling",
+      "given": [
+        "Application runs on multiple servers",
+        "Redis used for distributed locking",
+        "Team claim requires cross-server coordination"
+      ],
+      "when": [
+        "Server A acquires Redis lock 'team:raiders:lock' with TTL=10s",
+        "Server B attempts same lock and fails",
+        "Server A processes claim and releases lock",
+        "Or lock expires after 10s if server crashes"
+      ],
+      "then": [
+        "Only one server processes claim at a time",
+        "Lock expires automatically to prevent deadlocks",
+        "Monitoring alerts on frequent lock timeouts",
+        "Lock acquisition time < 50ms in 99th percentile",
+        "Failed lock attempts return immediately with 409",
+        "Idempotency key prevents duplicate processing"
+      ]
+    },
+    {
+      "scenario": "Conflict resolution with audit trail",
+      "given": [
+        "Concurrent claims detected and prevented",
+        "System maintains complete audit log"
+      ],
+      "when": [
+        "Multiple claim attempts occur simultaneously",
+        "Conflict resolution mechanism activates"
+      ],
+      "then": [
+        "All attempts logged with nanosecond timestamps",
+        "Log includes: user_id, team_id, attempt_time, lock_acquired, commit_status",
+        "Winner and losers clearly identified in logs",
+        "Metrics track: conflict rate, resolution time, retry success rate",
+        "Dashboards show concurrent claim patterns",
+        "Alerts trigger if conflict rate > 5% of claims"
+      ]
+    }
+  ],
+
+  "technical_requirements": {
+    "database_locking": {
+      "pessimistic_locking": {
+        "mechanism": "SELECT FOR UPDATE NOWAIT (PostgreSQL)",
+        "timeout": "5 seconds maximum lock hold time",
+        "deadlock_detection": "Automatic with exponential backoff retry",
+        "lock_scope": "Row-level locks on teams table"
+      },
+      "optimistic_locking": {
+        "version_field": "INTEGER version column on teams table",
+        "update_pattern": "UPDATE teams SET claimed_by=?, version=version+1 WHERE id=? AND version=?",
+        "conflict_detection": "Check affected rows = 0 for conflict",
+        "retry_strategy": "Exponential backoff: 100ms, 200ms, 400ms"
+      },
+      "transaction_isolation": {
+        "level": "REPEATABLE READ minimum, SERIALIZABLE preferred",
+        "serialization_failure_handling": "Automatic retry up to 3 attempts",
+        "connection_pool": "Separate pool for high-contention operations",
+        "timeout": "10 seconds transaction timeout"
+      }
+    },
+    "distributed_locking": {
+      "technology": "Redis with Redlock algorithm",
+      "lock_key_pattern": "lock:team:{league_id}:{team_id}",
+      "ttl": "10 seconds with automatic extension for long operations",
+      "quorum": "Majority of Redis nodes for lock acquisition",
+      "retry": "3 attempts with 50ms delay between retries"
+    },
+    "idempotency": {
+      "key_format": "idempotency:{user_id}:{team_id}:{timestamp_ms}",
+      "storage": "Redis with 60-second TTL",
+      "duplicate_detection": "Check idempotency key before processing",
+      "response_caching": "Cache successful response for idempotent retry"
+    },
+    "monitoring": {
+      "metrics": [
+        "concurrent_claim_attempts_total",
+        "lock_acquisition_duration_seconds",
+        "lock_timeout_total",
+        "claim_conflict_total",
+        "retry_success_rate"
+      ],
+      "alerts": [
+        "Lock timeout rate > 1%",
+        "Claim conflict rate > 5%",
+        "Lock acquisition time p99 > 100ms",
+        "Deadlock detection frequency > 10/hour"
+      ],
+      "dashboards": [
+        "Real-time concurrency heatmap",
+        "Conflict resolution timeline",
+        "Lock contention by team/league"
+      ]
+    }
+  },
+
+  "error_handling": {
+    "conflict_response": {
+      "http_status": 409,
+      "error_code": "TEAM_CLAIM_CONFLICT",
+      "message": "This team was just claimed by another user. Please select a different team.",
+      "retry_after": "1 second",
+      "suggested_action": "refresh_team_list"
+    },
+    "lock_timeout": {
+      "http_status": 503,
+      "error_code": "LOCK_TIMEOUT",
+      "message": "Unable to process claim due to high demand. Please try again.",
+      "retry_after": "2 seconds",
+      "max_retries": 3
+    },
+    "deadlock_detected": {
+      "http_status": 503,
+      "error_code": "TEMPORARY_FAILURE",
+      "message": "Temporary processing conflict. Retrying automatically.",
+      "internal_action": "Automatic retry with exponential backoff",
+      "user_visible": false
+    }
+  },
+
+  "performance_requirements": {
+    "lock_acquisition": "< 50ms at p99",
+    "conflict_resolution": "< 200ms at p99",
+    "total_claim_time_with_conflict": "< 1 second at p99",
+    "throughput": "Handle 1000 concurrent claim attempts per second",
+    "success_rate": "> 99.9% (excluding intentional conflicts)"
+  },
+
+  "testing_requirements": {
+    "load_testing": [
+      "Simulate 100 users claiming same team within 1-second window",
+      "Verify exactly 1 successful claim and 99 proper conflict responses",
+      "Test with 10,000 concurrent users across different teams",
+      "Measure lock contention and resolution times"
+    ],
+    "chaos_testing": [
+      "Kill application server mid-transaction to test lock expiry",
+      "Simulate network partitions in distributed lock scenario",
+      "Test database connection failures during claim processing",
+      "Verify recovery with zero data corruption"
+    ],
+    "unit_tests": [
+      "Mock concurrent transactions with race condition simulation",
+      "Test all lock timeout and retry paths",
+      "Verify idempotency key generation and validation",
+      "Test version-based optimistic locking logic"
+    ],
+    "integration_tests": [
+      "End-to-end concurrent claim test with real database",
+      "Redis distributed lock test with multiple app instances",
+      "Transaction rollback and cleanup verification",
+      "Audit log completeness validation"
+    ]
+  },
+
+  "related_stories": [
+    "US-OAC-002 (Team Claiming)",
+    "US-LCI-003 (Database Setup)",
+    "US-MPB-GAP-002 (Concurrent Pick Submissions)"
+  ],
+
+  "dependencies": [
+    "PostgreSQL 12+ with row-level locking support",
+    "Redis 6+ for distributed locking",
+    "Connection pooling library (e.g., pgBouncer, pg-pool)",
+    "Monitoring infrastructure (Prometheus, Grafana)"
+  ]
+}

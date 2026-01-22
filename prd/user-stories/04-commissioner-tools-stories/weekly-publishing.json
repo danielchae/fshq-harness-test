@@ -1,0 +1,196 @@
+{
+  "subcomponentId": "weekly-publishing",
+  "componentId": "commissioner-tools",
+  "tracesTo": [
+    "SOW: Commissioner Desk & Weekly Content Publishing",
+    "UserFlow: Weekly Commissioner Desk → Optional Content Creation & Publishing to Feed"
+  ],
+  "stories": [
+    {
+      "id": "WP-001",
+      "title": "Execute Single Publish Action for All Weekly Content",
+      "user": "League Commissioner",
+      "goal": "publish all completed weekly content (power rankings, matchup of the week, predictions) with a single unified publish action",
+      "benefit": "I can efficiently share all my weekly content with the league in one operation without multiple publish steps",
+      "acceptanceCriteria": [
+        "System provides single 'Publish All' button that triggers publishing for all non-skipped content sections atomically",
+        "Publish operation validates all non-skipped sections before execution and displays specific validation errors",
+        "Single transaction updates power rankings page, matchup page, predictions database, and creates all feed moments simultaneously",
+        "If any part of publish operation fails, system rolls back entire transaction and displays detailed error message",
+        "System displays progress indicator during publish operation showing each step being completed",
+        "Success confirmation displays summary of what was published with direct links to view content on respective pages and in feed"
+      ]
+    },
+    {
+      "id": "WP-002",
+      "title": "Create Feed Moments for Published Content",
+      "user": "League Commissioner",
+      "goal": "automatically generate separate feed moments for each type of published weekly content",
+      "benefit": "my content is immediately visible in the league newsfeed without manual posting",
+      "acceptanceCriteria": [
+        "System creates distinct feed moment for power rankings with preview of top 3 teams and link to full rankings page",
+        "System creates feed moment for matchup of the week featuring the highlighted matchup with hype text and predictions",
+        "System creates feed moment for commissioner predictions displaying all predictions made for the week",
+        "Each feed moment includes publication timestamp, commissioner attribution, and appropriate content preview",
+        "Feed moments are inserted at top of newsfeed timeline in chronological order of content type (rankings, matchup, predictions)",
+        "System only creates feed moments for non-skipped content sections",
+        "Feed moments support standard engagement features (comments, reactions) immediately upon creation"
+      ]
+    },
+    {
+      "id": "WP-003",
+      "title": "Update Power Rankings Page on Publish",
+      "user": "League Member (any role)",
+      "goal": "view the newly published power rankings on the dedicated power rankings page immediately after commissioner publishes",
+      "benefit": "I can see the latest team rankings and commissioner commentary as soon as they're published",
+      "acceptanceCriteria": [
+        "Power rankings page displays newly published rankings immediately after publish operation completes",
+        "Page shows correct week and season context with rankings ordered 1-N as specified by commissioner",
+        "Each team displays rank position, team name/logo, and commissioner commentary",
+        "Page includes publication timestamp and 'Published by [Commissioner Name]' attribution",
+        "Week selector on rankings page updates to show new week as 'Published' with green indicator",
+        "Historical rankings trajectory chart updates to include new week's data points for all teams"
+      ]
+    },
+    {
+      "id": "WP-004",
+      "title": "Update Matchups Page with Featured Matchup",
+      "user": "League Member (any role)",
+      "goal": "see the featured matchup of the week highlighted on the matchups page immediately after publishing",
+      "benefit": "I can quickly identify which game is the most important to watch this week",
+      "acceptanceCriteria": [
+        "Matchups page displays featured matchup with special visual styling (highlighted border, 'Matchup of the Week' badge)",
+        "Featured matchup shows both teams, hype text from commissioner, and commissioner's prediction",
+        "System positions featured matchup at top of matchup list for the selected week regardless of schedule order",
+        "Matchup displays commissioner prediction with clear indication of predicted winner and confidence level",
+        "Page updates immediately after publish with no cache delays or manual refresh required",
+        "Featured matchup is accessible via direct link from feed moment for easy navigation"
+      ]
+    },
+    {
+      "id": "WP-005",
+      "title": "Store Commissioner Predictions for Grading",
+      "user": "System",
+      "goal": "persist all commissioner predictions in database for post-stat-correction grading after matchups complete",
+      "benefit": "predictions can be automatically graded and stats calculated after official results are finalized",
+      "acceptanceCriteria": [
+        "System stores each prediction with matchup ID, predicted winner team ID, confidence level, and commissioner user ID",
+        "Predictions are associated with specific week and season for accurate grading context",
+        "Database schema includes prediction status field (pending, graded, stat-corrected) for tracking",
+        "System stores prediction timestamp and publication week for historical analysis",
+        "Predictions remain immutable after publication to ensure grading integrity",
+        "Schema supports storing optional prediction commentary or reasoning from commissioner"
+      ]
+    },
+    {
+      "id": "WP-006",
+      "title": "Detect NFL Stat Corrections via Data Sync",
+      "user": "System",
+      "goal": "automatically detect when NFL stat corrections occur that may change fantasy matchup outcomes",
+      "benefit": "predictions and pick'ems can be graded with official final scores after corrections",
+      "acceptanceCriteria": [
+        "System monitors Sleeper API for stat correction events via scheduled data synchronization (every 4 hours during season)",
+        "Stat correction detection compares previous matchup scores with updated scores from external platform",
+        "System identifies affected matchups where score changes resulted in winner changes (score differential flipped)",
+        "Detection logs all stat correction events with timestamp, affected matchup IDs, score changes, and winner changes",
+        "System flags affected weeks as 'pending regrading' when stat corrections detected within 72 hours of matchup completion",
+        "Notification is sent to commissioners when stat corrections affect published predictions or pick'ems"
+      ]
+    },
+    {
+      "id": "WP-007",
+      "title": "Automatically Grade Commissioner Predictions After Stat Corrections",
+      "user": "System",
+      "goal": "grade all commissioner predictions with official final results after stat correction window closes",
+      "benefit": "commissioner prediction stats are accurate and reflect true outcomes",
+      "acceptanceCriteria": [
+        "System automatically grades predictions 72 hours after matchup completion (standard stat correction window)",
+        "Grading process compares commissioner's predicted winner with actual matchup winner from Sleeper API",
+        "System marks predictions as 'correct' or 'incorrect' and stores grading timestamp",
+        "Grading handles regrading when stat corrections occur, updating previous grades with 'regraded' flag",
+        "System calculates weekly commissioner prediction accuracy (correct predictions / total predictions)",
+        "Grading updates commissioner's cumulative season and all-time prediction stats automatically",
+        "System displays grading status on predictions feed moment as 'Grading pending', 'Graded', or 'Regraded'"
+      ]
+    },
+    {
+      "id": "WP-008",
+      "title": "Update Commissioner Prediction Stats and Leaderboards",
+      "user": "League Member (any role)",
+      "goal": "view updated commissioner prediction statistics after weekly grading completes",
+      "benefit": "I can see how accurate the commissioner's predictions have been over time",
+      "acceptanceCriteria": [
+        "System maintains commissioner prediction stats table with weekly, season, and all-time records",
+        "Stats include total predictions, correct predictions, incorrect predictions, and accuracy percentage",
+        "Prediction stats appear on commissioner profile or stats page with visual accuracy indicators",
+        "System updates leaderboard comparing commissioner accuracy with other league member pick'ems performance",
+        "Stats display confidence-weighted accuracy for predictions with confidence levels (future enhancement)",
+        "Historical prediction data is preserved for all past seasons with dynasty league continuity",
+        "System displays 'Stats updated' timestamp to show freshness of graded data"
+      ]
+    },
+    {
+      "id": "WP-009",
+      "title": "Handle Republishing with Updated Content",
+      "user": "League Commissioner",
+      "goal": "update already-published content and republish with clear indication of changes",
+      "benefit": "I can correct errors or add information after initial publication without confusing league members",
+      "acceptanceCriteria": [
+        "System allows editing of published content which creates new draft version while preserving original",
+        "Republish action updates all affected pages and feed moments with new content atomically",
+        "Feed moments display 'Updated' badge with update timestamp to indicate content was modified post-publication",
+        "System maintains version history showing original publication and all subsequent updates with change tracking",
+        "Updated power rankings trigger regrading of predictions if rankings materially changed (future enhancement)",
+        "Republish only bumps feed moments if changes exceed configured significance threshold (e.g., commentary changes)",
+        "System notifies league members via optional notification when significant updates are republished"
+      ]
+    },
+    {
+      "id": "WP-010",
+      "title": "Display Publishing Status and History",
+      "user": "League Commissioner",
+      "goal": "view complete history of when content was published, updated, and graded for any week",
+      "benefit": "I can track my content publishing activity and verify grading occurred correctly",
+      "acceptanceCriteria": [
+        "Commissioner Desk displays publishing timeline showing publish date, republish dates, and grading completion dates",
+        "Each week shows status badges: 'Published', 'Grading Pending', 'Graded', 'Stat Corrected & Regraded'",
+        "System provides detailed publish history modal with timestamps, publisher user, and content versions",
+        "Grading status section shows prediction accuracy for the week and grading timestamp",
+        "Publishing history is filterable by season and content type (rankings, matchups, predictions)",
+        "System displays audit trail for troubleshooting: publish attempts, failures, rollbacks, and retries"
+      ]
+    },
+    {
+      "id": "WP-011",
+      "title": "Validate Content Completeness Before Publishing",
+      "user": "League Commissioner",
+      "goal": "receive clear validation errors if required content is missing or invalid before attempting to publish",
+      "benefit": "I avoid failed publish attempts and can complete all required content efficiently",
+      "acceptanceCriteria": [
+        "Publish button is disabled with tooltip explaining missing requirements when content is incomplete",
+        "System validates power rankings have all teams ranked with no gaps or duplicates (if not skipped)",
+        "System validates matchup of the week has team selection, hype text, and prediction (if not skipped)",
+        "System validates all predictions have winner selected for non-skipped matchups",
+        "Validation displays specific error messages with links to incomplete sections for quick navigation",
+        "System allows partial publish if some sections are explicitly skipped via 'Skip This Week' toggle",
+        "Pre-publish validation preview shows exactly what will be published before confirmation"
+      ]
+    },
+    {
+      "id": "WP-012",
+      "title": "Rollback Failed Publish Operations",
+      "user": "League Commissioner",
+      "goal": "have the system automatically rollback all changes if any part of the publish operation fails",
+      "benefit": "my content remains in draft state if publish fails rather than being partially published",
+      "acceptanceCriteria": [
+        "System wraps entire publish operation in database transaction to ensure atomicity",
+        "If feed moment creation fails, system rolls back page updates and database changes",
+        "If page update fails, system rolls back feed moments and reverts publish status to draft",
+        "System logs detailed error information for debugging failed publish attempts",
+        "Failed publish displays user-friendly error message with specific failure reason and retry option",
+        "Content remains in draft state after rollback with no partial data visible to league members",
+        "System sends error notification to technical admin for investigation of persistent failures"
+      ]
+    }
+  ]
+}

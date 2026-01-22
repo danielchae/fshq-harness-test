@@ -1,0 +1,831 @@
+{
+  "overview": "This UX specification defines the complete user experience architecture for FSHQ.gg, a fantasy sports clubhouse platform. The design supports three primary user roles (Admin, Manager, Fan) with distinct permission levels and specialized workflows. The architecture centers around five core user journeys: (1) League Connection from Sleeper API with real-time sync validation, (2) Team Claiming with identity verification, (3) Commissioner Content Creation with draft/publish workflows and autosave, (4) Pick'ems Competition with lock-time enforcement and automated grading, and (5) Social Engagement through comments and reactions on feed moments. The UI follows a mobile-first responsive design approach with state-driven component patterns derived from application state machines. All interfaces support real-time updates via Supabase subscriptions, optimistic UI updates with rollback on error, and comprehensive error recovery procedures. The design system emphasizes accessibility (WCAG 2.1 AA), performance (sub-3s initial load, sub-500ms transitions), and progressive enhancement for offline capability.",
+
+  "view_catalog": {
+    "views": [
+      {
+        "view_name": "LandingPage",
+        "view_type": "page",
+        "components": ["Hero", "FeatureGrid", "CTAButton", "Footer"],
+        "data_requirements": ["marketing_content_static"],
+        "key_interactions": ["click_connect_league", "click_login", "scroll_features"]
+      },
+      {
+        "view_name": "AuthenticationModal",
+        "view_type": "modal",
+        "components": ["TabSwitcher", "LoginForm", "RegisterForm", "Button", "Input", "ErrorMessage"],
+        "data_requirements": ["user_credentials", "session_token"],
+        "key_interactions": ["switch_tab", "input_credentials", "submit_form", "close_modal"]
+      },
+      {
+        "view_name": "LeagueConnectionWizard",
+        "view_type": "page",
+        "components": ["StepIndicator", "LeagueIDInput", "LeaguePreviewCard", "SyncProgressBar", "Button"],
+        "data_requirements": ["sleeper_league_metadata", "sync_progress_status", "team_roster_data"],
+        "key_interactions": ["input_league_id", "validate_league", "confirm_connection", "monitor_sync_progress"]
+      },
+      {
+        "view_name": "RoleSelectionOnboarding",
+        "view_type": "page",
+        "components": ["RoleCard", "RadioButton", "TeamGrid", "TeamClaimingInterface", "Button"],
+        "data_requirements": ["available_teams", "sleeper_rosters", "user_sleeper_identity"],
+        "key_interactions": ["select_role", "select_team", "validate_claim", "submit_onboarding"]
+      },
+      {
+        "view_name": "ProductTour",
+        "view_type": "dialog",
+        "components": ["TourOverlay", "TourTooltip", "StepIndicator", "Button"],
+        "data_requirements": ["tour_steps_config"],
+        "key_interactions": ["next_step", "previous_step", "skip_tour", "complete_tour"]
+      },
+      {
+        "view_name": "NewsfeedPage",
+        "view_type": "page",
+        "components": ["FeedMoment", "InfiniteScrollContainer", "SortToggle", "PostComposer", "PinnedMomentBanner"],
+        "data_requirements": ["feed_moments", "pinned_moments", "user_permissions", "league_members"],
+        "key_interactions": ["scroll_feed", "click_moment", "add_comment", "add_reaction", "toggle_sort", "load_more"]
+      },
+      {
+        "view_name": "MomentDetailPage",
+        "view_type": "page",
+        "components": ["MomentHeader", "MomentContent", "CommentThread", "ReactionPicker", "ShareButton"],
+        "data_requirements": ["moment_data", "comments", "reactions", "author_profile"],
+        "key_interactions": ["read_content", "write_comment", "react", "share", "edit_own_comment"]
+      },
+      {
+        "view_name": "CommissionerDeskPage",
+        "view_type": "page",
+        "components": ["WeekSelector", "ContentTabNav", "PowerRankingsEditor", "MatchupPredictionsEditor", "PostEditor", "PublishButton", "AutosaveIndicator"],
+        "data_requirements": ["draft_content", "published_content", "teams", "matchups", "historical_rankings"],
+        "key_interactions": ["select_week", "switch_tab", "edit_content", "save_draft", "publish", "preview"]
+      },
+      {
+        "view_name": "PowerRankingsPage",
+        "view_type": "page",
+        "components": ["WeekSelector", "RankingsTable", "TeamCard", "TrajectoryChart", "Commentary"],
+        "data_requirements": ["power_rankings", "teams", "historical_trajectory"],
+        "key_interactions": ["select_week", "view_trajectory", "read_commentary", "compare_teams"]
+      },
+      {
+        "view_name": "MatchupPredictionsPage",
+        "view_type": "page",
+        "components": ["WeekSelector", "MatchupCard", "PredictionBadge", "FeaturedMatchupHighlight", "Commentary"],
+        "data_requirements": ["matchup_predictions", "matchups", "teams", "prediction_accuracy"],
+        "key_interactions": ["select_week", "view_matchup", "read_prediction"]
+      },
+      {
+        "view_name": "PickemsSubmissionPage",
+        "view_type": "page",
+        "components": ["WeekSelector", "LockCountdown", "MatchupPickCard", "SubmitButton", "PicksSummary"],
+        "data_requirements": ["matchups", "user_picks", "lock_times", "other_users_picks_after_lock"],
+        "key_interactions": ["select_week", "make_pick", "change_pick", "submit_picks", "view_others_picks_post_lock"]
+      },
+      {
+        "view_name": "LeaderboardPage",
+        "view_type": "page",
+        "components": ["ScopeToggle", "RoleFilter", "WeekSelector", "LeaderboardTable", "UserStatsCard"],
+        "data_requirements": ["leaderboard_data", "user_stats", "league_members"],
+        "key_interactions": ["toggle_scope", "filter_role", "select_week", "view_user_profile"]
+      },
+      {
+        "view_name": "TransactionsPage",
+        "view_type": "page",
+        "components": ["TransactionList", "TransactionCard", "TypeFilter", "PaginationControls"],
+        "data_requirements": ["transactions", "teams", "players"],
+        "key_interactions": ["scroll_transactions", "filter_type", "react_to_transaction", "comment_on_transaction", "paginate"]
+      },
+      {
+        "view_name": "LeagueHistoryPage",
+        "view_type": "page",
+        "components": ["SeasonSelector", "ChampionCard", "SeasonSummary", "HistoricalStats"],
+        "data_requirements": ["league_history", "season_champions", "historical_stats"],
+        "key_interactions": ["select_season", "view_champion", "read_summary"]
+      },
+      {
+        "view_name": "LeagueSettingsPage",
+        "view_type": "page",
+        "components": ["SettingsForm", "VisibilityToggle", "JoinRuleToggle", "FanAccessToggle", "SaveButton"],
+        "data_requirements": ["league_settings", "league_metadata"],
+        "key_interactions": ["edit_settings", "toggle_options", "save_changes"]
+      },
+      {
+        "view_name": "MemberManagementPage",
+        "view_type": "page",
+        "components": ["MemberList", "MemberCard", "ApprovalQueue", "RoleSelector", "ActionButtons"],
+        "data_requirements": ["league_memberships", "pending_memberships", "teams"],
+        "key_interactions": ["view_member", "approve_member", "reject_member", "change_role", "assign_team"]
+      },
+      {
+        "view_name": "UserProfilePage",
+        "view_type": "page",
+        "components": ["ProfileHeader", "StatsOverview", "ActivityFeed", "PreferencesForm"],
+        "data_requirements": ["user_profile", "user_stats", "user_activity", "user_preferences"],
+        "key_interactions": ["edit_profile", "update_preferences", "view_activity"]
+      },
+      {
+        "view_name": "NotificationCenterDrawer",
+        "view_type": "drawer",
+        "components": ["NotificationList", "NotificationCard", "MarkAllReadButton", "FilterTabs"],
+        "data_requirements": ["user_notifications", "unread_count"],
+        "key_interactions": ["view_notification", "mark_read", "mark_all_read", "filter_notifications"]
+      },
+      {
+        "view_name": "LeagueSwitcherDropdown",
+        "view_type": "modal",
+        "components": ["LeagueList", "LeagueCard", "SearchInput", "AddLeagueButton"],
+        "data_requirements": ["user_leagues", "active_league_id"],
+        "key_interactions": ["search_leagues", "switch_league", "connect_new_league"]
+      }
+    ],
+    "navigation": {
+      "primary_nav": [
+        {"label": "Feed", "route": "/leagues/{slug}", "icon": "home", "roles": ["fan", "manager", "admin"]},
+        {"label": "Pick'ems", "route": "/leagues/{slug}/pickems", "icon": "ballot", "roles": ["fan", "manager", "admin"]},
+        {"label": "Rankings", "route": "/leagues/{slug}/rankings", "icon": "trophy", "roles": ["fan", "manager", "admin"]},
+        {"label": "Matchups", "route": "/leagues/{slug}/matchups", "icon": "sports", "roles": ["fan", "manager", "admin"]},
+        {"label": "Leaderboard", "route": "/leagues/{slug}/leaderboard", "icon": "leaderboard", "roles": ["fan", "manager", "admin"]},
+        {"label": "Transactions", "route": "/leagues/{slug}/transactions", "icon": "swap_horiz", "roles": ["fan", "manager", "admin"]},
+        {"label": "Commissioner", "route": "/leagues/{slug}/desk", "icon": "edit", "roles": ["manager_commissioner", "admin"]},
+        {"label": "Settings", "route": "/leagues/{slug}/settings", "icon": "settings", "roles": ["admin"]}
+      ],
+      "routes": [
+        {"path": "/", "component": "LandingPage", "access": "public"},
+        {"path": "/connect-league", "component": "LeagueConnectionWizard", "access": "authenticated"},
+        {"path": "/leagues/{slug}", "component": "NewsfeedPage", "access": "member"},
+        {"path": "/leagues/{slug}/onboarding", "component": "RoleSelectionOnboarding", "access": "authenticated"},
+        {"path": "/leagues/{slug}/moment/{momentId}", "component": "MomentDetailPage", "access": "member"},
+        {"path": "/leagues/{slug}/desk", "component": "CommissionerDeskPage", "access": "commissioner"},
+        {"path": "/leagues/{slug}/rankings", "component": "PowerRankingsPage", "access": "member"},
+        {"path": "/leagues/{slug}/matchups", "component": "MatchupPredictionsPage", "access": "member"},
+        {"path": "/leagues/{slug}/pickems", "component": "PickemsSubmissionPage", "access": "member"},
+        {"path": "/leagues/{slug}/leaderboard", "component": "LeaderboardPage", "access": "member"},
+        {"path": "/leagues/{slug}/transactions", "component": "TransactionsPage", "access": "member"},
+        {"path": "/leagues/{slug}/history", "component": "LeagueHistoryPage", "access": "member"},
+        {"path": "/leagues/{slug}/settings", "component": "LeagueSettingsPage", "access": "admin"},
+        {"path": "/leagues/{slug}/members", "component": "MemberManagementPage", "access": "admin"},
+        {"path": "/profile", "component": "UserProfilePage", "access": "authenticated"}
+      ]
+    }
+  },
+
+  "component_library": {
+    "Button": {
+      "component_name": "Button",
+      "props": {
+        "variant": "enum: primary | secondary | ghost | danger | outline",
+        "size": "enum: sm | md | lg",
+        "disabled": "boolean",
+        "loading": "boolean",
+        "fullWidth": "boolean",
+        "children": "ReactNode"
+      },
+      "event_handlers": ["onClick"]
+    },
+    "Input": {
+      "component_name": "Input",
+      "props": {
+        "type": "enum: text | email | password | number | tel",
+        "value": "string",
+        "placeholder": "string",
+        "disabled": "boolean",
+        "error": "string (error message)",
+        "helpText": "string",
+        "label": "string",
+        "required": "boolean"
+      },
+      "event_handlers": ["onChange", "onBlur", "onFocus"]
+    },
+    "Card": {
+      "component_name": "Card",
+      "props": {
+        "variant": "enum: default | elevated | outlined | ghost",
+        "padding": "enum: sm | md | lg",
+        "children": "ReactNode",
+        "clickable": "boolean"
+      },
+      "event_handlers": ["onClick"]
+    },
+    "Modal": {
+      "component_name": "Modal",
+      "props": {
+        "isOpen": "boolean",
+        "size": "enum: small | medium | large | fullscreen",
+        "closeOnOverlayClick": "boolean",
+        "title": "string",
+        "children": "ReactNode"
+      },
+      "event_handlers": ["onClose"],
+      "accessibility_notes": "Implements focus trap, ESC key to close, returns focus to trigger element on close"
+    },
+    "FeedMoment": {
+      "component_name": "FeedMoment",
+      "props": {
+        "moment": "Moment object with type, content, reactions, comments",
+        "isPinned": "boolean",
+        "currentUser": "User object",
+        "permissions": "Permissions object"
+      },
+      "event_handlers": ["onReact", "onComment", "onPin", "onHide", "onClick"]
+    },
+    "CommentThread": {
+      "component_name": "CommentThread",
+      "props": {
+        "comments": "array of Comment objects",
+        "currentUser": "User object",
+        "maxDepth": "number (default 3 for threading)",
+        "sortOrder": "enum: newest | oldest"
+      },
+      "event_handlers": ["onAddComment", "onEditComment", "onDeleteComment", "onReact"]
+    },
+    "LeagueConnectionWizard": {
+      "component_name": "LeagueConnectionWizard",
+      "props": {
+        "currentStep": "number",
+        "totalSteps": "number (3)",
+        "validationErrors": "object with field errors",
+        "isValidating": "boolean",
+        "syncProgress": "object with progress percentage and status"
+      },
+      "event_handlers": ["onStepComplete", "onStepBack", "onCancel"]
+    },
+    "TeamClaimingInterface": {
+      "component_name": "TeamClaimingInterface",
+      "props": {
+        "availableTeams": "array of Team objects",
+        "sleeperRosters": "array of SleeperRoster objects",
+        "selectedTeam": "Team object or null",
+        "validationStatus": "enum: valid | invalid | pending",
+        "isValidating": "boolean"
+      },
+      "event_handlers": ["onTeamSelect", "onTeamClaim"]
+    },
+    "CommissionerDeskEditor": {
+      "component_name": "CommissionerDeskEditor",
+      "props": {
+        "contentType": "enum: power_rankings | matchup_predictions | post",
+        "initialContent": "DeskPost object",
+        "autosaveInterval": "number (default 30000ms)",
+        "lastSaved": "Date or null",
+        "teams": "array of Team objects",
+        "matchups": "array of Matchup objects"
+      },
+      "event_handlers": ["onSave", "onPublish", "onDelete"]
+    },
+    "PickemsSubmissionForm": {
+      "component_name": "PickemsSubmissionForm",
+      "props": {
+        "week": "number",
+        "matchups": "array of Matchup objects",
+        "existingPicks": "array of Pick objects",
+        "lockTime": "Date",
+        "isLocked": "boolean"
+      },
+      "event_handlers": ["onSubmit", "onSaveDraft"]
+    },
+    "PowerRankingsChart": {
+      "component_name": "PowerRankingsChart",
+      "props": {
+        "rankingsHistory": "array of historical rankings by week",
+        "teams": "array of Team objects",
+        "selectedSeason": "number",
+        "hoveredWeek": "number or null"
+      },
+      "event_handlers": ["onWeekHover", "onTeamClick"]
+    },
+    "LeaderboardTable": {
+      "component_name": "LeaderboardTable",
+      "props": {
+        "data": "array of leaderboard entries",
+        "scope": "enum: weekly | season | alltime",
+        "roleFilter": "enum: all | manager | fan",
+        "currentUser": "User object",
+        "sortBy": "string (column name)",
+        "sortDirection": "enum: asc | desc"
+      },
+      "event_handlers": ["onSort", "onUserClick"]
+    },
+    "InfiniteScrollContainer": {
+      "component_name": "InfiniteScrollContainer",
+      "props": {
+        "children": "ReactNode",
+        "hasMore": "boolean",
+        "isLoading": "boolean",
+        "threshold": "number (default 200px from bottom)"
+      },
+      "event_handlers": ["onLoadMore"]
+    },
+    "LoadingSpinner": {
+      "component_name": "LoadingSpinner",
+      "props": {
+        "size": "enum: sm | md | lg",
+        "centered": "boolean",
+        "message": "string (optional)"
+      },
+      "event_handlers": []
+    },
+    "ErrorBoundary": {
+      "component_name": "ErrorBoundary",
+      "props": {
+        "children": "ReactNode",
+        "fallback": "ReactNode or function",
+        "onError": "function (error, errorInfo)"
+      },
+      "event_handlers": ["onReset"],
+      "accessibility_notes": "Provides error context to screen readers via aria-live region"
+    },
+    "Toast": {
+      "component_name": "Toast",
+      "props": {
+        "variant": "enum: info | success | warning | error",
+        "message": "string",
+        "duration": "number (ms, 0 for persistent)",
+        "dismissible": "boolean"
+      },
+      "event_handlers": ["onDismiss"]
+    }
+  },
+
+  "user_flow_maps": [
+    {
+      "flow_name": "League Connection Journey",
+      "entry_points": ["Landing page CTA", "Dashboard connect button", "Direct URL /connect-league", "Email invitation link"],
+      "decision_points": [
+        {
+          "condition": "League ID validation",
+          "branches": {
+            "valid": "Show league confirmation",
+            "invalid": "Show error, allow retry",
+            "already_connected": "Offer to join existing league"
+          }
+        },
+        {
+          "condition": "User confirms league",
+          "branches": {
+            "confirm": "Start sync process",
+            "cancel": "Return to league ID input"
+          }
+        },
+        {
+          "condition": "Sync completion",
+          "branches": {
+            "success": "Create league, redirect to onboarding",
+            "partial_failure": "Show warning, allow continue",
+            "critical_failure": "Show error, offer retry"
+          }
+        }
+      ],
+      "exit_points": ["League successfully connected", "User cancels wizard", "Critical error occurred"],
+      "view_sequence": ["LeagueConnectionWizard (Step 1: Input)", "LeagueConnectionWizard (Step 2: Confirmation)", "LeagueConnectionWizard (Step 3: Sync Progress)", "RoleSelectionOnboarding"],
+      "error_handling": [
+        {
+          "error": "Invalid league ID",
+          "recovery": "Show inline error, highlight input field, provide help text with examples",
+          "user_action": "Correct input and retry"
+        },
+        {
+          "error": "League already connected",
+          "recovery": "Show existing league details, offer join button",
+          "user_action": "Join existing league or go back"
+        },
+        {
+          "error": "Sleeper API timeout",
+          "recovery": "Show loading message, automatic retry with exponential backoff",
+          "user_action": "Wait for retry or manual retry"
+        },
+        {
+          "error": "Sync failure",
+          "recovery": "Preserve partial sync data, show detailed error, offer manual retry",
+          "user_action": "Retry sync or contact support"
+        }
+      ]
+    },
+    {
+      "flow_name": "Team Claiming Journey",
+      "entry_points": ["Onboarding flow after league connection", "League settings team assignment", "Admin invitation with pre-assigned team", "Direct navigation to /leagues/{slug}/claim-team"],
+      "decision_points": [
+        {
+          "condition": "Role selection",
+          "branches": {
+            "manager": "Show team claiming interface",
+            "fan": "Skip team claiming, proceed to tour"
+          }
+        },
+        {
+          "condition": "Sleeper user validation",
+          "branches": {
+            "valid_match": "Auto-approve claim",
+            "invalid_match": "Reject claim, show error",
+            "ambiguous_match": "Queue for admin approval",
+            "no_sleeper_data": "Queue for admin approval"
+          }
+        },
+        {
+          "condition": "Admin approval (if required)",
+          "branches": {
+            "approved": "Link team to user",
+            "rejected": "Notify user with reason"
+          }
+        }
+      ],
+      "exit_points": ["Team successfully claimed", "Claim pending admin approval", "Claim rejected", "User skips as fan"],
+      "view_sequence": ["RoleSelectionOnboarding", "TeamClaimingInterface", "ValidationSpinner", "SuccessConfirmation or ErrorMessage or PendingApproval"],
+      "error_handling": [
+        {
+          "error": "Sleeper username mismatch",
+          "recovery": "Show validation error with expected vs actual username, suggest contacting admin",
+          "user_action": "Try different team or contact admin"
+        },
+        {
+          "error": "Team already claimed",
+          "recovery": "Show who claimed the team, suggest alternatives",
+          "user_action": "Select different team or contact admin for co-manager setup"
+        },
+        {
+          "error": "Validation API failure",
+          "recovery": "Default to pending approval, notify admin",
+          "user_action": "Wait for admin review"
+        }
+      ]
+    },
+    {
+      "flow_name": "Commissioner Content Publishing",
+      "entry_points": ["Commissioner Desk navigation", "Weekly content reminder notification", "Direct URL /leagues/{slug}/desk", "Quick action button in feed"],
+      "decision_points": [
+        {
+          "condition": "Week selection",
+          "branches": {
+            "current_week": "Load current week matchups and teams",
+            "past_week": "Load historical data, mark read-only",
+            "future_week": "Show placeholder, limited editing"
+          }
+        },
+        {
+          "condition": "Content type selection",
+          "branches": {
+            "power_rankings": "Show rankings editor with drag-drop",
+            "matchup_predictions": "Show predictions form with featured matchup",
+            "commissioner_post": "Show rich text editor"
+          }
+        },
+        {
+          "condition": "Content validation",
+          "branches": {
+            "valid": "Enable publish button",
+            "invalid": "Show validation errors, disable publish",
+            "incomplete": "Show progress indicator, allow save draft"
+          }
+        },
+        {
+          "condition": "Publish action",
+          "branches": {
+            "success": "Create feed moments, update pages, show confirmation",
+            "failure": "Rollback changes, preserve draft, show error"
+          }
+        }
+      ],
+      "exit_points": ["Content published successfully", "Draft saved", "User discards changes", "Publish failed"],
+      "view_sequence": ["CommissionerDeskPage", "WeekSelector", "ContentEditor (Rankings/Predictions/Post)", "Preview", "PublishConfirmation"],
+      "error_handling": [
+        {
+          "error": "Validation error (missing required fields)",
+          "recovery": "Highlight missing fields, show inline errors, prevent publish",
+          "user_action": "Complete required fields"
+        },
+        {
+          "error": "Autosave failure",
+          "recovery": "Queue changes in localStorage, retry on next interval, show warning banner",
+          "user_action": "Continue editing, manual save available"
+        },
+        {
+          "error": "Publish failure",
+          "recovery": "Rollback all changes, preserve draft state, show detailed error with retry option",
+          "user_action": "Fix issue and retry publish"
+        },
+        {
+          "error": "Browser crash during editing",
+          "recovery": "Restore draft from localStorage on next session, show recovery banner",
+          "user_action": "Review recovered content, continue editing or discard"
+        }
+      ]
+    },
+    {
+      "flow_name": "Pick'ems Submission Flow",
+      "entry_points": ["Pick'ems navigation tab", "Pick'ems reminder notification", "Direct URL /leagues/{slug}/pickems", "Week matchup completion prompt"],
+      "decision_points": [
+        {
+          "condition": "Week selection",
+          "branches": {
+            "current_week_unlocked": "Show editable pick form",
+            "current_week_locked": "Show locked picks, reveal others",
+            "future_week": "Show preview, picks disabled",
+            "past_week": "Show graded results"
+          }
+        },
+        {
+          "condition": "Pick submission",
+          "branches": {
+            "all_picks_made": "Enable submit button",
+            "partial_picks": "Allow submit with confirmation",
+            "no_picks": "Disable submit"
+          }
+        },
+        {
+          "condition": "Lock time",
+          "branches": {
+            "before_lock": "Editable, show countdown",
+            "at_lock": "Lock picks, reveal all picks",
+            "after_lock": "Read-only, show results when available"
+          }
+        },
+        {
+          "condition": "Grading completion",
+          "branches": {
+            "all_graded": "Show correct/incorrect, update leaderboard",
+            "partially_graded": "Show available results, pending indicator",
+            "stat_correction": "Re-grade affected picks, show correction badge"
+          }
+        }
+      ],
+      "exit_points": ["Picks submitted successfully", "Lock time passed with picks", "Lock time passed without picks", "Grading completed"],
+      "view_sequence": ["PickemsSubmissionPage", "WeekSelector", "MatchupPickCards", "SubmitConfirmation", "LockedPicksView", "GradedResultsView"],
+      "error_handling": [
+        {
+          "error": "Submission failure before lock",
+          "recovery": "Preserve picks in localStorage, retry automatically, show retry banner",
+          "user_action": "Wait for automatic retry or manual retry"
+        },
+        {
+          "error": "Lock time passed during submission",
+          "recovery": "Reject submission, show lock time error, display locked picks",
+          "user_action": "View locked picks, wait for grading"
+        },
+        {
+          "error": "Network offline during editing",
+          "recovery": "Queue picks locally, show offline indicator, sync when online",
+          "user_action": "Continue making picks, auto-sync on reconnect"
+        },
+        {
+          "error": "Grading failure",
+          "recovery": "Queue for manual grading, show pending status, retry on next cycle",
+          "user_action": "Wait for grading completion"
+        }
+      ]
+    },
+    {
+      "flow_name": "Member Engagement Flow (Comments & Reactions)",
+      "entry_points": ["Feed moment click", "Moment detail page", "Notification click", "Direct link to moment"],
+      "decision_points": [
+        {
+          "condition": "User authentication",
+          "branches": {
+            "authenticated": "Show comment form and reaction buttons",
+            "guest": "Show login prompt on interaction"
+          }
+        },
+        {
+          "condition": "Comment submission",
+          "branches": {
+            "valid": "Post comment, show optimistically, send notification",
+            "invalid": "Show validation error",
+            "rate_limited": "Show rate limit message, disable submit"
+          }
+        },
+        {
+          "condition": "Reaction addition",
+          "branches": {
+            "not_reacted": "Add reaction, update count",
+            "already_reacted": "Remove reaction, update count"
+          }
+        }
+      ],
+      "exit_points": ["Comment posted successfully", "Reaction added", "User cancels", "Rate limit reached"],
+      "view_sequence": ["NewsfeedPage or MomentDetailPage", "CommentThread", "CommentComposer", "ReactionPicker"],
+      "error_handling": [
+        {
+          "error": "Comment submission failure",
+          "recovery": "Rollback optimistic update, show error banner, preserve comment text for retry",
+          "user_action": "Retry submission"
+        },
+        {
+          "error": "Network offline",
+          "recovery": "Queue comment/reaction in localStorage, show pending indicator, sync when online",
+          "user_action": "Continue using app, auto-sync on reconnect"
+        },
+        {
+          "error": "Rate limit exceeded",
+          "recovery": "Disable submit button, show countdown timer, queue for retry after cooldown",
+          "user_action": "Wait for cooldown period"
+        },
+        {
+          "error": "Spam detection",
+          "recovery": "Block submission, show warning, log for admin review",
+          "user_action": "Modify content or contact admin"
+        }
+      ]
+    },
+    {
+      "flow_name": "Admin Approval Flow",
+      "entry_points": ["Admin dashboard notification badge", "Member management page", "Email notification link", "Real-time Supabase subscription"],
+      "decision_points": [
+        {
+          "condition": "Request review",
+          "branches": {
+            "valid_request": "Show approval options",
+            "duplicate_request": "Show existing membership",
+            "invalid_user": "Show error details"
+          }
+        },
+        {
+          "condition": "Approval decision",
+          "branches": {
+            "approve_with_team": "Assign team, grant manager permissions",
+            "approve_as_fan": "Grant fan permissions",
+            "reject": "Update status, send rejection notification"
+          }
+        },
+        {
+          "condition": "Team assignment (if manager)",
+          "branches": {
+            "auto_detect": "Match Sleeper username, suggest team",
+            "manual_select": "Admin selects from available teams",
+            "no_team": "Approve as fan instead"
+          }
+        }
+      ],
+      "exit_points": ["Request approved", "Request rejected", "Pending further review"],
+      "view_sequence": ["MemberManagementPage", "ApprovalQueue", "RequestDetailsModal", "TeamAssignmentInterface", "ConfirmationDialog"],
+      "error_handling": [
+        {
+          "error": "Concurrent approval by multiple admins",
+          "recovery": "Lock request on first approval, show 'already processed' message to other admins",
+          "user_action": "Refresh queue, process next request"
+        },
+        {
+          "error": "Team already assigned",
+          "recovery": "Show current assignment, offer to reassign or make co-manager",
+          "user_action": "Choose different team or enable co-manager"
+        },
+        {
+          "error": "Notification send failure",
+          "recovery": "Complete approval, queue notification for retry, log failure",
+          "user_action": "Verify approval completed, user can check status in app"
+        }
+      ]
+    }
+  ],
+
+  "design_system": {
+    "typography": {
+      "font_family": {
+        "body": "System font stack: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
+        "heading": "Same as body for consistency",
+        "monospace": "'SF Mono', Monaco, Inconsolata, monospace for code snippets"
+      },
+      "scale": {
+        "xs": "12px",
+        "sm": "14px",
+        "base": "16px",
+        "lg": "18px",
+        "xl": "20px",
+        "2xl": "24px",
+        "3xl": "30px",
+        "4xl": "36px",
+        "5xl": "48px",
+        "6xl": "60px"
+      },
+      "line_height": {
+        "tight": "1.25",
+        "normal": "1.5",
+        "relaxed": "1.75"
+      },
+      "weights": {
+        "normal": "400",
+        "medium": "500",
+        "semibold": "600",
+        "bold": "700"
+      }
+    },
+    "color_palette": {
+      "primary": {
+        "50": "#f0f9ff",
+        "100": "#e0f2fe",
+        "200": "#bae6fd",
+        "300": "#7dd3fc",
+        "400": "#38bdf8",
+        "500": "#0ea5e9",
+        "600": "#0284c7",
+        "700": "#0369a1",
+        "800": "#075985",
+        "900": "#0c4a6e"
+      },
+      "secondary": {
+        "50": "#faf5ff",
+        "100": "#f3e8ff",
+        "200": "#e9d5ff",
+        "300": "#d8b4fe",
+        "400": "#c084fc",
+        "500": "#a855f7",
+        "600": "#9333ea",
+        "700": "#7e22ce",
+        "800": "#6b21a8",
+        "900": "#581c87"
+      },
+      "semantic": {
+        "success": {
+          "50": "#f0fdf4",
+          "100": "#dcfce7",
+          "500": "#22c55e",
+          "700": "#15803d",
+          "900": "#14532d"
+        },
+        "warning": {
+          "50": "#fffbeb",
+          "100": "#fef3c7",
+          "500": "#eab308",
+          "700": "#a16207",
+          "900": "#713f12"
+        },
+        "error": {
+          "50": "#fef2f2",
+          "100": "#fee2e2",
+          "500": "#ef4444",
+          "700": "#b91c1c",
+          "900": "#7f1d1d"
+        },
+        "info": {
+          "50": "#eff6ff",
+          "100": "#dbeafe",
+          "500": "#3b82f6",
+          "700": "#1d4ed8",
+          "900": "#1e3a8a"
+        }
+      },
+      "neutrals": {
+        "background": "#ffffff",
+        "background_dark": "#0f172a",
+        "surface": "#f8fafc",
+        "surface_dark": "#1e293b",
+        "border": "#e2e8f0",
+        "border_dark": "#334155",
+        "text": "#0f172a",
+        "text_dark": "#f1f5f9",
+        "text_muted": "#64748b",
+        "text_muted_dark": "#94a3b8"
+      }
+    },
+    "spacing": {
+      "base_unit": "4px",
+      "scale": {
+        "0": "0px",
+        "1": "4px",
+        "2": "8px",
+        "3": "12px",
+        "4": "16px",
+        "5": "20px",
+        "6": "24px",
+        "8": "32px",
+        "10": "40px",
+        "12": "48px",
+        "16": "64px",
+        "20": "80px",
+        "24": "96px",
+        "32": "128px"
+      },
+      "container_max_width": "1280px",
+      "container_padding": "16px",
+      "breakpoints": {
+        "mobile": "640px",
+        "tablet": "768px",
+        "desktop": "1024px",
+        "wide": "1280px",
+        "ultrawide": "1536px"
+      }
+    },
+    "elevation": {
+      "none": "none",
+      "sm": "0 1px 2px 0 rgba(0, 0, 0, 0.05)",
+      "base": "0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)",
+      "md": "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
+      "lg": "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
+      "xl": "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
+      "2xl": "0 25px 50px -12px rgba(0, 0, 0, 0.25)"
+    },
+    "radius": {
+      "none": "0px",
+      "sm": "2px",
+      "base": "4px",
+      "md": "6px",
+      "lg": "8px",
+      "xl": "12px",
+      "2xl": "16px",
+      "full": "9999px"
+    },
+    "component_variants": {
+      "button": ["primary", "secondary", "ghost", "danger", "outline"],
+      "card": ["default", "elevated", "outlined", "ghost"],
+      "badge": ["default", "success", "warning", "error", "info", "neutral"],
+      "input": ["default", "error", "success"],
+      "alert": ["info", "success", "warning", "error"]
+    }
+  }
+}

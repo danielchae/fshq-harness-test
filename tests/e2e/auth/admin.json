@@ -1,0 +1,15 @@
+{
+  "cookies": [
+    {
+      "name": "authjs.session-token",
+      "value": "mock-admin-session-token-for-testing",
+      "domain": "localhost",
+      "path": "/",
+      "expires": -1,
+      "httpOnly": true,
+      "secure": false,
+      "sameSite": "Lax"
+    }
+  ],
+  "origins": []
+}

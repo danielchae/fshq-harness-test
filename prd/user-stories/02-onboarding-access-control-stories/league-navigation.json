@@ -1,0 +1,160 @@
+{
+  "subcomponentId": "league-navigation",
+  "componentId": "onboarding-access-control",
+  "tracesTo": [
+    "SOW: League Clubhouse & Navigation",
+    "UserFlow: League Access, Switching & Role-Based Experience"
+  ],
+  "stories": [
+    {
+      "id": "LN-001",
+      "title": "Display League Switcher for Multi-League Users",
+      "user": "User in Multiple Leagues",
+      "goal": "see all my leagues in a switcher interface",
+      "benefit": "I can easily navigate between different league clubhouses I belong to",
+      "acceptanceCriteria": [
+        "System displays league switcher in header/navigation when user belongs to multiple leagues",
+        "League switcher shows list of all leagues user has membership in",
+        "Each league entry displays league name and optional logo/icon",
+        "Current active league is visually highlighted in the switcher",
+        "League switcher is accessible from any page within the application",
+        "System sorts leagues alphabetically or by most recently accessed"
+      ]
+    },
+    {
+      "id": "LN-002",
+      "title": "Switch Between Leagues",
+      "user": "User in Multiple Leagues",
+      "goal": "switch from one league clubhouse to another",
+      "benefit": "I can access different league spaces and their specific content without re-authenticating",
+      "acceptanceCriteria": [
+        "User can click on a league in the switcher to change active league",
+        "System updates league context globally across the application",
+        "System redirects to appropriate landing page for selected league (typically newsfeed)",
+        "All subsequent navigation and data fetching uses new league context",
+        "System persists last selected league in user session for next visit",
+        "League switch action is immediate without page refresh lag"
+      ]
+    },
+    {
+      "id": "LN-003",
+      "title": "Direct Route Single-League Users to Their League",
+      "user": "User in Only One League",
+      "goal": "be automatically directed to my league clubhouse without selecting from a switcher",
+      "benefit": "I have a streamlined experience without unnecessary navigation steps",
+      "acceptanceCriteria": [
+        "System detects user belongs to only one league upon login",
+        "System automatically sets that league as active league context",
+        "User is redirected directly to league clubhouse landing page (newsfeed)",
+        "System does not display league switcher interface for single-league users",
+        "If user later joins additional leagues, system automatically enables league switcher",
+        "System handles edge case where user has no league memberships with appropriate messaging"
+      ]
+    },
+    {
+      "id": "LN-004",
+      "title": "Maintain League Context Across Navigation",
+      "user": "User Navigating League Pages",
+      "goal": "stay within the context of my selected league as I navigate between pages",
+      "benefit": "all content and features I access are relevant to the current league without confusion",
+      "acceptanceCriteria": [
+        "System maintains league context in URL structure (e.g., /leagues/[leagueId]/feed)",
+        "All page navigation preserves current league context in routing",
+        "API calls and data queries automatically use current league context",
+        "System prevents cross-league data leakage by validating league context on all requests",
+        "Browser back/forward buttons correctly maintain league context",
+        "System stores league context in application state management (React Context or similar)"
+      ]
+    },
+    {
+      "id": "LN-005",
+      "title": "Display League Identity in Navigation",
+      "user": "User in Any League",
+      "goal": "clearly see which league I am currently viewing",
+      "benefit": "I always know which league space I am in to avoid confusion",
+      "acceptanceCriteria": [
+        "System displays current league name prominently in header or navigation",
+        "League identity includes league logo or icon if available",
+        "Current league indicator remains visible on all pages within league context",
+        "System uses visual design to distinguish league identity from other UI elements",
+        "League name is clickable to access league switcher (for multi-league users)",
+        "System displays league URL slug as additional context indicator if appropriate"
+      ]
+    },
+    {
+      "id": "LN-006",
+      "title": "Handle League Access Permissions During Navigation",
+      "user": "User Attempting to Access League",
+      "goal": "only access leagues I have valid membership in",
+      "benefit": "I am protected from accessing unauthorized league spaces and see appropriate error messages",
+      "acceptanceCriteria": [
+        "System validates user has active membership before allowing league context switch",
+        "System checks membership status and approval state for league access",
+        "Unapproved or revoked memberships prevent league access with clear messaging",
+        "System redirects unauthorized users to appropriate page (e.g., membership pending page)",
+        "System handles deep links to league pages by validating access before rendering",
+        "Error messages explain why access is denied and provide next steps (e.g., 'Membership pending approval')"
+      ]
+    },
+    {
+      "id": "LN-007",
+      "title": "Switch League While Preserving Page Type",
+      "user": "User Switching Leagues",
+      "goal": "stay on the same type of page (e.g., matchups) when I switch to a different league",
+      "benefit": "I can compare the same information across multiple leagues efficiently",
+      "acceptanceCriteria": [
+        "System detects current page type when user initiates league switch",
+        "System attempts to route to equivalent page in new league context (e.g., matchups → matchups)",
+        "If equivalent page exists in new league, user is directed there after switch",
+        "If equivalent page does not exist or is not accessible, user is directed to league landing page with optional notification",
+        "System preserves URL structure pattern across league switches where possible",
+        "User can disable this behavior via preference to always land on newsfeed after switch"
+      ]
+    },
+    {
+      "id": "LN-008",
+      "title": "Display League Membership Count in Switcher",
+      "user": "User in Multiple Leagues",
+      "goal": "see how many leagues I belong to at a glance",
+      "benefit": "I understand the scope of my league memberships without counting manually",
+      "acceptanceCriteria": [
+        "System displays total count of user's league memberships in league switcher UI",
+        "Count updates dynamically when user joins or leaves leagues",
+        "System distinguishes between active, pending, and archived league memberships in count if applicable",
+        "Count is visible before opening full league switcher menu",
+        "System handles large numbers of leagues gracefully (e.g., 10+ leagues) with scrollable list",
+        "Count includes only leagues where user has approved membership status"
+      ]
+    },
+    {
+      "id": "LN-009",
+      "title": "Search and Filter Leagues in Switcher",
+      "user": "User in Many Leagues",
+      "goal": "quickly find a specific league when I belong to many leagues",
+      "benefit": "I can efficiently locate and switch to the league I want without scrolling through long lists",
+      "acceptanceCriteria": [
+        "System provides search input in league switcher when user has 5+ leagues",
+        "Search filters leagues by name in real-time as user types",
+        "Search is case-insensitive and matches partial strings",
+        "System highlights matching text in league names during search",
+        "Search results update instantly without server round-trip for better UX",
+        "System clears search when switcher is closed or league is selected"
+      ]
+    },
+    {
+      "id": "LN-010",
+      "title": "Handle League Switcher on Mobile Devices",
+      "user": "Mobile User in Multiple Leagues",
+      "goal": "access and use league switcher on my mobile device",
+      "benefit": "I have a touch-optimized experience for switching between leagues on small screens",
+      "acceptanceCriteria": [
+        "System adapts league switcher UI for mobile viewport sizes",
+        "League switcher trigger is easily tappable with appropriate touch target size",
+        "League switcher menu displays in mobile-friendly format (e.g., bottom sheet or full-screen modal)",
+        "League list items have adequate spacing for touch interaction without mis-taps",
+        "System provides smooth animations for opening/closing league switcher on mobile",
+        "Mobile league switcher respects device safe areas and navigation gestures"
+      ]
+    }
+  ]
+}

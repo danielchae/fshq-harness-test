@@ -1,0 +1,191 @@
+{
+  "subcomponentId": "matchups-display",
+  "componentId": "matchups-pickems-brackets",
+  "tracesTo": [
+    "SOW: Matchups, Playoff Brackets & Pick'ems",
+    "UserFlow: Weekly Member Engagement, Feed Interaction, Pick'ems & History Browsing"
+  ],
+  "stories": [
+    {
+      "id": "MD-001",
+      "title": "View Current Week Regular Season Matchups",
+      "user": "League Member",
+      "goal": "see all matchups for the current week when I visit the matchups page",
+      "benefit": "I can quickly check this week's games and who is playing whom without navigating",
+      "acceptanceCriteria": [
+        "Page defaults to current NFL week on initial load",
+        "System displays all regular season matchups for the week in a grid or list layout",
+        "Each matchup block shows both team names, logos, and current scores if games are in progress or completed",
+        "System automatically updates to new week when NFL schedule advances",
+        "Current week is visually indicated in the week selector"
+      ]
+    },
+    {
+      "id": "MD-002",
+      "title": "Select Season for Matchup Viewing",
+      "user": "League Member",
+      "goal": "choose which season's matchups I want to view",
+      "benefit": "I can review historical matchups from previous seasons and compare past results",
+      "acceptanceCriteria": [
+        "Season selector dropdown displays all available seasons with matchup data",
+        "Current season is selected by default",
+        "Selecting a different season updates the week selector to show valid weeks for that season",
+        "Selecting a season loads the most recent completed or current week for that season",
+        "Dynasty leagues show continuous season history, redraft leagues show independent seasons",
+        "Season selector clearly indicates current season with label or visual marker"
+      ]
+    },
+    {
+      "id": "MD-003",
+      "title": "Navigate Between Weeks with Continuous Horizontal Selector",
+      "user": "League Member",
+      "goal": "easily browse through different weeks of matchups within a season",
+      "benefit": "I can review past weeks and preview future matchups with intuitive navigation",
+      "acceptanceCriteria": [
+        "Week selector is displayed as continuous horizontal scrollable/swipeable strip",
+        "Each week is represented as a clickable element in the strip (e.g., Week 1, Week 2, etc.)",
+        "Current selected week is visually highlighted in the selector",
+        "User can click/tap a week to load that week's matchups",
+        "Week selector supports horizontal scrolling for seasons with many weeks",
+        "System distinguishes between regular season weeks and playoff weeks visually",
+        "Week selector adapts to mobile with swipe gesture support"
+      ]
+    },
+    {
+      "id": "MD-004",
+      "title": "Display Regular Season Matchup Blocks",
+      "user": "League Member",
+      "goal": "see detailed information for each matchup in a clear block format",
+      "benefit": "I can easily understand matchup details including teams, scores, and status at a glance",
+      "acceptanceCriteria": [
+        "Each matchup is displayed in a dedicated block/card with clear visual separation",
+        "Matchup block shows both teams with logos, team names, and manager names",
+        "Matchup block displays current scores or final scores prominently",
+        "Pre-game matchups show projected scores or empty score placeholders",
+        "In-progress matchups indicate live status with visual indicator (e.g., 'LIVE' badge)",
+        "Completed matchups clearly show winner with visual emphasis (e.g., bold, highlight)",
+        "Matchup blocks are responsive and adapt to mobile screen sizes"
+      ]
+    },
+    {
+      "id": "MD-005",
+      "title": "Identify Featured Matchup of the Week",
+      "user": "League Member",
+      "goal": "quickly spot the commissioner's featured matchup on the page",
+      "benefit": "I can see which game the commissioner considers most important or interesting this week",
+      "acceptanceCriteria": [
+        "Featured matchup is visually distinguished from other matchups (e.g., larger size, special border, highlight color)",
+        "Featured matchup displays commissioner's hype text or description if provided",
+        "Only one matchup is featured per week as designated by commissioner",
+        "If no matchup is featured for a week, all matchups display in standard format",
+        "Featured matchup is positioned prominently on the page (e.g., top or center)",
+        "Featured indicator is clear and consistent across desktop and mobile views"
+      ]
+    },
+    {
+      "id": "MD-006",
+      "title": "View Live Score Updates for In-Progress Matchups",
+      "user": "League Member During Game Day",
+      "goal": "see real-time or near-real-time score updates for ongoing matchups",
+      "benefit": "I can follow games as they happen without manually refreshing or leaving the page",
+      "acceptanceCriteria": [
+        "System fetches updated scores from external fantasy platform API at regular intervals",
+        "In-progress matchups display current scores that update automatically on the page",
+        "User can manually refresh matchup data with a refresh button or pull-to-refresh gesture",
+        "System indicates last update timestamp for score data",
+        "Score updates happen without full page reload using background data fetching",
+        "System handles API rate limits gracefully without breaking page functionality"
+      ]
+    },
+    {
+      "id": "MD-007",
+      "title": "View Final Scores for Completed Matchups",
+      "user": "League Member",
+      "goal": "see final scores and winners for matchups that have concluded",
+      "benefit": "I know the results of past games and can track standings progression",
+      "acceptanceCriteria": [
+        "Completed matchups display final scores with decimal precision as provided by platform",
+        "Winner is clearly indicated with visual styling (e.g., bold text, highlight, checkmark)",
+        "Loser is visually de-emphasized or shown with neutral styling",
+        "Ties are indicated if league rules support tie outcomes",
+        "System marks matchups as final after stat corrections are applied by fantasy platform",
+        "Final scores persist and do not change unless platform applies late stat corrections"
+      ]
+    },
+    {
+      "id": "MD-008",
+      "title": "Display Matchup Contextual Information",
+      "user": "League Member",
+      "goal": "see additional context about each matchup beyond just team names and scores",
+      "benefit": "I get richer information to understand matchup significance and storylines",
+      "acceptanceCriteria": [
+        "System displays team records (wins-losses) alongside team names in matchup block",
+        "System shows playoff implications if applicable (e.g., 'Must-win for playoffs')",
+        "Matchup block includes link to more detailed matchup view if available",
+        "System displays projected winner based on pre-game projections if available",
+        "Historical head-to-head record is optionally displayed for recurring matchups",
+        "Contextual information is concise and does not clutter the matchup block"
+      ]
+    },
+    {
+      "id": "MD-009",
+      "title": "Handle Bye Weeks and Uneven Matchups",
+      "user": "League Member",
+      "goal": "understand when teams have byes or when matchups are not symmetrical",
+      "benefit": "I know which teams are not playing this week and see accurate schedule representation",
+      "acceptanceCriteria": [
+        "Teams with byes are clearly indicated on matchups page (e.g., 'BYE' label, grayed out)",
+        "Bye teams are displayed separately from active matchups or in a dedicated section",
+        "In leagues with uneven team counts, byes rotate according to league schedule",
+        "System does not create phantom matchups for teams on bye",
+        "Bye week schedule is sourced from fantasy platform league data",
+        "Users can quickly identify which teams are active vs on bye for the week"
+      ]
+    },
+    {
+      "id": "MD-010",
+      "title": "Navigate to Playoff Bracket from Matchups Page",
+      "user": "League Member During Playoffs",
+      "goal": "easily switch to viewing playoff bracket when postseason begins",
+      "benefit": "I can seamlessly transition from regular season matchups to playoff structure visualization",
+      "acceptanceCriteria": [
+        "System automatically detects when league enters playoff weeks based on league settings",
+        "Page displays prominent link or tab to switch to playoff bracket view during postseason",
+        "Regular season matchup view remains accessible even during playoffs for historical reference",
+        "System provides clear indication of when playoffs begin (e.g., 'Playoffs start Week 15')",
+        "Navigation between matchups page and bracket page maintains season and week context",
+        "System handles both standard and custom playoff start weeks based on league configuration"
+      ]
+    },
+    {
+      "id": "MD-011",
+      "title": "View Week Selector on Mobile Devices",
+      "user": "Mobile User",
+      "goal": "navigate between weeks on my mobile device with touch-optimized controls",
+      "benefit": "I have a smooth experience browsing matchups on smaller screens",
+      "acceptanceCriteria": [
+        "Continuous week selector adapts to mobile viewport with horizontal swipe support",
+        "Week elements in selector have adequate touch target size for easy tapping",
+        "Swiping left/right scrolls through weeks smoothly without page navigation conflicts",
+        "Selected week is centered in viewport when possible for better visibility",
+        "System provides visual feedback for week selection (e.g., animation, highlight)",
+        "Week selector does not interfere with vertical scrolling of matchup list"
+      ]
+    },
+    {
+      "id": "MD-012",
+      "title": "Filter and Sort Matchups",
+      "user": "League Member",
+      "goal": "organize matchup display based on my preferences or specific criteria",
+      "benefit": "I can prioritize viewing matchups that are most relevant or interesting to me",
+      "acceptanceCriteria": [
+        "System provides sort options (e.g., by score differential, by team name, by playoff seeding)",
+        "User can filter matchups by status (e.g., show only live games, show only completed)",
+        "Sort and filter preferences are applied immediately without page reload",
+        "System persists user's sort/filter preferences for their session or future visits",
+        "Default sort order is by matchup scheduling or seeding as determined by league",
+        "Filter and sort controls are accessible but not intrusive to main matchup view"
+      ]
+    }
+  ]
+}

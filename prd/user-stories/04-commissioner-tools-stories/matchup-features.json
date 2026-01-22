@@ -1,0 +1,187 @@
+{
+  "subcomponentId": "matchup-features",
+  "componentId": "commissioner-tools",
+  "tracesTo": [
+    "SOW: Commissioner Desk & Weekly Content Publishing",
+    "UserFlow: Weekly Commissioner Desk → Optional Content Creation & Publishing to Feed"
+  ],
+  "stories": [
+    {
+      "id": "MF-001",
+      "title": "Select Featured Matchup from Weekly Schedule",
+      "user": "League Commissioner",
+      "goal": "select one matchup from the current week's schedule to feature as 'Matchup of the Week'",
+      "benefit": "I can highlight the most interesting or competitive matchup to drive engagement",
+      "acceptanceCriteria": [
+        "System displays all matchups for the selected week in selectable list format with team names and records",
+        "User can select exactly one matchup as the featured matchup per week",
+        "Selected matchup is visually highlighted with distinct styling and 'Featured' badge",
+        "System prevents publishing if no matchup is selected and section is not skipped",
+        "Previously selected matchup for the week is preserved and displayed on return to desk"
+      ]
+    },
+    {
+      "id": "MF-002",
+      "title": "View Matchup Context and Statistics",
+      "user": "League Commissioner",
+      "goal": "see relevant team statistics and historical context when selecting a featured matchup",
+      "benefit": "I can make informed decisions about which matchup is most interesting to feature",
+      "acceptanceCriteria": [
+        "Each matchup displays team current records (wins-losses) from external platform data",
+        "System shows team power rankings position (if available) for both teams",
+        "Matchup list displays projected or actual scores when available from platform",
+        "System highlights rivalry indicators (e.g., same division, previous playoff matchups) if data available",
+        "User can expand matchup row to see additional team statistics without leaving selection interface"
+      ]
+    },
+    {
+      "id": "MF-003",
+      "title": "Write Matchup Hype Text",
+      "user": "League Commissioner",
+      "goal": "add compelling narrative text to build anticipation for the featured matchup",
+      "benefit": "I can tell the story behind the matchup and engage league members emotionally",
+      "acceptanceCriteria": [
+        "System provides rich text editor for hype text with basic formatting (bold, italic, links)",
+        "Editor supports multiline input with minimum 10 characters and maximum 2000 characters",
+        "Character count indicator shows remaining characters and validates against limits",
+        "Autosave preserves hype text drafts every 30 seconds and on blur",
+        "System displays preview of how hype text will appear on matchup page and feed moment",
+        "Hype text field is required if matchup is selected; system blocks publishing if empty"
+      ]
+    },
+    {
+      "id": "MF-004",
+      "title": "Create Structured Winner Prediction",
+      "user": "League Commissioner",
+      "goal": "predict which team will win the featured matchup with rationale",
+      "benefit": "I can make my official prediction and add credibility to my commissioner role",
+      "acceptanceCriteria": [
+        "System provides radio button or select control to choose predicted winner from the two teams",
+        "User must select exactly one team as predicted winner before publishing",
+        "Optional 'Predicted Score' fields allow entering score predictions for both teams (integers only)",
+        "Optional 'Prediction Rationale' text field supports up to 500 characters for reasoning",
+        "Prediction data is stored structured (not free text) for later automated grading",
+        "System displays prediction prominently on matchup page with 'Commissioner Prediction' header"
+      ]
+    },
+    {
+      "id": "MF-005",
+      "title": "Skip Matchup of the Week for Specific Weeks",
+      "user": "League Commissioner",
+      "goal": "choose not to feature a matchup for weeks where no compelling storyline exists",
+      "benefit": "I can avoid forced content and maintain quality when appropriate",
+      "acceptanceCriteria": [
+        "System provides 'Skip Matchup of the Week' toggle checkbox at top of section",
+        "When skipped, all matchup selection and content fields are disabled and grayed out",
+        "Skipped status is saved to draft and prevents validation errors during publishing",
+        "System clearly indicates 'Skipped for this week' status with informational message",
+        "User can un-skip section and add content without affecting other published sections",
+        "No feed moment or matchup page content is created for skipped weeks"
+      ]
+    },
+    {
+      "id": "MF-006",
+      "title": "Edit Previously Published Matchup Features",
+      "user": "League Commissioner",
+      "goal": "correct errors or update hype text/predictions after initial publication",
+      "benefit": "I can fix mistakes without being locked into wrong information",
+      "acceptanceCriteria": [
+        "System allows editing published matchup features by creating new draft version",
+        "Draft edits are not visible to league members until explicitly republished",
+        "Republishing updates matchup page content and adds 'Updated' indicator to feed moment",
+        "System preserves original prediction for grading purposes even if updated before grading",
+        "Version history tracks all changes with timestamps and editor identification",
+        "User can revert to previous version from version history if needed"
+      ]
+    },
+    {
+      "id": "MF-007",
+      "title": "Preview Matchup Feature Content",
+      "user": "League Commissioner",
+      "goal": "see exactly how the featured matchup will appear before publishing",
+      "benefit": "I can verify layout, formatting, and content accuracy before making it public",
+      "acceptanceCriteria": [
+        "Preview mode renders matchup exactly as it will appear on matchup page to league members",
+        "Preview includes team names, records, hype text, prediction, and all formatting",
+        "Preview shows how feed moment will appear in newsfeed timeline with timestamp",
+        "User can toggle between edit and preview modes without losing unsaved changes",
+        "Preview mode clearly indicates 'Preview - Not Published' with visual banner"
+      ]
+    },
+    {
+      "id": "MF-008",
+      "title": "Validate Matchup Feature Completeness",
+      "user": "League Commissioner",
+      "goal": "receive clear feedback about missing or invalid content before attempting to publish",
+      "benefit": "I can complete all required fields without trial-and-error publishing attempts",
+      "acceptanceCriteria": [
+        "System displays validation errors inline for each incomplete or invalid field",
+        "Publish button is disabled with tooltip explaining missing requirements",
+        "Validation checks: matchup selected, hype text present and within limits, winner predicted",
+        "Error messages are specific and actionable (e.g., 'Select a featured matchup' not 'Invalid content')",
+        "Validation occurs in real-time as user completes fields, providing immediate feedback",
+        "System allows saving drafts with incomplete content but prevents publishing"
+      ]
+    },
+    {
+      "id": "MF-009",
+      "title": "Publish Matchup Feature to Feed and Pages",
+      "user": "League Commissioner",
+      "goal": "make the featured matchup and prediction visible to all league members with single action",
+      "benefit": "I can efficiently share my matchup feature without manual multi-step processes",
+      "acceptanceCriteria": [
+        "Publishing creates dedicated 'Matchup of the Week' feed moment in league newsfeed",
+        "Matchup page displays featured matchup section with hype text and prediction prominently",
+        "Feed moment includes team names, hype text preview (truncated if long), and link to full matchup page",
+        "Published content is immediately visible to all league members based on role permissions",
+        "System records publication timestamp and associates prediction with week for later grading",
+        "Publish operation is atomic - all updates succeed or all fail with rollback"
+      ]
+    },
+    {
+      "id": "MF-010",
+      "title": "Grade Commissioner Prediction After Stat Corrections",
+      "user": "League Commissioner",
+      "goal": "have my winner prediction automatically graded as correct or incorrect after official results",
+      "benefit": "I can track my prediction accuracy over time and add credibility to future predictions",
+      "acceptanceCriteria": [
+        "System automatically grades prediction after stat correction deadline passes for week",
+        "Grading compares predicted winner to actual matchup winner from platform final scores",
+        "Prediction is marked 'Correct' or 'Incorrect' with visual indicator on matchup page",
+        "System updates commissioner prediction accuracy statistics (total correct/total predictions)",
+        "Graded predictions cannot be changed retroactively but can be annotated with notes",
+        "System handles edge cases: ties (marked as incorrect), cancelled games (marked as void)"
+      ]
+    },
+    {
+      "id": "MF-011",
+      "title": "Track Commissioner Prediction History",
+      "user": "League Member",
+      "goal": "view the commissioner's past prediction accuracy and track record",
+      "benefit": "I can see how reliable the commissioner's predictions are over time",
+      "acceptanceCriteria": [
+        "System maintains cumulative prediction record for commissioner visible on profile or stats page",
+        "Statistics display: total predictions, correct predictions, accuracy percentage, streak information",
+        "Historical view shows all past predictions with results for each week (correct/incorrect/pending)",
+        "Predictions are linked to original matchup pages for context",
+        "Statistics reset annually for redraft leagues or persist across seasons for dynasty leagues",
+        "Leaderboard comparison shows commissioner accuracy vs other predictors if applicable"
+      ]
+    },
+    {
+      "id": "MF-012",
+      "title": "Change Featured Matchup Before Publishing",
+      "user": "League Commissioner",
+      "goal": "switch to a different featured matchup if I change my mind during draft creation",
+      "benefit": "I can adjust my selection without losing all my work",
+      "acceptanceCriteria": [
+        "User can reselect featured matchup from schedule at any time before publishing",
+        "Changing matchup selection displays confirmation prompt warning that hype text may need updating",
+        "System preserves hype text and prediction rationale when changing matchup (not auto-cleared)",
+        "Predicted winner selection is cleared when matchup changes to prevent invalid data",
+        "Autosave captures new matchup selection immediately for draft persistence",
+        "System provides undo capability to revert to previous matchup selection within editing session"
+      ]
+    }
+  ]
+}

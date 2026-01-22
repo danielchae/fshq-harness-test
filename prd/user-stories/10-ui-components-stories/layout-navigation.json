@@ -1,0 +1,190 @@
+{
+  "subcomponentId": "layout-navigation",
+  "componentId": "ui-components",
+  "tracesTo": [
+    "SOW: League Clubhouse & Navigation",
+    "SOW: UI / Visuals Guidelines"
+  ],
+  "stories": [
+    {
+      "id": "LYT-001",
+      "title": "Implement Responsive Clubhouse Layout Structure",
+      "user": "Frontend Developer",
+      "goal": "create a consistent, responsive layout structure for the league clubhouse",
+      "benefit": "all pages maintain visual consistency and adapt properly to different screen sizes",
+      "acceptanceCriteria": [
+        "Layout uses responsive grid system that adapts to mobile, tablet, and desktop viewports",
+        "Layout includes designated areas for header, left-side navigation, main content, and optional right sidebar",
+        "Layout maintains consistent spacing, padding, and margins across all breakpoints",
+        "Layout uses CSS Grid or Flexbox for flexible, maintainable structure",
+        "Layout respects mobile-first design principles with progressive enhancement",
+        "Layout handles dynamic content heights without breaking visual structure"
+      ]
+    },
+    {
+      "id": "LYT-002",
+      "title": "Build Left-Side Navigation Menu",
+      "user": "League Member",
+      "goal": "access all major league pages from a persistent left-side navigation menu",
+      "benefit": "I can quickly navigate to any section of the league clubhouse without searching",
+      "acceptanceCriteria": [
+        "Navigation menu displays on left side of layout on desktop and tablet viewports",
+        "Menu includes links to all primary league pages (Feed, Matchups, Power Rankings, Transactions, etc.)",
+        "Current page is visually highlighted in navigation menu",
+        "Menu items include icons or visual indicators for improved scannability",
+        "Menu remains visible and accessible while scrolling page content",
+        "Menu collapses to hamburger menu on mobile devices with slide-out drawer"
+      ]
+    },
+    {
+      "id": "LYT-003",
+      "title": "Create League Switcher Header Component",
+      "user": "User in Multiple Leagues",
+      "goal": "see the current league context and access league switcher from the header",
+      "benefit": "I always know which league I'm viewing and can easily switch between leagues",
+      "acceptanceCriteria": [
+        "Header displays prominently at top of all pages within league clubhouse layout",
+        "Header shows current league name and optional logo/icon",
+        "Header includes league switcher trigger for multi-league users",
+        "Header integrates with global navigation and user profile controls",
+        "Header remains fixed or sticky at top of viewport for constant visibility",
+        "Header design adapts to mobile viewports with appropriate responsive behavior"
+      ]
+    },
+    {
+      "id": "LYT-004",
+      "title": "Implement Mobile-Responsive Navigation",
+      "user": "Mobile User",
+      "goal": "access all navigation features on my mobile device with touch-optimized controls",
+      "benefit": "I have a seamless navigation experience regardless of device",
+      "acceptanceCriteria": [
+        "Navigation converts to hamburger menu icon on mobile viewports (typically < 768px)",
+        "Hamburger menu triggers slide-out navigation drawer from left or right edge",
+        "Navigation drawer includes all menu items from desktop left-side navigation",
+        "Touch targets meet minimum size requirements (44x44px) for accessibility",
+        "Drawer includes smooth open/close animations with backdrop overlay",
+        "Navigation drawer closes when user taps backdrop or selects menu item"
+      ]
+    },
+    {
+      "id": "LYT-005",
+      "title": "Design Consistent Header with League Identity",
+      "user": "League Member",
+      "goal": "see clear league branding and identity in the header across all pages",
+      "benefit": "I always know which league space I'm in and feel oriented within the application",
+      "acceptanceCriteria": [
+        "Header displays league name prominently using consistent typography",
+        "Header shows league logo/icon if available, with fallback to default icon",
+        "Header uses league's brand colors or theme colors if configured",
+        "Header layout remains consistent across all pages within league clubhouse",
+        "Header includes breadcrumb or page title to indicate current location within league",
+        "Header design follows Shadcn UI and Tailwind CSS design system patterns"
+      ]
+    },
+    {
+      "id": "LYT-006",
+      "title": "Build Global Navigation Controls in Header",
+      "user": "Authenticated User",
+      "goal": "access global application features like user profile, settings, and logout from the header",
+      "benefit": "I can manage my account and access universal features from any page",
+      "acceptanceCriteria": [
+        "Header includes user profile dropdown menu in top-right corner",
+        "User menu displays user avatar, name, and email",
+        "User menu includes links to account settings, profile management, and logout",
+        "User menu provides quick access to notifications if applicable",
+        "User menu dropdown is accessible via keyboard navigation",
+        "User menu adapts to mobile viewport with appropriate touch interactions"
+      ]
+    },
+    {
+      "id": "LYT-007",
+      "title": "Implement Collapsible Left-Side Navigation",
+      "user": "User Wanting More Screen Space",
+      "goal": "collapse or expand the left-side navigation menu to maximize content area",
+      "benefit": "I can customize my viewing experience based on my current needs",
+      "acceptanceCriteria": [
+        "Navigation menu includes collapse/expand toggle button",
+        "Collapsed state shows only icons with tooltips on hover",
+        "Expanded state shows full menu item labels alongside icons",
+        "Layout smoothly animates transition between collapsed and expanded states",
+        "Layout automatically adjusts content area width when navigation state changes",
+        "User's navigation state preference persists across sessions"
+      ]
+    },
+    {
+      "id": "LYT-008",
+      "title": "Create Consistent Page Container Components",
+      "user": "Frontend Developer",
+      "goal": "use reusable container components for consistent page layouts",
+      "benefit": "all pages have uniform structure, spacing, and responsive behavior",
+      "acceptanceCriteria": [
+        "Container component provides consistent max-width and centering for page content",
+        "Container includes standard padding and margin values from design system",
+        "Container handles overflow and scrolling behavior appropriately",
+        "Container supports variants for full-width, constrained, and narrow layouts",
+        "Container integrates seamlessly with left navigation and header components",
+        "Container component is built with Shadcn UI and Tailwind CSS utilities"
+      ]
+    },
+    {
+      "id": "LYT-009",
+      "title": "Build Responsive Navigation Menu Highlighting",
+      "user": "League Member",
+      "goal": "clearly see which page I'm currently on via navigation menu highlighting",
+      "benefit": "I maintain orientation within the league clubhouse and understand my current location",
+      "acceptanceCriteria": [
+        "Active navigation menu item is visually highlighted with distinct background or border",
+        "Active state uses color, typography weight, or icon changes for clear indication",
+        "Navigation highlighting updates automatically based on current route",
+        "Highlighting works correctly in both expanded and collapsed navigation states",
+        "Highlighting persists when page reloads or when navigating back via browser controls",
+        "Highlighting supports nested menu items or sub-navigation if present"
+      ]
+    },
+    {
+      "id": "LYT-010",
+      "title": "Implement Accessible Navigation with Keyboard Support",
+      "user": "User Relying on Keyboard Navigation",
+      "goal": "navigate the entire clubhouse layout using only keyboard controls",
+      "benefit": "I can use the application efficiently without requiring a mouse",
+      "acceptanceCriteria": [
+        "All navigation menu items are reachable via Tab key navigation",
+        "Focus indicators are clearly visible on all interactive navigation elements",
+        "Enter or Space key activates navigation links and triggers",
+        "Escape key closes mobile navigation drawer and dropdown menus",
+        "Skip-to-content link allows bypassing navigation to reach main content quickly",
+        "Navigation follows logical tab order matching visual hierarchy"
+      ]
+    },
+    {
+      "id": "LYT-011",
+      "title": "Design Loading States for Layout Components",
+      "user": "User Navigating Between Pages",
+      "goal": "see appropriate loading indicators while page content loads",
+      "benefit": "I understand the application is working and know when content is ready",
+      "acceptanceCriteria": [
+        "Layout displays skeleton loaders for header and navigation during initial load",
+        "Main content area shows loading spinner or skeleton while fetching data",
+        "Navigation remains interactive during content loading",
+        "Loading states use consistent visual design across all pages",
+        "Loading indicators are accessible to screen readers with appropriate ARIA labels",
+        "Layout prevents layout shift when transitioning from loading to loaded state"
+      ]
+    },
+    {
+      "id": "LYT-012",
+      "title": "Build Error Boundary for Layout Components",
+      "user": "User Encountering Application Errors",
+      "goal": "see helpful error messages when navigation or layout fails",
+      "benefit": "I understand what went wrong and can take appropriate action to recover",
+      "acceptanceCriteria": [
+        "Layout includes error boundary component to catch React rendering errors",
+        "Error boundary displays user-friendly error message instead of blank screen",
+        "Error state provides option to reload page or return to safe location (e.g., home)",
+        "Error boundary logs error details for debugging without exposing sensitive info",
+        "Error boundary prevents entire application crash when layout component fails",
+        "Error boundary includes visual design consistent with application theme"
+      ]
+    }
+  ]
+}

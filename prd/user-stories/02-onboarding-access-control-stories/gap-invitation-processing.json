@@ -1,0 +1,107 @@
+{
+  "subcomponentId": "invitation-processing",
+  "componentId": "onboarding-access-control",
+  "tracesTo": [
+    "SOW: Onboarding, Roles & Access Control - Instant join via invite links",
+    "UserFlow: Manager / Fan Onboarding, Claiming & Role Assignment",
+    "Research: Discord-style single-tap onboarding (discord-communities.md)"
+  ],
+  "stories": [
+    {
+      "id": "INV-P-001",
+      "title": "New User Accepts League Invite Link",
+      "user": "Prospective Member",
+      "goal": "join a league by clicking an invite link shared by the admin",
+      "benefit": "I can quickly access the league without complicated signup processes",
+      "acceptanceCriteria": [
+        "User can click invite link from email, message, or social media and be directed to FSHQ invitation page",
+        "System validates invite token for authenticity, expiration, and usage limits before proceeding",
+        "Invitation page displays league name, description, member count, and inviter details",
+        "System shows clear call-to-action button 'Join [League Name]' or 'Accept Invitation'",
+        "If user is not authenticated, system prompts to create account or login before accepting invitation",
+        "System preserves invite context through authentication flow and auto-accepts after login/registration",
+        "System displays clear error messages for invalid, expired, or revoked invite links with guidance"
+      ]
+    },
+    {
+      "id": "INV-P-002",
+      "title": "System Processes Auto-Approved Invite Acceptance",
+      "user": "New Member",
+      "goal": "gain immediate access to league content after accepting an auto-approve invite",
+      "benefit": "I can start participating in the league immediately without waiting for admin review",
+      "acceptanceCriteria": [
+        "System automatically creates league membership record when user accepts auto-approve invite link",
+        "User's role is set according to invite link configuration (manager with team selection or fan)",
+        "System redirects user directly to league clubhouse after successful acceptance",
+        "User receives welcome notification with league orientation information",
+        "System increments invite link usage counter and logs acceptance in invitation analytics",
+        "System sends notification to league admin about new member joining via specific invite link",
+        "Membership is active immediately with full access to league content and features for assigned role"
+      ]
+    },
+    {
+      "id": "INV-P-003",
+      "title": "System Processes Manual-Approval Invite Acceptance",
+      "user": "New Member",
+      "goal": "submit my request to join a league via invite link that requires admin approval",
+      "benefit": "I understand my request is being reviewed and can proceed once approved",
+      "acceptanceCriteria": [
+        "System creates pending membership request when user accepts manual-approval invite link",
+        "User sees confirmation message: 'Your request to join [League Name] is pending admin approval'",
+        "System pre-fills approval queue entry with invite link source and role configuration",
+        "User receives email confirmation that their request is pending with estimated review timeframe",
+        "System adds user to admin's approval queue with 'Invited via [link ID]' indicator for priority handling",
+        "User can view pending status in their account dashboard with option to cancel request",
+        "System notifies user via email when admin approves or denies their request"
+      ]
+    },
+    {
+      "id": "INV-P-004",
+      "title": "Existing User Joins Additional League via Invite",
+      "user": "Existing FSHQ Member",
+      "goal": "join a new league using an invite link while already having an account",
+      "benefit": "I can expand my league memberships without creating duplicate accounts",
+      "acceptanceCriteria": [
+        "System recognizes authenticated user clicking invite link and skips account creation step",
+        "User sees league preview with 'Join as [username]' button instead of registration form",
+        "System adds new league membership to user's existing account without requiring re-authentication",
+        "User can immediately switch between leagues using league navigation/switcher after joining",
+        "System respects role configuration from invite link when creating membership",
+        "If invite link is for manager role, system displays available teams for claiming",
+        "System prevents duplicate membership if user is already a member of the target league"
+      ]
+    },
+    {
+      "id": "INV-P-005",
+      "title": "System Validates Invite Link Constraints",
+      "user": "System",
+      "goal": "enforce invite link rules and limits during acceptance process",
+      "benefit": "league access remains controlled according to admin configuration",
+      "acceptanceCriteria": [
+        "System checks invite link expiration timestamp before allowing acceptance",
+        "System enforces max usage limit and prevents acceptance if limit is reached",
+        "System validates that league membership capacity is not exceeded before creating membership",
+        "For manager role invites, system verifies that unclaimed teams are available",
+        "System prevents acceptance of revoked invite links with appropriate error message",
+        "System enforces rate limiting on invite link access to prevent abuse or scraping",
+        "System logs all validation failures in admin audit trail with attempted access details"
+      ]
+    },
+    {
+      "id": "INV-P-006",
+      "title": "User Selects Team During Manager Invite Acceptance",
+      "user": "Prospective Manager",
+      "goal": "claim a team while accepting a manager-role invite link",
+      "benefit": "I can establish my team ownership as part of the invitation flow",
+      "acceptanceCriteria": [
+        "System displays available teams for claiming after user accepts manager invite link",
+        "User can browse team list with logos, names, and current availability status",
+        "System shows team details (division, conference, recent performance) to aid selection",
+        "User must select a team before completing invitation acceptance",
+        "System reserves selected team during acceptance process to prevent race conditions",
+        "System validates team is still available before finalizing membership",
+        "If no teams are available, system provides clear message and option to join as fan instead"
+      ]
+    }
+  ]
+}

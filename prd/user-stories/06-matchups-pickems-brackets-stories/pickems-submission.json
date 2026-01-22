@@ -1,0 +1,190 @@
+{
+  "subcomponentId": "pickems-submission",
+  "componentId": "matchups-pickems-brackets",
+  "tracesTo": [
+    "SOW: Matchups, Playoff Brackets & Pick'ems",
+    "UserFlow: Weekly Member Engagement, Feed Interaction, Pick'ems & History Browsing"
+  ],
+  "stories": [
+    {
+      "id": "PS-001",
+      "title": "Submit Pick'ems for Current Week Matchups",
+      "user": "League Member",
+      "goal": "pick winners for all matchups in the current week before the lock deadline",
+      "benefit": "I can participate in the weekly pick'ems competition and prove my prediction skills",
+      "acceptanceCriteria": [
+        "System displays all matchups for current week with pick selection interface",
+        "User can select winner for each matchup by clicking/tapping on team",
+        "Selected picks are visually indicated with highlight, checkmark, or selection state",
+        "System shows lock time/deadline for pick submissions prominently",
+        "User can submit picks even if not all matchups are picked (partial submission allowed)",
+        "System confirms successful submission with visual feedback or message"
+      ]
+    },
+    {
+      "id": "PS-002",
+      "title": "Edit Picks Before Lock Time",
+      "user": "League Member Who Submitted Picks",
+      "goal": "change my picks for matchups that have not yet locked",
+      "benefit": "I can adjust my predictions based on new information like injuries or lineup changes",
+      "acceptanceCriteria": [
+        "User can return to pick'ems page and see their previously submitted picks",
+        "User can change any pick by clicking/tapping different team before matchup locks",
+        "System automatically saves changes when new pick is selected",
+        "Changes are immediately reflected in user's submission",
+        "System prevents editing picks after individual matchup lock time has passed",
+        "Visual indicator shows which matchups are still editable vs locked"
+      ]
+    },
+    {
+      "id": "PS-003",
+      "title": "View Lock Times for Each Matchup",
+      "user": "League Member",
+      "goal": "see when each matchup locks so I know my deadline for picks",
+      "benefit": "I can manage my time and make informed decisions about when to finalize picks",
+      "acceptanceCriteria": [
+        "Each matchup displays its individual lock time based on game start time",
+        "Lock times are shown in user's local timezone",
+        "System displays countdown timer or time remaining until lock for upcoming matchups",
+        "Locked matchups are clearly marked with visual indicator (e.g., lock icon, grayed out)",
+        "System shows both date and time for matchups more than 24 hours away",
+        "Lock times automatically update as game times approach"
+      ]
+    },
+    {
+      "id": "PS-004",
+      "title": "Choose Not to Participate in Pick'ems for a Week",
+      "user": "League Member",
+      "goal": "skip submitting picks for a week without penalty or forced participation",
+      "benefit": "I have flexibility to participate when I want without being required to pick every week",
+      "acceptanceCriteria": [
+        "System does not require user to submit picks for any week",
+        "User can view pick'ems interface without being forced to make selections",
+        "Non-participation does not generate error messages or warnings",
+        "User's stats and leaderboard position reflect only weeks they participated",
+        "System does not create default or auto-generated picks for non-participants",
+        "User can still view results and others' picks even if they didn't participate"
+      ]
+    },
+    {
+      "id": "PS-005",
+      "title": "Hide Other Users' Picks Until Lock",
+      "user": "League Member",
+      "goal": "make my picks without seeing what others have chosen before lock time",
+      "benefit": "I make independent predictions without being influenced by others' selections",
+      "acceptanceCriteria": [
+        "System does not display other users' picks before matchup lock time",
+        "Pick'ems page only shows current user's own selections before lock",
+        "Other users' participation status (picked/not picked) is not visible before lock",
+        "System prevents API or data inspection from revealing others' picks early",
+        "Privacy is maintained for all matchups until their individual lock times",
+        "System shows clear message that others' picks will be revealed after lock"
+      ]
+    },
+    {
+      "id": "PS-006",
+      "title": "View Others' Picks After Lock Time",
+      "user": "League Member",
+      "goal": "see what other users picked for locked matchups",
+      "benefit": "I can compare my predictions with others and engage in friendly competition",
+      "acceptanceCriteria": [
+        "System reveals all users' picks for each matchup after it locks",
+        "Revealed picks show which users picked which team with visual breakdown (e.g., percentage, list)",
+        "System displays pick distribution for each matchup (e.g., '7 picked Team A, 3 picked Team B')",
+        "User can see individual picks of specific members if desired",
+        "Revealed picks update automatically when lock time is reached without page refresh",
+        "System maintains historical view of all users' picks for locked matchups"
+      ]
+    },
+    {
+      "id": "PS-007",
+      "title": "Receive Confirmation of Pick Submission",
+      "user": "League Member Submitting Picks",
+      "goal": "know that my picks were successfully saved and recorded",
+      "benefit": "I have confidence that my selections will be graded and counted",
+      "acceptanceCriteria": [
+        "System displays confirmation message after successful pick submission or update",
+        "Confirmation indicates number of matchups picked and time of submission",
+        "User can view summary of their submitted picks on confirmation",
+        "System sends browser notification or visual feedback for successful save",
+        "Failed submissions display clear error message with reason and retry option",
+        "Confirmation persists briefly then allows user to continue browsing"
+      ]
+    },
+    {
+      "id": "PS-008",
+      "title": "View My Pick Status Summary",
+      "user": "League Member",
+      "goal": "see an overview of which matchups I have picked and which are pending",
+      "benefit": "I can quickly identify incomplete picks and ensure I don't miss any matchups",
+      "acceptanceCriteria": [
+        "System displays progress indicator showing picked matchups vs total matchups",
+        "Summary shows which specific matchups have picks and which are empty",
+        "Visual distinction between picked, unpicked, and locked matchups",
+        "User can access this summary from main pick'ems page",
+        "Summary updates in real-time as user makes or changes picks",
+        "System highlights unpicked matchups approaching lock time"
+      ]
+    },
+    {
+      "id": "PS-009",
+      "title": "Handle Late Access After Some Matchups Lock",
+      "user": "League Member Visiting Late",
+      "goal": "still submit picks for unlocked matchups even if some games have already started",
+      "benefit": "I can participate partially if I missed earlier deadlines",
+      "acceptanceCriteria": [
+        "System allows picks for any matchup that has not yet locked",
+        "Locked matchups are clearly marked and disabled from selection",
+        "User can see results of locked matchups while picking remaining games",
+        "System calculates partial participation in grading and stats",
+        "Late submissions are timestamped and reflect actual participation window",
+        "User sees clear indication of which matchups are still available for picks"
+      ]
+    },
+    {
+      "id": "PS-010",
+      "title": "Access Pick'ems from Multiple Devices",
+      "user": "League Member on Different Device",
+      "goal": "submit or edit my picks from any device with my selections synchronized",
+      "benefit": "I have flexibility to participate from desktop, mobile, or tablet seamlessly",
+      "acceptanceCriteria": [
+        "User's picks are stored in database and accessible from any logged-in device",
+        "Changes made on one device are immediately reflected on other devices",
+        "System prevents conflicting edits if user is logged in on multiple devices simultaneously",
+        "Pick'ems interface is fully responsive and functional on mobile browsers",
+        "User can start picks on one device and finish on another without data loss",
+        "System maintains consistent state across all devices in real-time"
+      ]
+    },
+    {
+      "id": "PS-011",
+      "title": "View Historical Picks from Previous Weeks",
+      "user": "League Member",
+      "goal": "review my past picks from completed weeks",
+      "benefit": "I can track my prediction accuracy over time and learn from my choices",
+      "acceptanceCriteria": [
+        "User can navigate to previous weeks to view their historical picks",
+        "Historical picks are displayed with actual game outcomes for comparison",
+        "System shows which picks were correct (green) and incorrect (red) with visual indicators",
+        "User can see their pick compared to actual result and other users' picks",
+        "Historical picks are read-only and cannot be edited after lock",
+        "System maintains complete pick history for all participated weeks"
+      ]
+    },
+    {
+      "id": "PS-012",
+      "title": "Receive Reminder Before Lock Deadline",
+      "user": "League Member Who Has Not Submitted Picks",
+      "goal": "get notified when the pick'ems deadline is approaching",
+      "benefit": "I don't miss the chance to participate because I forgot about the deadline",
+      "acceptanceCriteria": [
+        "System sends notification or displays banner when first matchup lock is approaching (e.g., 1 hour before)",
+        "Reminder indicates how many matchups are unpicked and time remaining",
+        "User can configure reminder preferences or opt out of reminders",
+        "Reminders are sent via in-app notification, email, or browser notification based on settings",
+        "System only sends reminders to users who have not completed picks for upcoming week",
+        "Multiple reminders can be configured for different time thresholds"
+      ]
+    }
+  ]
+}

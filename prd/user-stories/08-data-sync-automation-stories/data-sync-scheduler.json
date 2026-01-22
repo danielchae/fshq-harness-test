@@ -1,0 +1,122 @@
+{
+  "subcomponentId": "data-sync-scheduler",
+  "componentId": "data-sync-automation",
+  "tracesTo": [
+    "SOW: Edge Cases - NFL stat corrections",
+    "UserFlow: Weekly Commissioner Desk → Optional Content Creation & Publishing to Feed"
+  ],
+  "stories": [
+    {
+      "id": "DSS-001",
+      "title": "Configure Sync Schedule by Season Phase",
+      "user": "System",
+      "goal": "adjust data synchronization frequency based on NFL season state and league activity",
+      "benefit": "FSHQ optimizes API usage and ensures timely updates during active weeks while reducing overhead during off-season",
+      "acceptanceCriteria": [
+        "System syncs every 5 minutes during active game days (Thursday through Monday during NFL season)",
+        "System syncs hourly on Tuesday and Wednesday during regular season",
+        "System syncs daily during off-season or when no active matchups exist",
+        "System increases sync frequency to every 2 minutes during playoff weeks",
+        "System adjusts schedule automatically when NFL season state changes"
+      ]
+    },
+    {
+      "id": "DSS-002",
+      "title": "Execute Scheduled League Data Sync Job",
+      "user": "System",
+      "goal": "poll external fantasy platform APIs on schedule and trigger synchronization workflows",
+      "benefit": "FSHQ maintains current league data without manual intervention",
+      "acceptanceCriteria": [
+        "System executes sync job based on configured schedule for each connected league",
+        "System queues sync requests to prevent concurrent syncs for same league",
+        "System logs sync job start time, duration, and completion status",
+        "System handles sync job failures with exponential backoff retry logic",
+        "System prevents overlapping syncs by checking lock status before starting new job"
+      ]
+    },
+    {
+      "id": "DSS-003",
+      "title": "Perform Differential Sync for League Updates",
+      "user": "System",
+      "goal": "identify and synchronize only changed data since last successful sync",
+      "benefit": "FSHQ reduces API calls and database writes by avoiding redundant data processing",
+      "acceptanceCriteria": [
+        "System tracks last sync timestamp for each league and data type",
+        "System compares fetched data against stored data using version timestamps or checksums",
+        "System updates only entities that have changed since last sync",
+        "System processes new transactions, matchup scores, and roster changes incrementally",
+        "System marks sync as successful only after all differential updates complete"
+      ]
+    },
+    {
+      "id": "DSS-004",
+      "title": "Detect NFL Stat Corrections Post-Matchup",
+      "user": "System",
+      "goal": "identify when matchup scores change due to NFL stat corrections after initial results posted",
+      "benefit": "FSHQ can trigger re-grading of predictions and pick'ems when official scores change",
+      "acceptanceCriteria": [
+        "System compares current matchup scores against previously stored scores for completed weeks",
+        "System detects score changes greater than 0.1 points as potential stat corrections",
+        "System logs stat correction events with old score, new score, and detection timestamp",
+        "System continues monitoring completed matchups for 72 hours after week conclusion",
+        "System flags affected matchups for re-grading and notification generation"
+      ]
+    },
+    {
+      "id": "DSS-005",
+      "title": "Trigger Automated Re-Grading on Stat Correction",
+      "user": "System",
+      "goal": "automatically recalculate pick'ems results and commissioner predictions when scores change",
+      "benefit": "FSHQ maintains accurate standings and predictions without manual intervention",
+      "acceptanceCriteria": [
+        "System identifies all pick'ems entries and predictions affected by stat correction",
+        "System recalculates winners and losers based on corrected scores",
+        "System updates pick'ems leaderboards and user statistics with new results",
+        "System marks affected predictions as re-graded with correction timestamp",
+        "System generates notification moments for stat corrections that change outcomes"
+      ]
+    },
+    {
+      "id": "DSS-006",
+      "title": "Track and Display Sync Status per League",
+      "user": "Admin",
+      "goal": "view current synchronization status and health for each connected league",
+      "benefit": "Admins can monitor data freshness and troubleshoot sync issues quickly",
+      "acceptanceCriteria": [
+        "System displays last successful sync timestamp for each league",
+        "System shows sync status (active, idle, error, paused) with visual indicators",
+        "System displays time until next scheduled sync",
+        "System logs and displays recent sync errors with error messages",
+        "System provides manual trigger option for immediate sync if needed"
+      ]
+    },
+    {
+      "id": "DSS-007",
+      "title": "Handle Sync Failures with Retry Logic",
+      "user": "System",
+      "goal": "recover from temporary sync failures without losing data or requiring manual intervention",
+      "benefit": "FSHQ maintains reliability even when external APIs are temporarily unavailable",
+      "acceptanceCriteria": [
+        "System implements exponential backoff retry for failed sync attempts (1min, 2min, 5min, 15min)",
+        "System logs detailed error information for each failed sync attempt",
+        "System sends alert to admins if sync fails after 4 consecutive retry attempts",
+        "System automatically resumes normal sync schedule after successful retry",
+        "System preserves partial sync progress to avoid re-fetching successfully synced data"
+      ]
+    },
+    {
+      "id": "DSS-008",
+      "title": "Prioritize Critical Data in Sync Jobs",
+      "user": "System",
+      "goal": "ensure high-priority data types sync first during scheduled jobs",
+      "benefit": "FSHQ displays critical updates like match scores before lower-priority historical data",
+      "acceptanceCriteria": [
+        "System syncs current week matchup scores with highest priority",
+        "System syncs recent transactions (last 7 days) with high priority",
+        "System syncs roster changes with medium priority",
+        "System syncs historical data and past seasons with low priority",
+        "System completes high-priority syncs before starting low-priority data fetches"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,188 @@
+{
+  "subcomponentId": "playoff-brackets",
+  "componentId": "matchups-pickems-brackets",
+  "tracesTo": [
+    "SOW: Matchups, Playoff Brackets & Pick'ems",
+    "UserFlow: Weekly Member Engagement, Feed Interaction, Pick'ems & History Browsing"
+  ],
+  "stories": [
+    {
+      "id": "PB-001",
+      "title": "View Winners Bracket for Standard Playoff Format",
+      "user": "League Member",
+      "goal": "see the championship bracket with all playoff teams and matchup progression",
+      "benefit": "I can follow the path to the championship and understand playoff structure",
+      "acceptanceCriteria": [
+        "System displays bracket with seeds based on league playoff settings",
+        "Bracket shows all playoff rounds from first round through championship",
+        "Each bracket slot shows team logo, name, and seed number",
+        "Matchup winners advance to next round with visual connection lines",
+        "Completed matchups show final scores and indicate winner"
+      ]
+    },
+    {
+      "id": "PB-002",
+      "title": "View Losers/Toilet Bowl Bracket",
+      "user": "League Member",
+      "goal": "see the consolation bracket for teams eliminated from championship contention",
+      "benefit": "I can track the consolation games and toilet bowl progression for non-playoff or eliminated teams",
+      "acceptanceCriteria": [
+        "System displays separate losers bracket if league settings enable consolation games",
+        "Losers bracket shows teams not in or eliminated from winners bracket",
+        "Bracket structure mirrors league consolation playoff configuration",
+        "System clearly labels bracket as consolation or toilet bowl",
+        "Losers bracket displays alongside or separate from winners bracket based on UI design",
+        "Bracket respects league-specific naming (e.g., Toilet Bowl, Consolation, Sacko)"
+      ]
+    },
+    {
+      "id": "PB-003",
+      "title": "Display Dynamic Bracket Layout Based on League Settings",
+      "user": "League Member",
+      "goal": "see a bracket layout that matches my league's specific playoff configuration",
+      "benefit": "I get an accurate representation regardless of league size, playoff team count, or structure",
+      "acceptanceCriteria": [
+        "System reads league playoff settings from external platform (number of playoff teams, rounds, byes)",
+        "Bracket dynamically generates rounds based on playoff team count (4-team, 6-team, 8-team, etc.)",
+        "System handles first-round byes by showing top seeds advancing automatically to second round",
+        "Bracket adjusts for custom playoff structures if platform supports them",
+        "Layout is responsive and adapts to available screen space without horizontal scrolling on desktop",
+        "System handles edge cases like 3-team playoffs or unconventional bracket structures"
+      ]
+    },
+    {
+      "id": "PB-004",
+      "title": "View Forward-Looking Placeholder Teams",
+      "user": "League Member Viewing Future Rounds",
+      "goal": "see placeholders for teams that will advance from previous rounds",
+      "benefit": "I understand bracket structure even when future matchups are not yet determined",
+      "acceptanceCriteria": [
+        "Undetermined matchups show placeholder text (e.g., 'Winner of [Matchup A] vs [Matchup B]')",
+        "Placeholders reference the specific previous-round matchups by team names or seeds",
+        "Placeholders update to actual teams once previous round matchups are completed",
+        "System maintains placeholder structure for all future rounds at start of playoffs",
+        "Visual styling distinguishes placeholders from confirmed teams (e.g., grayed out, dashed border)"
+      ]
+    },
+    {
+      "id": "PB-005",
+      "title": "Automatic Round Progression and Winner Advancement",
+      "user": "League Member",
+      "goal": "see teams automatically move forward in the bracket as games complete",
+      "benefit": "I have an up-to-date view of playoff progression without manual updates",
+      "acceptanceCriteria": [
+        "System fetches playoff matchup results from external fantasy platform API",
+        "Winners automatically populate next round matchup slots after current round completes",
+        "Bracket updates reflect latest data based on sync schedule (e.g., hourly during playoffs)",
+        "System handles stat corrections by updating bracket if winners change due to late corrections",
+        "Automatic advancement respects league playoff schedule and round timing",
+        "User can manually trigger bracket refresh to get latest results"
+      ]
+    },
+    {
+      "id": "PB-006",
+      "title": "Display Matchup Scores Within Bracket",
+      "user": "League Member",
+      "goal": "see scores for each playoff matchup directly in the bracket view",
+      "benefit": "I can assess competitiveness and outcomes without navigating away from bracket",
+      "acceptanceCriteria": [
+        "Each bracket matchup displays current or final scores next to team names",
+        "In-progress matchups show live scores that update based on sync frequency",
+        "Completed matchups show final scores with decimal precision",
+        "System indicates matchup status (scheduled, live, final) with visual cues",
+        "Scores are displayed clearly without cluttering bracket visual design",
+        "System handles pre-game matchups by showing empty scores or projected scores"
+      ]
+    },
+    {
+      "id": "PB-007",
+      "title": "Indicate Current Playoff Round",
+      "user": "League Member",
+      "goal": "quickly identify which round of the playoffs is currently active",
+      "benefit": "I know where we are in the playoff timeline without confusion",
+      "acceptanceCriteria": [
+        "System highlights or labels the current active round in the bracket",
+        "Current round indicator updates automatically as playoffs progress",
+        "Visual styling emphasizes current round (e.g., bolder text, highlight color, border)",
+        "System shows round names/labels (e.g., Quarterfinals, Semifinals, Championship)",
+        "Past rounds are visually de-emphasized but remain visible for context",
+        "Future rounds are shown with placeholder styling"
+      ]
+    },
+    {
+      "id": "PB-008",
+      "title": "Navigate Between Playoff Seasons",
+      "user": "League Member",
+      "goal": "view playoff brackets from previous seasons to review historical outcomes",
+      "benefit": "I can compare playoff results across years and see dynasty continuity",
+      "acceptanceCriteria": [
+        "Season selector dropdown is available on bracket page",
+        "User can select past seasons to load historical playoff brackets",
+        "Historical brackets show completed results with final scores and champions",
+        "System loads brackets for all available seasons with playoff data",
+        "Current season is selected by default when page loads",
+        "Dynasty leagues show all historical seasons, redraft leagues show independent season brackets"
+      ]
+    },
+    {
+      "id": "PB-009",
+      "title": "Display Playoff Seeding and Team Records",
+      "user": "League Member",
+      "goal": "see playoff seed numbers and regular season records for context",
+      "benefit": "I understand how teams earned their playoff positions and bracket placement",
+      "acceptanceCriteria": [
+        "Each team in bracket displays their playoff seed number (e.g., #1, #2)",
+        "System shows regular season record alongside team name (e.g., 10-4)",
+        "Seeding determines bracket matchup positions according to league rules",
+        "System highlights division winners or special seeding if applicable",
+        "Records and seeds are sourced from external platform league data",
+        "Visual design integrates seeding and records without cluttering bracket"
+      ]
+    },
+    {
+      "id": "PB-010",
+      "title": "View Championship and Third Place Matchups",
+      "user": "League Member",
+      "goal": "see the championship game and third-place game as distinct final matchups",
+      "benefit": "I can track both the ultimate winner and third-place finisher clearly",
+      "acceptanceCriteria": [
+        "Championship matchup is prominently displayed at the top or end of bracket",
+        "Third-place game is shown separately if league settings enable it",
+        "System labels championship and third-place games clearly",
+        "Winner of championship is visually celebrated or highlighted (e.g., trophy icon, special styling)",
+        "System handles leagues without third-place games by omitting that matchup",
+        "Final standings are implied by bracket outcomes (1st, 2nd, 3rd place visible)"
+      ]
+    },
+    {
+      "id": "PB-011",
+      "title": "Responsive Mobile Bracket View",
+      "user": "Mobile User",
+      "goal": "view and navigate the playoff bracket on my mobile device",
+      "benefit": "I have a usable bracket experience on smaller screens without losing information",
+      "acceptanceCriteria": [
+        "Bracket layout adapts to mobile viewport with vertical or collapsible structure",
+        "User can tap to expand/collapse rounds or sections to manage screen space",
+        "Team names, seeds, and scores remain legible on small screens",
+        "Connection lines between matchups are simplified or adjusted for mobile layout",
+        "User can scroll or swipe to navigate through rounds if horizontal space is limited",
+        "Bracket maintains visual hierarchy and clarity on mobile devices"
+      ]
+    },
+    {
+      "id": "PB-012",
+      "title": "Display First-Round Byes for Top Seeds",
+      "user": "League Member",
+      "goal": "see that top-seeded teams receive first-round byes and automatically advance",
+      "benefit": "I understand the advantage of higher seeding and bracket structure",
+      "acceptanceCriteria": [
+        "System displays bye indicators for top seeds in first round (e.g., 'BYE' label)",
+        "Top seeds with byes appear directly in second round matchup slots",
+        "Bracket visually connects bye teams to their second-round opponents",
+        "System respects league playoff settings for how many teams receive byes (typically 1 or 2)",
+        "Bye teams are clearly distinguished from teams playing in first round",
+        "Bracket structure adjusts round labels to account for bye week"
+      ]
+    }
+  ]
+}

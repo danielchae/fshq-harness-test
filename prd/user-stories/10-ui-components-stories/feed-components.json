@@ -1,0 +1,190 @@
+{
+  "subcomponentId": "feed-components",
+  "componentId": "ui-components",
+  "tracesTo": [
+    "SOW: Newsfeed & Moments",
+    "SOW: User Interactions - Content Consumption"
+  ],
+  "stories": [
+    {
+      "id": "FED-001",
+      "title": "Implement Base Feed Item Card Component",
+      "user": "Frontend Developer",
+      "goal": "create a reusable feed item card component that displays all moment types consistently",
+      "benefit": "all feed content has uniform structure, spacing, and visual hierarchy",
+      "acceptanceCriteria": [
+        "Card component includes header with user/author info, timestamp, and action menu",
+        "Card supports flexible content area for different moment types (text, images, structured data)",
+        "Card includes footer with engagement metrics (comments count, reactions count)",
+        "Card uses Shadcn UI Card component with consistent padding and borders",
+        "Card adapts to mobile, tablet, and desktop viewports with responsive design",
+        "Card includes hover and focus states for interactive elements"
+      ]
+    },
+    {
+      "id": "FED-002",
+      "title": "Build Trade Moment Rendering Component",
+      "user": "League Member",
+      "goal": "see trade moments displayed with clear team/player information and trade details",
+      "benefit": "I can quickly understand who was involved in the trade and what was exchanged",
+      "acceptanceCriteria": [
+        "Trade moment shows team logos and names for both sides of trade",
+        "Trade moment displays players and picks exchanged in structured format",
+        "Trade moment includes timestamp showing when trade was processed",
+        "Trade moment links to transaction detail view when clicked",
+        "Trade moment uses icons or visual indicators to differentiate from other moment types",
+        "Trade moment supports multi-team trades with appropriate layout"
+      ]
+    },
+    {
+      "id": "FED-003",
+      "title": "Create Match Result Moment Component",
+      "user": "League Member",
+      "goal": "see weekly match results displayed with scores and team matchup information",
+      "benefit": "I can quickly review game outcomes without navigating to matchups page",
+      "acceptanceCriteria": [
+        "Match result shows team names, logos, and final scores",
+        "Match result highlights winning team with visual emphasis",
+        "Match result includes week number and season context",
+        "Match result supports playoff game indicators and bracket context",
+        "Match result links to detailed matchup view when clicked",
+        "Match result displays properly for ties or unfinished games"
+      ]
+    },
+    {
+      "id": "FED-004",
+      "title": "Design User-Generated Post Moment Component",
+      "user": "League Member",
+      "goal": "see user posts displayed with author info, content, and optional media",
+      "benefit": "I can read league member commentary and engage with community content",
+      "acceptanceCriteria": [
+        "Post moment displays author name, avatar, and role badge (Manager/Fan)",
+        "Post moment renders text content with proper line breaks and formatting",
+        "Post moment supports links with preview cards (future: media embeds)",
+        "Post moment includes edit/delete controls for post author",
+        "Post moment shows 'edited' indicator if content was modified",
+        "Post moment truncates long content with 'read more' expansion"
+      ]
+    },
+    {
+      "id": "FED-005",
+      "title": "Build Power Rankings Moment Component",
+      "user": "League Member",
+      "goal": "see power rankings published moments with condensed rankings preview",
+      "benefit": "I can see latest rankings directly in feed and access full rankings page",
+      "acceptanceCriteria": [
+        "Rankings moment displays week number and season context",
+        "Rankings moment shows condensed preview of top 3-5 teams with ranks",
+        "Rankings moment includes commissioner commentary preview if available",
+        "Rankings moment links to full power rankings page when clicked",
+        "Rankings moment uses distinct visual styling to stand out in feed",
+        "Rankings moment shows timestamp of when rankings were published"
+      ]
+    },
+    {
+      "id": "FED-006",
+      "title": "Create Matchup of the Week Moment Component",
+      "user": "League Member",
+      "goal": "see featured matchup moments with hype text and commissioner predictions",
+      "benefit": "I can see which game to watch and the commissioner's prediction",
+      "acceptanceCriteria": [
+        "Matchup moment displays both teams with logos and current records",
+        "Matchup moment shows commissioner's hype text and prediction",
+        "Matchup moment includes week number and featured matchup indicator",
+        "Matchup moment links to matchups page with featured game highlighted",
+        "Matchup moment updates to show actual result after game completes",
+        "Matchup moment shows prediction accuracy badge if graded"
+      ]
+    },
+    {
+      "id": "FED-007",
+      "title": "Implement Comment Thread Component",
+      "user": "League Member",
+      "goal": "read and post comments on feed items in a threaded conversation",
+      "benefit": "I can engage in discussions about moments and see what others are saying",
+      "acceptanceCriteria": [
+        "Comment thread displays below moment content with collapsible section",
+        "Comments show author name, avatar, role badge, and timestamp",
+        "Comment input field appears when user clicks 'Add comment' action",
+        "Comments display in chronological order with newest first or last",
+        "Comments support edit and delete actions for comment author",
+        "Comment thread shows count of total comments and loads incrementally if many"
+      ]
+    },
+    {
+      "id": "FED-008",
+      "title": "Build Reaction Controls Component",
+      "user": "League Member",
+      "goal": "react to feed moments with emoji reactions and see others' reactions",
+      "benefit": "I can quickly express sentiment without writing comments",
+      "acceptanceCriteria": [
+        "Reaction bar displays common emoji options (thumbs up, laugh, fire, etc.)",
+        "Reactions show count for each emoji type used on moment",
+        "User can add or remove their reaction by clicking emoji",
+        "User's selected reactions are visually highlighted",
+        "Reaction picker expands to show full emoji palette on demand",
+        "Reactions update in real-time or near-real-time for other users"
+      ]
+    },
+    {
+      "id": "FED-009",
+      "title": "Create Infinite Scroll Feed Loading",
+      "user": "League Member",
+      "goal": "continuously scroll through feed content without pagination controls",
+      "benefit": "I can browse feed effortlessly and discover more content naturally",
+      "acceptanceCriteria": [
+        "Feed automatically loads next batch of moments when user scrolls near bottom",
+        "Loading indicator appears while fetching additional moments",
+        "Feed maintains scroll position when new moments are loaded",
+        "Feed handles end of content gracefully with 'caught up' message",
+        "Feed loads initial batch quickly (10-20 moments) for fast page render",
+        "Feed supports pull-to-refresh on mobile devices to get latest content"
+      ]
+    },
+    {
+      "id": "FED-010",
+      "title": "Build Feed Item Action Menu Component",
+      "user": "League Member",
+      "goal": "access contextual actions for feed moments via dropdown menu",
+      "benefit": "I can pin content, report issues, or access moment-specific options",
+      "acceptanceCriteria": [
+        "Action menu trigger appears in top-right corner of feed item cards",
+        "Action menu includes options: Share, Report, Pin (admin only), Hide, Delete (author only)",
+        "Action menu adapts options based on user role and moment ownership",
+        "Action menu uses Shadcn UI DropdownMenu component for consistency",
+        "Action menu closes after selection or when clicking outside",
+        "Action menu is accessible via keyboard navigation"
+      ]
+    },
+    {
+      "id": "FED-011",
+      "title": "Design Feed Loading Skeleton States",
+      "user": "User Waiting for Feed to Load",
+      "goal": "see appropriate loading placeholders while feed content loads",
+      "benefit": "I understand the page is loading and anticipate content structure",
+      "acceptanceCriteria": [
+        "Feed displays 5-10 skeleton cards during initial load",
+        "Skeleton cards match feed item card dimensions and structure",
+        "Skeleton uses animated shimmer effect for visual feedback",
+        "Skeleton prevents layout shift when real content replaces placeholders",
+        "Skeleton respects responsive design for different viewport sizes",
+        "Skeleton loading state is accessible with appropriate ARIA labels"
+      ]
+    },
+    {
+      "id": "FED-012",
+      "title": "Implement Feed Empty State Component",
+      "user": "League Member in New League",
+      "goal": "see helpful message when feed has no content yet",
+      "benefit": "I understand why the feed is empty and what actions I can take",
+      "acceptanceCriteria": [
+        "Empty state displays centered message explaining no moments exist yet",
+        "Empty state includes illustration or icon for visual interest",
+        "Empty state provides call-to-action to create first post or connect league",
+        "Empty state differentiates between 'no content yet' and 'caught up' scenarios",
+        "Empty state adapts messaging based on user role (admin vs member)",
+        "Empty state maintains consistent styling with application theme"
+      ]
+    }
+  ]
+}

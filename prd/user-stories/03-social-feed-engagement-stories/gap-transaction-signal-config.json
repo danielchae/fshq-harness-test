@@ -1,0 +1,101 @@
+{
+  "subcomponentId": "gap-transaction-signal-config",
+  "componentId": "social-feed-engagement",
+  "tracesTo": [
+    "SOW: Transactions Page",
+    "SOW: Newsfeed & Moments",
+    "Gap Analysis: Priority 2 - Quality Enhancements"
+  ],
+  "stories": [
+    {
+      "id": "TSC-001",
+      "title": "Configure Transaction Signal Thresholds for Feed Promotion",
+      "user": "League Admin",
+      "goal": "set thresholds for when transactions automatically get promoted to the social feed as moments",
+      "benefit": "I can control which transactions are significant enough to warrant feed visibility and avoid cluttering the feed with minor moves",
+      "acceptanceCriteria": [
+        "Admin can access transaction signal configuration from league admin dashboard",
+        "Admin can set threshold for transaction impact score that triggers auto-promotion to feed",
+        "Admin can configure separate thresholds for different transaction types: trades, adds, drops, waivers",
+        "System provides slider or numeric input for threshold values with clear impact labels (e.g., 'Low', 'Medium', 'High', 'Major')",
+        "System shows preview of recent transactions that would/wouldn't meet current threshold settings",
+        "Changes to thresholds apply to future transactions immediately but don't affect existing moments"
+      ]
+    },
+    {
+      "id": "TSC-002",
+      "title": "Define Custom Transaction Significance Rules",
+      "user": "League Admin",
+      "goal": "create custom rules for what makes a transaction significant enough for feed promotion",
+      "benefit": "I can tailor transaction visibility to my league's specific dynamics and player values",
+      "acceptanceCriteria": [
+        "Admin can enable/disable auto-promotion for specific transaction types globally",
+        "Admin can define player-specific rules (e.g., transactions involving top 10 players always promote)",
+        "Admin can set roster position rules (e.g., QB trades always promote, kicker drops never promote)",
+        "Admin can configure trade magnitude rules (e.g., 2-for-1 trades, trades involving draft picks)",
+        "System validates rules and shows warning if rules are too permissive or restrictive",
+        "Admin can test rules against historical transactions to see impact before applying"
+      ]
+    },
+    {
+      "id": "TSC-003",
+      "title": "View Transaction Signal Analytics",
+      "user": "League Admin",
+      "goal": "analyze which transactions are being promoted to feed and engagement patterns",
+      "benefit": "I can understand transaction significance patterns and refine my signal configuration for optimal feed quality",
+      "acceptanceCriteria": [
+        "Admin can access transaction signal dashboard showing promotion statistics",
+        "Dashboard displays: total transactions, auto-promoted transactions, promotion rate by type",
+        "Dashboard shows engagement metrics for promoted transactions (reactions, comments, views)",
+        "Admin can view list of promoted vs non-promoted transactions with their calculated significance scores",
+        "Dashboard provides recommendations for threshold adjustments based on engagement data",
+        "Admin can export transaction signal data for external analysis"
+      ]
+    },
+    {
+      "id": "TSC-004",
+      "title": "Override Auto-Promotion Decisions Manually",
+      "user": "League Admin",
+      "goal": "manually promote or demote transactions that were incorrectly handled by auto-promotion rules",
+      "benefit": "I can correct edge cases where significance scoring doesn't match actual league impact",
+      "acceptanceCriteria": [
+        "Admin can view all transactions with their auto-promotion status",
+        "Admin can manually promote transactions that didn't meet threshold to create moments",
+        "Admin can demote/hide moments that were auto-promoted but aren't actually significant",
+        "System records manual overrides and uses them to improve auto-promotion algorithm",
+        "Manual promotions create moments with admin designation indicating manual curation",
+        "Admin can bulk promote/demote transactions during specific time periods (e.g., playoff trades)"
+      ]
+    },
+    {
+      "id": "TSC-005",
+      "title": "Set Time-Based Transaction Signal Adjustments",
+      "user": "League Admin",
+      "goal": "adjust transaction significance thresholds based on season phase",
+      "benefit": "I can automatically emphasize transactions during critical periods like trade deadlines and playoffs",
+      "acceptanceCriteria": [
+        "Admin can define season phase periods (pre-season, regular season, trade deadline, playoffs)",
+        "Admin can set different transaction thresholds for each season phase",
+        "System automatically switches threshold settings based on current season phase",
+        "Admin can preview how current transactions would be handled in different season phases",
+        "System provides preset threshold profiles for common season phase strategies",
+        "Admin can manually override automatic phase-based adjustments if needed"
+      ]
+    },
+    {
+      "id": "TSC-006",
+      "title": "Configure Transaction Signal Notifications",
+      "user": "League Admin",
+      "goal": "receive notifications when significant transactions occur based on signal thresholds",
+      "benefit": "I can stay informed about major league moves without monitoring the feed constantly",
+      "acceptanceCriteria": [
+        "Admin can enable/disable transaction signal notifications in settings",
+        "Admin can set notification threshold separate from feed promotion threshold",
+        "Admin receives immediate notification when transaction exceeds notification threshold",
+        "Notifications include transaction details and calculated significance score",
+        "Admin can choose notification delivery method (in-app, email, SMS)",
+        "System batches notifications during high-volume periods to avoid notification spam"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,975 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ============================================================================
+// AUTH MODELS (Required for Auth.js)
+// ============================================================================
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  emailVerified DateTime?
+  password      String?   @db.VarChar(255)
+  name          String?   @db.VarChar(255)
+  username      String?   @unique @db.VarChar(50)
+  image         String?   @db.VarChar(2048)
+  avatarUrl     String?   @db.VarChar(2048)
+  preferences   Json?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Auth.js relations
+  accounts Account[]
+  sessions Session[]
+
+  // Application relations (to be added as tables are created)
+  createdLeagues      League[]            // Leagues created by this user
+  memberships         LeagueMembership[]  // League memberships (task-04)
+  approvedMemberships LeagueMembership[]  @relation("MembershipApprover") // Memberships this user approved
+  moments             Moment[]            @relation("MomentAuthor") // Moments created by this user (task-07)
+  comments            Comment[]           // Comments authored by this user (task-08)
+  reactions           Reaction[]          // Reactions by this user (task-08)
+  pickemEntries       PickemEntry[]       // Pick'ems entries by this user (task-11)
+  weeklyStats         WeeklyStats[]       @relation("UserWeeklyStats")    // Weekly pick'ems stats (task-12)
+  seasonStats         SeasonStats[]       @relation("UserSeasonStats")    // Season pick'ems stats (task-12)
+  allTimeStats        AllTimeStats[]      @relation("UserAllTimeStats")   // All-time pick'ems stats (task-12)
+
+  @@index([email])
+  @@index([username])
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ============================================================================
+// ADD YOUR APPLICATION MODELS BELOW
+// ============================================================================
+
+// ============================================================================
+// ENUMS
+// ============================================================================
+
+enum Platform {
+  sleeper
+  espn
+  yahoo
+}
+
+enum Visibility {
+  public
+  private
+}
+
+enum JoinRule {
+  auto_join
+  approval_required
+}
+
+enum MembershipRole {
+  commissioner
+  admin
+  manager
+  fan
+}
+
+enum MembershipStatus {
+  pending
+  approved
+  rejected
+}
+
+// ============================================================================
+// MOMENT TYPE ENUM (task-07)
+// ============================================================================
+
+enum MomentType {
+  post
+  trade
+  rankings
+  prediction
+  matchResult
+  transaction
+  pickems
+}
+
+// ============================================================================
+// POWER RANKING STATUS ENUM (task-09)
+// ============================================================================
+
+enum PowerRankingStatus {
+  draft
+  published
+}
+
+// ============================================================================
+// MATCHUP TYPE ENUM (task-10)
+// ============================================================================
+
+enum MatchupType {
+  regular_season
+  playoff
+  toilet_bowl
+}
+
+// ============================================================================
+// MATCHUP PREDICTION STATUS ENUM (task-10)
+// ============================================================================
+
+enum MatchupPredictionStatus {
+  draft
+  published
+}
+
+// ============================================================================
+// LEAGUES (task-02)
+// ============================================================================
+
+model League {
+  id                String     @id @default(cuid())
+  slug              String     @unique @db.VarChar(50)
+  name              String     @db.VarChar(255)
+  description       String?    @db.Text
+  platform          Platform   @default(sleeper)
+  platformLeagueId  String?    @db.VarChar(255) // External platform league ID (e.g., Sleeper league ID)
+  teamCount         Int        @default(0)
+  season            Int
+  scoringFormat     String?    @db.VarChar(50)
+  playoffStructure  String?    @db.VarChar(50)
+  isDynasty         Boolean    @default(false)
+  avatarUrl         String?    @db.VarChar(2048)
+  visibility        Visibility @default(private)
+  joinRule          JoinRule   @default(approval_required)
+  creatorId         String?
+
+  // Sync tracking fields (task-50)
+  lastSyncedAt      DateTime?  // Last time data was synced from platform
+  lastSyncChecksum  String?    @db.VarChar(64) // Checksum for differential sync
+
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+
+  // Auth.js relation - league creator
+  creator User? @relation(fields: [creatorId], references: [id], onDelete: SetNull)
+
+  // Application relations (to be added as tables are created)
+  memberships   LeagueMembership[] // task-04
+  teams         Team[]             // task-03
+  settings      LeagueSettings?    // task-05 - One-to-one relationship with settings
+  moments       Moment[]           // task-07 - Moments in this league
+  powerRankings PowerRanking[]     // task-09 - Weekly power rankings
+  matchups      Matchup[]          // task-10 - Weekly matchups
+  pickemEntries PickemEntry[]      // task-11 - Pick'ems entries in this league
+  weeklyStats   WeeklyStats[]      @relation("LeagueWeeklyStats")  // task-12 - Weekly pick'ems stats
+  seasonStats   SeasonStats[]      @relation("LeagueSeasonStats")  // task-12 - Season pick'ems stats
+  allTimeStats  AllTimeStats[]     @relation("LeagueAllTimeStats") // task-12 - All-time pick'ems stats
+  transactions       Transaction[]       @relation("LeagueTransactions")  // task-13 - League transactions
+  seasonHistories    SeasonHistory[]     @relation("LeagueSeasonHistory")  // task-14 - Historical seasons
+  engagementMetrics  EngagementMetrics[] @relation("LeagueEngagementMetrics")  // task-14 - Weekly engagement
+
+  @@unique([platform, platformLeagueId], name: "platform_league_unique")
+  @@index([slug])
+  @@index([creatorId])
+  @@index([platformLeagueId])
+}
+
+// ============================================================================
+// TEAMS (task-03)
+// ============================================================================
+
+model Team {
+  id                   String   @id @default(cuid())
+  leagueId             String
+  name                 String   @db.VarChar(255)
+  ownerUsername        String?  @db.VarChar(100) // Platform username of team owner
+  sleeperUsername      String?  @db.VarChar(100) // Sleeper platform username for validation
+  managerId            String?  // Reference to user who manages this team
+  externalRosterId     String?  @db.VarChar(255) // External platform roster ID for sync
+  platformTeamId       String?  @db.VarChar(255) // Platform-specific team identifier (task-50)
+  avatarUrl            String?  @db.VarChar(2048)
+
+  // Record fields (wins, losses, ties stored as individual fields for query efficiency)
+  wins                 Int      @default(0)
+  losses               Int      @default(0)
+  ties                 Int      @default(0)
+
+  // Additional stats from PRD
+  pointsScored         Decimal? @db.Decimal(10, 2) // Total points scored
+  currentSeason        Int?     // Current season year
+
+  // Dynasty league support
+  stableFantasyUserId  String?  @db.VarChar(255) // Stable ID for dynasty continuity across seasons
+
+  // Claiming status
+  isClaimed            Boolean  @default(false)
+  claimedBy            String?  // User ID who claimed this team
+  claimedAt            DateTime?
+
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  // Relations
+  league               League   @relation(fields: [leagueId], references: [id], onDelete: Cascade)
+
+  // Future relations (to be added as tables are created)
+  memberships            LeagueMembership[]    // task-04
+  powerRankingEntries    PowerRankingEntry[]   // task-09 - Power ranking entries for this team
+
+  // Matchup relations (task-10)
+  homeMatchups           Matchup[]             @relation("HomeTeamMatchups")    // Matchups where this team is home
+  awayMatchups           Matchup[]             @relation("AwayTeamMatchups")    // Matchups where this team is away
+  wonMatchups            Matchup[]             @relation("WinnerMatchups")      // Matchups won by this team
+  predictedWinMatchups   MatchupPrediction[]   @relation("PredictedWinnerMatchups")  // Predictions where this team was picked to win
+
+  // Pick'ems relations (task-11)
+  pickemPredictions      PickemEntry[]         @relation("PickemPredictedWinner")  // Pick'ems where this team was picked to win
+
+  // Transaction relations (task-13)
+  transactions           Transaction[]         @relation("TeamTransactions")       // Transactions involving this team
+
+  @@unique([leagueId, externalRosterId], name: "league_roster_unique")
+  @@index([leagueId])
+  @@index([externalRosterId])
+  @@index([managerId])
+  @@index([claimedBy])
+}
+
+// ============================================================================
+// LEAGUE MEMBERSHIPS (task-04)
+// ============================================================================
+
+model LeagueMembership {
+  id                String           @id @default(cuid())
+  userId            String
+  leagueId          String
+  role              MembershipRole   @default(fan)
+  status            MembershipStatus @default(pending)
+  teamId            String?          // Optional team assignment for manager role
+  approvedById      String?          // User who approved this membership
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+
+  // Relations
+  user              User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  league            League           @relation(fields: [leagueId], references: [id], onDelete: Cascade)
+  team              Team?            @relation(fields: [teamId], references: [id], onDelete: SetNull)
+  approvedBy        User?            @relation("MembershipApprover", fields: [approvedById], references: [id], onDelete: SetNull)
+
+  // Compound unique constraint: one membership per user per league
+  @@unique([userId, leagueId], name: "user_league_unique")
+
+  // Indexes for efficient queries
+  @@index([userId])
+  @@index([leagueId])
+  @@index([userId, leagueId])       // Access check queries (task-17)
+  @@index([leagueId, status])       // For approval queue queries
+  @@index([leagueId, role])         // For role-based queries
+  @@index([leagueId, userId, role]) // Combined access and role check (task-17)
+}
+
+// ============================================================================
+// LEAGUE SETTINGS (task-05)
+// ============================================================================
+
+model LeagueSettings {
+  id                     String   @id @default(cuid())
+  leagueId               String   @unique  // One-to-one relationship with League
+
+  // Feature toggles (from acceptance criteria and backend tests)
+  pickemsEnabled         Boolean  @default(true)
+  powerRankingsEnabled   Boolean  @default(true)
+  bracketEnabled         Boolean  @default(true)
+  playoffBracketEnabled  Boolean  @default(true)  // Alias for backend tests compatibility
+  momentsEnabled         Boolean  @default(true)  // Enable moments/posts feature
+  transactionsEnabled    Boolean  @default(true)  // Enable transactions feed feature
+
+  // Auto-moment generation settings (task-53)
+  autoMomentsEnabled     Boolean  @default(true)  // Enable automatic moment generation
+  blowoutThreshold       Int      @default(50)    // Point margin to consider a blowout (e.g., 50+ points)
+  closeGameThreshold     Int      @default(1)     // Point margin to consider a close game (e.g., <1 point)
+
+  // Fan access settings (from frontend type contract)
+  fanAccessEnabled       Boolean  @default(true)
+  fanLimit               Int?     // null means unlimited
+  currentFanCount        Int      @default(0)
+
+  // Description for league (from frontend type contract)
+  description            String?  @db.Text
+
+  // Public content visibility settings (stored as JSON for flexibility)
+  // Controls what non-members can see for public leagues
+  publicContent          Json     @default("{\"rankings\": true, \"matchups\": true, \"brackets\": true, \"transactions\": false, \"history\": true}")
+
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+
+  // Relation to League
+  league                 League   @relation(fields: [leagueId], references: [id], onDelete: Cascade)
+
+  @@index([leagueId])
+}
+
+// ============================================================================
+// URL SLUGS (task-06)
+// ============================================================================
+
+model Slug {
+  id           String   @id @default(cuid())
+  slug         String   @unique @db.VarChar(50)  // Unique URL-safe identifier
+  entityType   String   @db.VarChar(50)          // Type of entity: 'league', 'team', etc.
+  entityId     String   @db.VarChar(255)         // ID of the referenced entity
+  createdById  String?                            // User who created this slug
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Indexes for efficient lookups
+  @@index([slug])                                 // Fast slug lookups for URL routing
+  @@index([entityType, entityId])                 // Find slug by entity reference
+  @@index([createdById])
+}
+
+// ============================================================================
+// MOMENTS (task-07)
+// ============================================================================
+
+model Moment {
+  id            String      @id @default(cuid())
+  leagueId      String
+  authorId      String
+  type          MomentType  @default(post)
+  content       String?     @db.Text               // Content of the moment (text for posts, JSON for trades)
+
+  // Moderation fields (from acceptance criteria)
+  isPinned      Boolean     @default(false)        // Admin-pinned to top of feed
+  isHidden      Boolean     @default(false)        // Hidden by moderator
+  pinnedById    String?                            // User who pinned this moment
+  hiddenById    String?                            // User who hid this moment
+  hideReason    String?     @db.VarChar(255)       // Reason for hiding (moderation queue)
+  hiddenAt      DateTime?                          // Timestamp when hidden
+
+  // Auto-moment generation fields (task-53)
+  isAutoGenerated     Boolean  @default(false)     // True for system-generated moments
+  momentType          String?  @db.VarChar(50)     // Sub-type: blowout_game, close_game, notable_trade, etc.
+  metadata            Json?                        // Additional metadata for the moment (matchupId, margin, etc.)
+  sourceMatchupId     String?                      // Source matchup ID for deduplication
+  sourceTransactionId String?                      // Source transaction ID for deduplication
+
+  // Activity tracking (from PRD spec)
+  lastActivityAt DateTime   @default(now())        // Last engagement (comment/reaction) timestamp
+
+  // Timestamps (from acceptance criteria)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  // Relations
+  author        User        @relation("MomentAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  league        League      @relation(fields: [leagueId], references: [id], onDelete: Cascade)
+
+  // Relations (task-08)
+  comments  Comment[]   // Comments on this moment
+  reactions Reaction[]  // Reactions to this moment
+
+  // Indexes for efficient queries
+  @@index([leagueId])
+  @@index([authorId])
+  @@index([leagueId, createdAt])                   // Feed queries: recent moments by league
+  @@index([leagueId, lastActivityAt])              // Feed queries: active moments by league
+  @@index([leagueId, isPinned])                    // Find pinned moments for feed
+  @@index([type])                                  // Filter by moment type
+  @@index([leagueId, isAutoGenerated])             // Find auto-generated moments
+  @@index([leagueId, sourceMatchupId, momentType]) // Deduplication for matchup-based moments
+  @@index([leagueId, sourceTransactionId, momentType]) // Deduplication for transaction-based moments
+}
+
+// ============================================================================
+// COMMENTS (task-08)
+// ============================================================================
+
+model Comment {
+  id          String    @id @default(cuid())
+  content     String    @db.Text               // Comment text content
+  authorId    String                           // User who wrote the comment
+  momentId    String                           // Moment this comment belongs to
+  parentId    String?                          // Parent comment ID for threading (null = top-level)
+
+  // Moderation fields
+  isEdited    Boolean   @default(false)        // Whether comment was edited
+  isHidden    Boolean   @default(false)        // Hidden by moderator
+
+  // Timestamps
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // Relations
+  author      User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  moment      Moment    @relation(fields: [momentId], references: [id], onDelete: Cascade)
+  parent      Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: SetNull)
+  replies     Comment[] @relation("CommentReplies")
+
+  // Indexes for efficient queries
+  @@index([momentId])                          // Get all comments for a moment
+  @@index([authorId])                          // Get all comments by a user
+  @@index([momentId, createdAt])               // Comments sorted by time
+  @@index([parentId])                          // Find replies to a comment
+}
+
+// ============================================================================
+// REACTIONS (task-08)
+// ============================================================================
+
+model Reaction {
+  id           String    @id @default(cuid())
+  userId       String                          // User who reacted
+  momentId     String                          // Moment this reaction is on
+  reactionType String    @db.VarChar(50)       // Emoji reaction (e.g., '👍', '🔥', '😂')
+
+  // Timestamps
+  createdAt    DateTime  @default(now())
+
+  // Relations
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  moment       Moment    @relation(fields: [momentId], references: [id], onDelete: Cascade)
+
+  // Compound unique constraint: one reaction per user per moment per type
+  @@unique([userId, momentId, reactionType], name: "user_moment_reaction_unique")
+
+  // Indexes for efficient queries
+  @@index([momentId])                          // Get all reactions for a moment
+  @@index([userId])                            // Get all reactions by a user
+  @@index([momentId, reactionType])            // Count reactions by type for a moment
+}
+
+// ============================================================================
+// POWER RANKINGS (task-09)
+// ============================================================================
+
+model PowerRanking {
+  id                  String              @id @default(cuid())
+  leagueId            String
+  season              Int                 // Season year
+  weekNumber          Int                 // Week number in season
+  status              PowerRankingStatus  @default(draft)
+  publishedByUserId   String?             // User who published the rankings
+  isSkipped           Boolean             @default(false)  // Week skipped by commissioner
+  publishedAt         DateTime?           // When rankings were published
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+
+  // Relations
+  league              League              @relation(fields: [leagueId], references: [id], onDelete: Cascade)
+
+  // Ranking entries for each team
+  entries             PowerRankingEntry[]
+
+  // Compound unique: one ranking per league per week per season
+  @@unique([leagueId, season, weekNumber], name: "league_season_week_unique")
+
+  // Indexes for efficient queries
+  @@index([leagueId])
+  @@index([leagueId, season])                // Query rankings by season
+  @@index([leagueId, weekNumber])            // Query rankings by week
+  @@index([status])                          // Filter by draft/published
+}
+
+// ============================================================================
+// POWER RANKING ENTRIES (task-09)
+// ============================================================================
+
+model PowerRankingEntry {
+  id              String        @id @default(cuid())
+  powerRankingId  String
+  teamId          String
+  rank            Int           // Team rank (1 = best)
+  previousRank    Int?          // Previous week's rank for movement calculation
+  movement        Int?          // Rank movement (positive = moved up, negative = moved down)
+  commentary      String?       @db.Text  // Commissioner commentary for this team
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  // Relations
+  powerRanking    PowerRanking  @relation(fields: [powerRankingId], references: [id], onDelete: Cascade)
+  team            Team          @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  // Compound unique: each team ranked once per power ranking
+  @@unique([powerRankingId, teamId], name: "power_ranking_team_unique")
+
+  // Additional unique: no duplicate ranks within a power ranking
+  @@unique([powerRankingId, rank], name: "power_ranking_rank_unique")
+
+  // Indexes for efficient queries
+  @@index([powerRankingId])                  // Get all entries for a ranking
+  @@index([teamId])                          // Team-specific trajectory queries
+  @@index([powerRankingId, rank])            // Ordered ranking queries
+}
+
+// ============================================================================
+// MATCHUPS (task-10)
+// ============================================================================
+
+model Matchup {
+  id                  String       @id @default(cuid())
+  leagueId            String
+  season              Int          @default(2025)      // Season year
+  weekNumber          Int          // Week number in season
+  homeTeamId          String       // First team (home team)
+  awayTeamId          String       // Second team (away team)
+
+  // Score fields - actual scores for completed matchups
+  homeTeamScore       Decimal?     @db.Decimal(10, 2)  // Home team actual score
+  awayTeamScore       Decimal?     @db.Decimal(10, 2)  // Away team actual score
+  homeScore           Float?                           // Home team score (alias for backend tests)
+  awayScore           Float?                           // Away team score (alias for backend tests)
+
+  // Projected scores (optional, from platform sync)
+  homeTeamProjected   Decimal?     @db.Decimal(10, 2)  // Home team projected score
+  awayTeamProjected   Decimal?     @db.Decimal(10, 2)  // Away team projected score
+
+  // Matchup status and result
+  winnerId            String?                          // Winning team ID (null if not complete or tie)
+  isComplete          Boolean      @default(false)     // Whether matchup has final scores
+  matchupType         MatchupType  @default(regular_season)  // Type: regular_season, playoff, toilet_bowl
+
+  // Playoff-specific fields (task-43)
+  isPlayoff           Boolean      @default(false)     // Whether this is a playoff matchup
+  playoffRound        Int?                             // Playoff round number (1=quarterfinals, 2=semifinals, 3=championship)
+
+  // External platform sync
+  externalMatchupId   String?      @db.VarChar(255)   // External platform matchup ID for sync
+
+  // Stat correction tracking (task-52)
+  completedAt         DateTime?                        // When matchup was marked complete
+  lastScoreUpdate     DateTime?                        // Last time scores were updated
+  statCorrectionAt    DateTime?                        // When a stat correction was applied
+  previousWinnerId    String?                          // Winner before stat correction (for auditing)
+
+  // Timestamps
+  createdAt           DateTime     @default(now())
+  updatedAt           DateTime     @updatedAt
+
+  // Relations
+  league              League       @relation(fields: [leagueId], references: [id], onDelete: Cascade)
+  homeTeam            Team         @relation("HomeTeamMatchups", fields: [homeTeamId], references: [id], onDelete: Cascade)
+  awayTeam            Team         @relation("AwayTeamMatchups", fields: [awayTeamId], references: [id], onDelete: Cascade)
+  winner              Team?        @relation("WinnerMatchups", fields: [winnerId], references: [id], onDelete: SetNull)
+
+  // Related predictions
+  predictions         MatchupPrediction[]
+
+  // Pick'ems entries (task-11)
+  pickemEntries       PickemEntry[]                    // User pick'ems for this matchup
+
+  // Indexes for efficient queries
+  @@unique([leagueId, season, weekNumber, homeTeamId, awayTeamId], name: "league_week_matchup_unique")
+  @@index([leagueId])
+  @@index([leagueId, season])                          // Query matchups by season
+  @@index([leagueId, season, weekNumber])              // Query matchups by week
+  @@index([leagueId, weekNumber])                      // Week queries without season filter (task-17)
+  @@index([leagueId, isComplete])                      // Filter by completion status (task-17)
+  @@index([leagueId, weekNumber, isComplete])          // Grading queries (task-17)
+  @@index([externalMatchupId])                         // External sync lookups
+  @@index([homeTeamId])                                // Home team queries
+  @@index([awayTeamId])                                // Away team queries
+  @@index([matchupType])                               // Filter by matchup type
+  @@index([leagueId, isPlayoff])                       // Filter playoff matchups (task-43)
+  @@index([leagueId, isPlayoff, playoffRound])         // Playoff bracket queries (task-43)
+}
+
+// ============================================================================
+// MATCHUP PREDICTIONS (task-10) - Commissioner predictions for matchups
+// ============================================================================
+
+model MatchupPrediction {
+  id                       String                   @id @default(cuid())
+  matchupId                String
+  leagueId                 String                   // Denormalized for efficient queries
+  season                   Int                      // Season year (denormalized)
+  weekNumber               Int                      // Week number (denormalized)
+
+  // Prediction fields
+  predictedWinnerId        String                   // Team predicted to win
+  hypeText                 String?                  @db.Text  // Commissioner hype text / commentary
+
+  // Featured matchup support
+  isFeatured               Boolean                  @default(false)  // "Matchup of the Week" flag
+
+  // Status and publication
+  status                   MatchupPredictionStatus  @default(draft)
+  publishedAt              DateTime?                // When prediction was published
+  publishedByUserId        String?                  // User who published
+
+  // Grading fields (populated after matchup completes)
+  isCorrect                Boolean?                 // Whether prediction was correct
+  gradedAt                 DateTime?                // When prediction was graded
+
+  // Timestamps
+  createdAt                DateTime                 @default(now())
+  updatedAt                DateTime                 @updatedAt
+
+  // Relations
+  matchup                  Matchup                  @relation(fields: [matchupId], references: [id], onDelete: Cascade)
+  predictedWinner          Team                     @relation("PredictedWinnerMatchups", fields: [predictedWinnerId], references: [id], onDelete: Cascade)
+
+  // Unique constraint: one prediction per matchup per league (commissioner can only have one prediction per matchup)
+  @@unique([matchupId], name: "matchup_prediction_unique")
+
+  // Indexes for efficient queries
+  @@index([matchupId])
+  @@index([leagueId])
+  @@index([leagueId, weekNumber])                    // Week queries without season filter (task-17)
+  @@index([leagueId, season, weekNumber])            // Week-specific queries
+  @@index([leagueId, status])                        // Filter by draft/published
+  @@index([leagueId, weekNumber, isFeatured])        // Featured matchup per week (task-17)
+  @@index([isFeatured])                              // Featured matchup queries
+}
+
+// ============================================================================
+// PICKEM ENTRIES (task-11) - User pick'ems selections and auto-grading
+// ============================================================================
+
+model PickemEntry {
+  id                  String    @id @default(cuid())
+  userId              String                          // User who made the pick
+  leagueId            String                          // League the pick belongs to (denormalized for efficiency)
+  matchupId           String                          // Matchup being predicted
+  weekNumber          Int                             // Week number (denormalized for efficient queries)
+  season              Int                             // Season year (denormalized)
+
+  // Prediction fields
+  predictedWinnerId   String                          // Team predicted to win
+
+  // Lock status
+  lockedAt            DateTime?                       // When the pick was locked (game started)
+  submittedAt         DateTime   @default(now())      // When the pick was submitted/updated
+
+  // Grading fields (populated after matchup completes)
+  isCorrect           Boolean?                        // Whether the prediction was correct (null = not graded)
+  pointsEarned        Int        @default(0)          // Points earned from this pick (typically 1 if correct, 0 if wrong)
+
+  // Stat correction tracking
+  hasStatCorrection   Boolean    @default(false)      // Whether the result was affected by stat correction
+  previousIsCorrect   Boolean?                        // Previous grading result before stat correction
+  gradedAt            DateTime?                       // When the pick was graded
+  regradedAt          DateTime?                       // When the pick was regraded (after stat correction)
+
+  // Timestamps
+  createdAt           DateTime   @default(now())
+  updatedAt           DateTime   @updatedAt
+
+  // Relations
+  user                User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  league              League     @relation(fields: [leagueId], references: [id], onDelete: Cascade)
+  matchup             Matchup    @relation(fields: [matchupId], references: [id], onDelete: Cascade)
+  predictedWinner     Team       @relation("PickemPredictedWinner", fields: [predictedWinnerId], references: [id], onDelete: Cascade)
+
+  // Compound unique constraint: one pick per user per matchup (from acceptance criteria)
+  @@unique([userId, matchupId], name: "user_matchup_pick_unique")
+
+  // Indexes for efficient queries
+  @@index([userId])                                   // User's picks
+  @@index([matchupId])                                // Picks for grading a matchup
+  @@index([leagueId])                                 // All picks in a league
+  @@index([leagueId, weekNumber])                     // Weekly leaderboard queries
+  @@index([leagueId, season, weekNumber])             // Season-week queries
+  @@index([userId, leagueId])                         // User's picks in a league (task-17)
+  @@index([userId, leagueId, weekNumber])             // User's weekly picks in league
+  @@index([userId, leagueId, season])                 // User's season picks
+  @@index([userId, matchupId])                        // Unique constraint support (task-17)
+  @@index([leagueId, weekNumber, isCorrect])          // Leaderboard with grading filter (task-17)
+  @@index([leagueId, season, isCorrect])              // Season stats queries (task-17)
+  @@index([matchupId, isCorrect])                     // Grading result lookup (task-17)
+  @@index([isCorrect])                                // Filter by grading result
+}
+
+// ============================================================================
+// WEEKLY STATS (task-12) - Aggregated weekly pick'ems performance
+// ============================================================================
+
+model WeeklyStats {
+  id              String    @id @default(cuid())
+  userId          String
+  leagueId        String
+  season          Int       @default(2025)             // Season year
+  weekNumber      Int                                  // Week number in season
+
+  // Performance metrics
+  totalPicks      Int       @default(0)                // Total picks made this week
+  correctPicks    Int       @default(0)                // Number of correct picks
+  accuracy        Float     @default(0)                // Accuracy percentage (0-100)
+
+  // Timestamps
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // Relations
+  user            User      @relation("UserWeeklyStats", fields: [userId], references: [id], onDelete: Cascade)
+  league          League    @relation("LeagueWeeklyStats", fields: [leagueId], references: [id], onDelete: Cascade)
+
+  // Compound unique: one stats record per user per league per week per season
+  @@unique([userId, leagueId, season, weekNumber], name: "user_league_week_stats_unique")
+
+  // Indexes for efficient queries
+  @@index([userId])
+  @@index([leagueId])
+  @@index([leagueId, season, weekNumber])             // Weekly leaderboard queries
+  @@index([leagueId, weekNumber])                     // Week-specific queries
+  @@index([userId, leagueId])                         // User's stats in a league
+}
+
+// ============================================================================
+// SEASON STATS (task-12) - Aggregated season pick'ems performance
+// ============================================================================
+
+model SeasonStats {
+  id              String    @id @default(cuid())
+  userId          String
+  leagueId        String
+  season          Int                                  // Season year
+
+  // Performance metrics
+  totalPicks      Int       @default(0)                // Total picks made this season
+  correctPicks    Int       @default(0)                // Number of correct picks
+  accuracy        Float     @default(0)                // Accuracy percentage (0-100)
+
+  // Streak tracking (from acceptance criteria)
+  currentStreak   Int       @default(0)                // Current consecutive correct picks
+  longestStreak   Int       @default(0)                // Longest streak this season
+
+  // Additional metrics
+  perfectWeeks    Int       @default(0)                // Number of weeks with 100% accuracy
+  bestWeekAccuracy Float?                              // Best single week accuracy
+
+  // Timestamps
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // Relations
+  user            User      @relation("UserSeasonStats", fields: [userId], references: [id], onDelete: Cascade)
+  league          League    @relation("LeagueSeasonStats", fields: [leagueId], references: [id], onDelete: Cascade)
+
+  // Compound unique: one stats record per user per league per season
+  @@unique([userId, leagueId, season], name: "user_league_season_stats_unique")
+
+  // Indexes for efficient queries
+  @@index([userId])
+  @@index([leagueId])
+  @@index([leagueId, season])                         // Season leaderboard queries
+  @@index([leagueId, season, correctPicks])           // Sorted leaderboard queries
+  @@index([userId, leagueId])                         // User's stats in a league
+}
+
+// ============================================================================
+// ALL-TIME STATS (task-12) - Aggregated all-time pick'ems performance
+// ============================================================================
+
+model AllTimeStats {
+  id                  String    @id @default(cuid())
+  userId              String
+  leagueId            String
+
+  // Performance metrics
+  totalPicks          Int       @default(0)            // Total picks across all seasons
+  correctPicks        Int       @default(0)            // Number of correct picks
+  accuracy            Float     @default(0)            // Accuracy percentage (0-100)
+
+  // Streak and history tracking
+  longestStreak       Int       @default(0)            // Longest streak ever
+  seasonsPlayed       Int       @default(0)            // Number of seasons participated
+  bestSeasonAccuracy  Float?                           // Best single season accuracy
+
+  // Additional milestones
+  perfectWeeksTotal   Int       @default(0)            // Total perfect weeks ever
+  championshipWins    Int       @default(0)            // Number of times won pick'ems championship
+
+  // Timestamps
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  // Relations
+  user                User      @relation("UserAllTimeStats", fields: [userId], references: [id], onDelete: Cascade)
+  league              League    @relation("LeagueAllTimeStats", fields: [leagueId], references: [id], onDelete: Cascade)
+
+  // Compound unique: one all-time stats record per user per league
+  @@unique([userId, leagueId], name: "user_league_alltime_stats_unique")
+
+  // Indexes for efficient queries
+  @@index([userId])
+  @@index([leagueId])
+  @@index([leagueId, correctPicks])                   // Sorted all-time leaderboard
+  @@index([userId, leagueId])                         // User's all-time stats
+}
+
+// ============================================================================
+// TRANSACTIONS (task-13)
+// Track all league transactions: trades, adds, drops, waiver pickups
+// Synced from external platform APIs (e.g., Sleeper)
+// ============================================================================
+
+enum TransactionType {
+  trade   // Player traded between teams
+  add     // Player added from free agency
+  drop    // Player dropped to free agency
+  waiver  // Player claimed via waiver wire
+}
+
+model Transaction {
+  id          String          @id @default(cuid())
+  leagueId    String
+  weekNumber  Int             // NFL week when transaction occurred
+  type        TransactionType // Type of transaction
+  teamId      String          // Primary team involved in transaction
+  playerName  String          @db.VarChar(255) // Player name for display
+  timestamp   DateTime        // When the transaction occurred
+
+  // Optional metadata
+  faabAmount  Int?            // FAAB dollars spent (for waiver claims)
+  tradePartnerTeamId String?  // For trades: the other team involved
+  notes       String?         @db.Text // Additional transaction details
+
+  // Auto-moment generation fields (task-53)
+  playerPosition String?       @db.VarChar(10)  // Player position (QB, RB, WR, etc.)
+  isNotable      Boolean       @default(false)  // High-value transaction for auto-moment generation
+
+  // Transaction promotion fields (task-54)
+  impactScore       Float?                       // Calculated impact score (0-10) for promotion eligibility
+  isPromoted        Boolean      @default(false) // Whether this transaction has been promoted to a moment
+  promotedMomentId  String?                      // ID of the moment created from this transaction
+
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  // Relations
+  league      League          @relation("LeagueTransactions", fields: [leagueId], references: [id], onDelete: Cascade)
+  team        Team            @relation("TeamTransactions", fields: [teamId], references: [id], onDelete: Cascade)
+
+  // Indexes for efficient queries
+  @@index([leagueId])                          // All transactions for a league
+  @@index([teamId])                            // All transactions for a team
+  @@index([leagueId, weekNumber])              // Transactions by week in a league
+  @@index([leagueId, type])                    // Filter by transaction type
+  @@index([leagueId, timestamp])               // Order by timestamp (DESC for recent)
+  @@index([timestamp])                         // Global timestamp ordering
+  @@index([leagueId, isNotable])               // Find notable transactions for auto-moments
+  @@index([leagueId, isPromoted, impactScore]) // Find unpromoted high-impact transactions (task-54)
+}
+
+// ============================================================================
+// SEASON HISTORY (task-14)
+// Historical data for past seasons including champions and records
+// ============================================================================
+
+model SeasonHistory {
+  id                   String    @id @default(cuid())
+  leagueId             String
+  year                 Int                             // Season year (e.g., 2024)
+
+  // Championship data (required fields from backend test)
+  champion             String    @db.VarChar(255)     // Champion team/manager name
+  runnerUp             String    @db.VarChar(255)     // Runner-up team/manager name
+  totalMembers         Int                             // Number of teams that season
+
+  // Optional detailed fields (from backend test)
+  championshipScore    String?   @db.VarChar(50)      // Final championship score (e.g., "156.8 - 148.2")
+  thirdPlace           String?   @db.VarChar(255)     // Third place finisher
+  regularSeasonWinner  String?   @db.VarChar(255)     // Regular season winner (top seed)
+  playoffTeams         Int?                            // Number of teams that made playoffs
+  highestWeeklyScore   Float?                          // Highest single week score for all-time records
+
+  // Extended historical data (from PRD spec)
+  seasonSummary        String?   @db.Text             // Narrative summary of the season
+  dynastyContinuityData Json?                          // Dynasty-specific continuity data
+
+  // Timestamps
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  // Relations
+  league               League    @relation("LeagueSeasonHistory", fields: [leagueId], references: [id], onDelete: Cascade)
+
+  // Compound unique: one history record per league per year
+  @@unique([leagueId, year], name: "league_year_history_unique")
+
+  // Indexes for efficient queries
+  @@index([leagueId])
+  @@index([leagueId, year])                          // Query history by year
+  @@index([year])                                    // Global year queries
+}
+
+// ============================================================================
+// ENGAGEMENT METRICS (task-14)
+// Weekly engagement tracking for moments, comments, and reactions
+// ============================================================================
+
+model EngagementMetrics {
+  id               String    @id @default(cuid())
+  leagueId         String
+  weekNumber       Int                              // Week number in season
+
+  // Engagement counters (from backend test)
+  momentsCreated   Int       @default(0)            // Moments created this week
+  commentsCount    Int       @default(0)            // Comments posted this week
+  reactionsCount   Int       @default(0)            // Reactions given this week
+
+  // Additional engagement metrics (for future expansion)
+  uniqueActiveUsers Int?                            // Unique users who engaged
+  peakDailyActivity Int?                            // Peak daily engagement count
+
+  // Timestamps
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  // Relations
+  league           League    @relation("LeagueEngagementMetrics", fields: [leagueId], references: [id], onDelete: Cascade)
+
+  // Compound unique: one metrics record per league per week
+  @@unique([leagueId, weekNumber], name: "league_week_engagement_unique")
+
+  // Indexes for efficient queries
+  @@index([leagueId])
+  @@index([leagueId, weekNumber])                   // Week-specific queries
+  @@index([weekNumber])                             // Cross-league weekly queries
+}
+

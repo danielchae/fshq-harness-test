@@ -1,0 +1,94 @@
+{
+  "subcomponentId": "rankings-display",
+  "componentId": "power-rankings-history",
+  "tracesTo": [
+    "SOW: Power Rankings View & History",
+    "UserFlow: Weekly Member Engagement, Feed Interaction, Pick'ems & History Browsing"
+  ],
+  "stories": [
+    {
+      "id": "RD-001",
+      "title": "View Most Recent Published Power Rankings",
+      "user": "League Member",
+      "goal": "see the latest power rankings when I visit the rankings page",
+      "benefit": "I can quickly check the current team standings without having to navigate through week selectors",
+      "acceptanceCriteria": [
+        "Page defaults to most recent week with published power rankings on initial load",
+        "System displays team rankings in table format with rank numbers (1, 2, 3...)",
+        "Each ranking row shows team name, logo, and commissioner commentary",
+        "If no rankings published for current season, system displays message indicating no rankings available",
+        "Page loads rankings data efficiently without unnecessary API calls"
+      ]
+    },
+    {
+      "id": "RD-002",
+      "title": "Select Season to View Rankings",
+      "user": "League Member",
+      "goal": "choose which season's power rankings I want to view",
+      "benefit": "I can review historical rankings from previous seasons and compare across years",
+      "acceptanceCriteria": [
+        "Season selector dropdown displays all seasons with published power rankings",
+        "Current season is selected by default",
+        "Selecting a different season updates the week selector to show available weeks for that season",
+        "Selecting a season loads the most recent published week for that season",
+        "Dynasty leagues show continuous season history, redraft leagues show independent seasons"
+      ]
+    },
+    {
+      "id": "RD-003",
+      "title": "Navigate Between Weekly Rankings",
+      "user": "League Member",
+      "goal": "browse through different weeks of power rankings within a season",
+      "benefit": "I can see how rankings evolved throughout the season and find specific weeks of interest",
+      "acceptanceCriteria": [
+        "Week selector dropdown shows all weeks with published rankings for selected season",
+        "Only weeks with published rankings are selectable in the dropdown",
+        "Selecting a week loads and displays that week's rankings table",
+        "System indicates current NFL week and most recent published week",
+        "Week selector shows week labels (Week 1, Week 2, etc.) with playoff weeks clearly marked"
+      ]
+    },
+    {
+      "id": "RD-004",
+      "title": "Display Rankings Table with Team Details",
+      "user": "League Member",
+      "goal": "see a clear table showing all team rankings with relevant details",
+      "benefit": "I can easily scan the rankings and understand each team's position and commentary",
+      "acceptanceCriteria": [
+        "Table displays rank number, team logo, team name, and commissioner commentary in columns",
+        "Teams are ordered by rank from 1 (best) to N (worst)",
+        "Commissioner commentary is displayed in full or with expand/collapse for long text",
+        "Team logos render properly with fallback to team initials if logo unavailable",
+        "Table is responsive and adapts to mobile screen sizes"
+      ]
+    },
+    {
+      "id": "RD-005",
+      "title": "Handle Weeks with No Published Rankings",
+      "user": "League Member",
+      "goal": "understand when rankings are not available for a selected week",
+      "benefit": "I know whether rankings haven't been published yet or were skipped by the commissioner",
+      "acceptanceCriteria": [
+        "If commissioner skipped rankings for a week, system displays message indicating rankings not available for that week",
+        "If commissioner hasn't published yet for current week, system displays message indicating rankings pending publication",
+        "System provides clear distinction between unpublished (draft) and skipped rankings",
+        "User can easily navigate to previous or next available week with published rankings",
+        "Message includes expected timeline if rankings are typically published on specific day"
+      ]
+    },
+    {
+      "id": "RD-006",
+      "title": "View Commissioner Commentary for Each Team",
+      "user": "League Member",
+      "goal": "read detailed commentary about why each team is ranked at their position",
+      "benefit": "I understand the reasoning behind rankings and get insights into team performance",
+      "acceptanceCriteria": [
+        "Commentary text is clearly associated with each team's ranking row",
+        "Long commentary is readable without excessive scrolling (with expand/collapse if needed)",
+        "Commentary supports basic formatting (line breaks, emphasis) if provided by commissioner",
+        "If no commentary provided for a team, system displays a placeholder or leaves field empty",
+        "Commentary is searchable within the page for finding specific keywords or references"
+      ]
+    }
+  ]
+}

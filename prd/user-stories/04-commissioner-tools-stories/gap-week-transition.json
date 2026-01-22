@@ -1,0 +1,116 @@
+{
+  "subcomponentId": "gap-week-transition",
+  "componentId": "commissioner-tools",
+  "tracesTo": [
+    "SOW: Commissioner Desk & Weekly Content Publishing",
+    "UserFlow: Weekly Commissioner Desk → Optional Content Creation & Publishing to Feed",
+    "Gap Analysis: Multi-step coordination stories"
+  ],
+  "dependencies": [
+    "commissioner-desk",
+    "power-rankings-creation",
+    "matchup-features",
+    "weekly-publishing"
+  ],
+  "stories": [
+    {
+      "id": "WT-001",
+      "title": "Automatically Advance to Next Week After Publishing",
+      "user": "League Commissioner",
+      "goal": "automatically move to the next week's Commissioner Desk after successfully publishing current week's content",
+      "benefit": "I can immediately start working on next week's content without manual navigation or week selection",
+      "acceptanceCriteria": [
+        "System automatically advances Commissioner Desk to next week (current week + 1) immediately after successful publish operation completes",
+        "Week selector updates to show new week as 'Active' with draft status for all content sections",
+        "System displays success modal confirming publish with 'Continue to Next Week' button and 'View Published Content' alternative",
+        "If user selects 'Continue to Next Week', system navigates to empty Commissioner Desk for next week with week number updated in header",
+        "Previously published week shows 'Published' badge in week selector with green checkmark indicator",
+        "System handles season boundary gracefully: displays 'Season Complete' message when advancing past final playoff week",
+        "Auto-advance respects NFL week schedule: warns if advancing to week that hasn't started yet with countdown timer to week start",
+        "System preserves unsaved draft content for current week in case user needs to republish or make updates",
+        "Week transition creates audit log entry with timestamp, commissioner user, and published week number",
+        "User preference setting allows disabling auto-advance to stay on published week for review"
+      ]
+    },
+    {
+      "id": "WT-002",
+      "title": "Copy Previous Week's Content as Template for New Week",
+      "user": "League Commissioner",
+      "goal": "quickly start new week's content by copying relevant parts from previous week as a starting template",
+      "benefit": "I save time by reusing formatting, team order patterns, and commentary structure from previous weeks",
+      "acceptanceCriteria": [
+        "System provides 'Copy from Previous Week' button at top of Commissioner Desk when starting new week",
+        "Copy operation allows selective copying: Power Rankings only, Matchup Hype Template only, Predictions Pattern only, or All Content",
+        "When copying power rankings, system preserves team order and commentary structure but marks commentary as '[Update needed]' placeholder",
+        "Copied rankings automatically adjust to current week's standings with visual diff showing moved teams since last week",
+        "System preserves matchup hype text template but updates team names and matchup context for current week's matchups",
+        "Prediction copying transfers confidence patterns and commentary style but requires new winner selection",
+        "Copy operation is non-destructive: creates new draft without affecting published content from previous week",
+        "System displays modal showing preview of copied content before confirming copy action",
+        "Copied content includes 'Copied from Week [X]' annotation for tracking content lineage",
+        "User can undo copy operation and start with blank template if copied content isn't useful",
+        "System tracks copy template usage metrics: frequency of copying, which sections most copied, time saved estimates"
+      ]
+    },
+    {
+      "id": "WT-003",
+      "title": "Track Week Status and Publishing History Across Season",
+      "user": "League Commissioner",
+      "goal": "view complete season overview showing which weeks are published, draft, or skipped with quick navigation",
+      "benefit": "I can quickly understand my season progress and navigate to any week to view or edit content",
+      "acceptanceCriteria": [
+        "System provides season calendar view accessible from Commissioner Desk showing all weeks in grid layout",
+        "Each week displays status badge: Published (green), Draft (yellow), Skipped (gray), Upcoming (blue), or Not Started (white)",
+        "Published weeks show publication date, commissioner who published, and quick preview of content with thumbnail",
+        "Calendar view displays mini-statistics for each week: rankings published (Y/N), matchup featured (Y/N), predictions count",
+        "User can click any week to navigate directly to that week's Commissioner Desk for viewing or editing",
+        "Season progress bar shows percentage of weeks completed with target completion rate based on current NFL week",
+        "System highlights current NFL week in calendar with 'Current Week' indicator to maintain context",
+        "Calendar includes search/filter: show only published weeks, show only weeks with specific content types, show weeks needing updates",
+        "Season view displays commissioner activity metrics: total weeks published, average time to publish, consistency score",
+        "System sends reminder notifications for upcoming weeks: 'Week [X] starts in 3 days - time to start your rankings!'",
+        "Export functionality allows downloading season publishing history as CSV for external analysis or record-keeping"
+      ]
+    },
+    {
+      "id": "WT-004",
+      "title": "Handle Week Status Transitions with Validation",
+      "user": "League Commissioner",
+      "goal": "change week status (Draft → Published → Skipped) with appropriate validations and warnings",
+      "benefit": "I can manage my publishing workflow flexibly while preventing invalid state transitions",
+      "acceptanceCriteria": [
+        "System allows marking week as 'Skipped' from draft state when commissioner doesn't want to publish that week",
+        "Skipping week displays confirmation modal explaining impact: no feed moments, no rankings update, no predictions tracked",
+        "System prevents skipping weeks that are already published without first unpublishing with warning message",
+        "Unpublish action removes feed moments, reverts rankings page to previous week, and deletes predictions from database",
+        "System warns before unpublishing if week has graded predictions or if stat corrections have occurred",
+        "Week can be moved from Skipped back to Draft status to resume content creation",
+        "System validates week order: warns if publishing week out of sequence (publishing week 5 before week 4)",
+        "Status transitions create audit trail entries: who changed status, when, from what status to what status",
+        "Bulk status operations allowed for multiple weeks: 'Mark weeks 15-17 as Skipped' for leagues with shortened seasons",
+        "System displays pending transitions: 'Publishing in progress', 'Unpublishing in progress' with progress indicators",
+        "Status change notifications sent to other league commissioners (if multiple commissioners exist) for coordination"
+      ]
+    },
+    {
+      "id": "WT-005",
+      "title": "Manage Commissioner Workflow Across Multiple Devices",
+      "user": "League Commissioner",
+      "goal": "seamlessly continue working on weekly content across desktop and mobile devices",
+      "benefit": "I can start content on desktop and finish on mobile without losing progress or context",
+      "acceptanceCriteria": [
+        "System automatically saves draft content to database every 30 seconds or on input blur",
+        "Draft content syncs across devices in real-time using Supabase Realtime subscriptions",
+        "Mobile app displays 'Draft Updated on Another Device' notification when cross-device changes detected",
+        "User can review changes and choose to keep current device version or accept synced version in conflict scenarios",
+        "System preserves cursor position and scroll location when switching devices (within reasonable timeframe)",
+        "Commissioner Desk mobile interface adapts layout for smaller screens while maintaining all functionality",
+        "Drag-and-drop team ranking is replaced with up/down arrow buttons on mobile for accessibility",
+        "Mobile publish button includes same validation and atomic transaction behavior as desktop",
+        "System tracks device usage patterns: desktop vs mobile creation time, publish device preference, cross-device frequency",
+        "Offline mode allows continuing draft edits on mobile without connection with sync on reconnection",
+        "System displays sync status indicator: 'All changes saved', 'Saving...', 'Offline - changes will sync when connected'"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,291 @@
+{
+  "subcomponentId": "pickems-transactions-schema",
+  "componentId": "data-persistence",
+  "tracesTo": [
+    "SOW: Tech Stack - Supabase (PostgreSQL)",
+    "SOW: Matchups, Playoff Brackets & Pick'ems",
+    "SOW: Transactions & League History"
+  ],
+  "stories": [
+    {
+      "id": "PTS-001",
+      "title": "Design Pick'ems Entries Table Schema",
+      "user": "System",
+      "goal": "define a pickems_entries table that stores individual user picks for weekly matchups",
+      "benefit": "user pick'ems submissions are properly recorded with timestamps and lock enforcement",
+      "acceptanceCriteria": [
+        "Pickems_entries table includes id (UUID, primary key), user_id (foreign key to users), matchup_id (foreign key to matchups), created_at, updated_at",
+        "Table stores predicted_winner_team_id (foreign key to teams) for user's pick",
+        "Schema includes locked_at timestamp to track when pick was finalized before lock time",
+        "Composite unique index on (user_id, matchup_id) ensures one pick per user per matchup",
+        "Foreign key constraints with ON DELETE CASCADE ensure cleanup when user or matchup is deleted"
+      ]
+    },
+    {
+      "id": "PTS-002",
+      "title": "Design Pick'ems Grading Results Table Schema",
+      "user": "System",
+      "goal": "define a pickems_grading table that stores graded results for user picks after stat corrections",
+      "benefit": "pick accuracy is tracked with timestamps reflecting stat-correction-finalized grading",
+      "acceptanceCriteria": [
+        "Pickems_grading table includes id (UUID, primary key), pickems_entry_id (foreign key to pickems_entries, unique)",
+        "Table stores is_correct boolean indicating if predicted winner matches actual matchup outcome",
+        "Schema includes graded_at timestamp reflecting when grading occurred post-stat-corrections",
+        "Table includes stat_correction_applied boolean flag to track if corrections impacted grading",
+        "Foreign key ensures grading records are deleted when parent pick entry is removed"
+      ]
+    },
+    {
+      "id": "PTS-003",
+      "title": "Design Weekly Pick'ems Stats Table Schema",
+      "user": "System",
+      "goal": "define a pickems_weekly_stats table for aggregated user performance per week",
+      "benefit": "weekly stats queries execute efficiently without recalculating correct picks on every page load",
+      "acceptanceCriteria": [
+        "Pickems_weekly_stats table includes id (UUID, primary key), user_id (foreign key to users), league_id (foreign key to leagues), season, week_number",
+        "Table stores correct_picks (integer), total_picks (integer), accuracy_percentage (decimal)",
+        "Schema includes weekly_rank (integer) calculated among all league participants for that week",
+        "Composite unique index on (user_id, league_id, season, week_number) ensures one stat record per user per week",
+        "Table includes graded_at timestamp reflecting when week's grading was finalized"
+      ]
+    },
+    {
+      "id": "PTS-004",
+      "title": "Design Season Pick'ems Stats Table Schema",
+      "user": "System",
+      "goal": "define a pickems_season_stats table for aggregated user performance per season",
+      "benefit": "season-long performance tracking is efficient with pre-calculated cumulative statistics",
+      "acceptanceCriteria": [
+        "Pickems_season_stats table includes id (UUID, primary key), user_id (foreign key to users), league_id (foreign key to leagues), season",
+        "Table stores cumulative correct_picks, total_picks, accuracy_percentage across all weeks",
+        "Schema includes season_rank (integer) based on correct picks with accuracy as tiebreaker",
+        "Table includes win_loss_record (JSON) storing correct-incorrect format (e.g., {wins: 45, losses: 23})",
+        "Composite unique index on (user_id, league_id, season) ensures one stat record per user per season"
+      ]
+    },
+    {
+      "id": "PTS-005",
+      "title": "Design All-Time Pick'ems Stats Table Schema",
+      "user": "System",
+      "goal": "define a pickems_alltime_stats table for cumulative user performance across all seasons",
+      "benefit": "historical legacy tracking and all-time leaderboards are efficiently supported",
+      "acceptanceCriteria": [
+        "Pickems_alltime_stats table includes id (UUID, primary key), user_id (foreign key to users), league_id (foreign key to leagues)",
+        "Table stores lifetime correct_picks, total_picks, overall_accuracy_percentage across all seasons",
+        "Schema includes alltime_rank (integer) based on cumulative correct picks",
+        "Table includes seasons_participated (integer) for tracking user engagement duration",
+        "Unique index on (user_id, league_id) ensures one all-time record per user per league"
+      ]
+    },
+    {
+      "id": "PTS-006",
+      "title": "Design Role-Based Leaderboards Schema",
+      "user": "System",
+      "goal": "support separate Manager and Fan leaderboards through role-based stats filtering",
+      "benefit": "managers and fans can compete fairly within their respective role groups",
+      "acceptanceCriteria": [
+        "Pickems_weekly_stats and pickems_season_stats include role (enum: 'manager', 'fan') derived from user membership",
+        "Queries can filter stats by role for separate Manager and Fan leaderboard generation",
+        "Schema includes role_rank fields: manager_rank and fan_rank calculated separately per role group",
+        "Role assignment updates propagate to stats tables when user role changes in league memberships",
+        "Indexes on (league_id, season, role, correct_picks DESC) optimize leaderboard queries"
+      ]
+    },
+    {
+      "id": "PTS-007",
+      "title": "Design Transactions Table Schema",
+      "user": "System",
+      "goal": "define a transactions table that stores all fantasy league transactions from external platforms",
+      "benefit": "comprehensive transaction history is available for display, filtering, and engagement",
+      "acceptanceCriteria": [
+        "Transactions table includes id (UUID, primary key), league_id (foreign key to leagues), transaction_type (enum), created_at, synced_at timestamps",
+        "Transaction_type enum includes: 'trade', 'waiver_claim', 'free_agent_add', 'free_agent_drop', 'draft_pick'",
+        "Table stores external_transaction_id (unique per league) for API sync deduplication",
+        "Schema includes involved_teams (JSON array) listing team_ids participating in transaction",
+        "Table includes transaction_details (JSONB) for flexible storage of players, picks, and platform-specific data"
+      ]
+    },
+    {
+      "id": "PTS-008",
+      "title": "Design Transaction Engagement Schema",
+      "user": "System",
+      "goal": "track comments and reactions on transactions to support engagement-based promotion to newsfeed",
+      "benefit": "engaged transactions automatically surface to main feed without manual curation",
+      "acceptanceCriteria": [
+        "Transactions table includes engagement_count (integer) aggregating comments and reactions",
+        "Table includes last_engagement_at timestamp for determining promotion eligibility",
+        "Schema includes promoted_to_feed boolean flag indicating if transaction was promoted to moments feed",
+        "Table includes promoted_at timestamp reflecting when promotion occurred",
+        "Comments and reactions use polymorphic relationship (reactable_type: 'transaction', reactable_id: transaction.id)"
+      ]
+    },
+    {
+      "id": "PTS-009",
+      "title": "Design League History Table Schema",
+      "user": "System",
+      "goal": "define a league_history table for storing season summaries and historical records",
+      "benefit": "users can browse past seasons with champions, runner-ups, and season highlights",
+      "acceptanceCriteria": [
+        "League_history table includes id (UUID, primary key), league_id (foreign key to leagues), season (unique per league)",
+        "Table stores champion_team_id (foreign key to teams), runner_up_team_id for final standings",
+        "Schema includes season_summary (text) for narrative description or commissioner notes",
+        "Table includes dynasty_continuity_data (JSONB) for linking seasons in dynasty leagues",
+        "Composite unique index on (league_id, season) ensures one history record per season"
+      ]
+    },
+    {
+      "id": "PTS-010",
+      "title": "Design Historical Week Links Schema",
+      "user": "System",
+      "goal": "support deep linking to historical week views for power rankings, matchups, and picks",
+      "benefit": "users can navigate to any past week and see content as it appeared at that time",
+      "acceptanceCriteria": [
+        "Schema supports queries filtering by league_id, season, and week_number across all tables",
+        "Power rankings, matchups, and pickems entries include season and week_number for historical access",
+        "URL routing supports pattern /[league-slug]/history/[season]/week/[week-number]",
+        "Historical data remains immutable after grading finalization to preserve accuracy",
+        "Indexes on (league_id, season, week_number) optimize historical week queries"
+      ]
+    },
+    {
+      "id": "PTS-011",
+      "title": "Implement Pick'ems Foreign Key Relationships",
+      "user": "System",
+      "goal": "establish all foreign key constraints for pick'ems data integrity",
+      "benefit": "database maintains referential integrity and prevents orphaned pick records",
+      "acceptanceCriteria": [
+        "Pickems_entries.user_id references users.id with ON DELETE CASCADE to remove picks when user deleted",
+        "Pickems_entries.matchup_id references matchups.id with ON DELETE CASCADE",
+        "Pickems_grading.pickems_entry_id references pickems_entries.id with ON DELETE CASCADE",
+        "Pickems_weekly_stats.user_id and pickems_season_stats.user_id reference users.id with ON DELETE CASCADE",
+        "All pick'ems tables include league_id foreign key referencing leagues.id with ON DELETE CASCADE"
+      ]
+    },
+    {
+      "id": "PTS-012",
+      "title": "Implement Transactions Foreign Key Relationships",
+      "user": "System",
+      "goal": "establish all foreign key constraints for transactions data integrity",
+      "benefit": "database maintains referential integrity and prevents orphaned transaction records",
+      "acceptanceCriteria": [
+        "Transactions.league_id references leagues.id with ON DELETE CASCADE",
+        "League_history.league_id references leagues.id with ON DELETE CASCADE",
+        "League_history.champion_team_id references teams.id with ON DELETE SET NULL to preserve history if team removed",
+        "Transaction engagement uses polymorphic relationships with proper foreign keys to transactions table",
+        "All involved_teams references in transaction_details JSONB are validated against existing team_ids"
+      ]
+    },
+    {
+      "id": "PTS-013",
+      "title": "Design Indexes for Pick'ems Query Optimization",
+      "user": "System",
+      "goal": "create indexes on pick'ems tables for efficient leaderboard and stats queries",
+      "benefit": "leaderboards and personal stats pages load quickly even with large historical datasets",
+      "acceptanceCriteria": [
+        "Index on pickems_entries(matchup_id, user_id) for fast pick lookups during grading",
+        "Index on pickems_weekly_stats(league_id, season, week_number, correct_picks DESC) for weekly leaderboards",
+        "Index on pickems_season_stats(league_id, season, role, correct_picks DESC) for role-based season leaderboards",
+        "Index on pickems_alltime_stats(league_id, correct_picks DESC) for all-time leaderboards",
+        "Composite index on pickems_entries(user_id, created_at DESC) for user pick history"
+      ]
+    },
+    {
+      "id": "PTS-014",
+      "title": "Design Indexes for Transactions Query Optimization",
+      "user": "System",
+      "goal": "create indexes on transactions table for efficient filtering and sorting",
+      "benefit": "transaction pages with filters execute quickly with proper index support",
+      "acceptanceCriteria": [
+        "Index on transactions(league_id, created_at DESC) for chronological transaction feed",
+        "Index on transactions(league_id, transaction_type) for type-based filtering",
+        "Index on transactions(league_id, engagement_count DESC, last_engagement_at DESC) for promoted feed eligibility",
+        "GIN index on transactions(involved_teams) for team-based transaction filtering (JSONB array queries)",
+        "Index on league_history(league_id, season) for historical season navigation"
+      ]
+    },
+    {
+      "id": "PTS-015",
+      "title": "Implement Database Triggers for Stats Updates",
+      "user": "System",
+      "goal": "automate stats aggregation through database triggers when grading completes",
+      "benefit": "stats tables remain accurate without manual recalculation on every query",
+      "acceptanceCriteria": [
+        "Trigger on pickems_grading INSERT/UPDATE recalculates pickems_weekly_stats for affected user and week",
+        "Trigger updates pickems_season_stats when weekly stats change",
+        "Trigger updates pickems_alltime_stats when season stats change",
+        "Trigger recalculates weekly_rank and season_rank when stats change for any user in league",
+        "Trigger on comments/reactions to transactions increments engagement_count and updates last_engagement_at"
+      ]
+    },
+    {
+      "id": "PTS-016",
+      "title": "Implement Row-Level Security for Pick'ems Data",
+      "user": "System",
+      "goal": "configure Supabase RLS policies to enforce pick visibility rules at database level",
+      "benefit": "picks remain hidden from other users until lock time without application-level checks",
+      "acceptanceCriteria": [
+        "Pickems_entries RLS policy allows users to read only their own picks before matchup lock time",
+        "After matchup lock time, RLS policy allows all league members to read all picks",
+        "Users can only INSERT/UPDATE their own picks and only before lock time",
+        "Pickems_grading, stats tables allow read access to all league members",
+        "RLS policies use Supabase auth.uid() and matchup lock timestamps for enforcement"
+      ]
+    },
+    {
+      "id": "PTS-017",
+      "title": "Implement Row-Level Security for Transactions Data",
+      "user": "System",
+      "goal": "configure Supabase RLS policies for transactions data access control",
+      "benefit": "transactions data is secured appropriately based on league membership and visibility settings",
+      "acceptanceCriteria": [
+        "Transactions table RLS policy allows read access to all league members",
+        "Transaction engagement (comments, reactions) follows same RLS rules as other content types",
+        "League_history table RLS policy allows read access based on league membership and visibility",
+        "Only admins can write to league_history for season summary management",
+        "RLS policies enforce league privacy settings for historical data access"
+      ]
+    },
+    {
+      "id": "PTS-018",
+      "title": "Support Stat Correction Regrading Schema",
+      "user": "System",
+      "goal": "enable detection and handling of stat correction impacts on pick'ems grading",
+      "benefit": "grading remains accurate when official scores change after initial grading",
+      "acceptanceCriteria": [
+        "Pickems_grading table includes previous_is_correct field for tracking grading changes",
+        "Schema includes regraded_at timestamp separate from initial graded_at",
+        "Table includes stat_correction_flag boolean indicating if this pick was affected by corrections",
+        "System maintains grading audit trail through timestamped updates",
+        "Stats tables update via triggers when regrading changes pick outcomes"
+      ]
+    },
+    {
+      "id": "PTS-019",
+      "title": "Design Transaction Filtering and Search Schema Support",
+      "user": "System",
+      "goal": "enable efficient filtering of transactions by type, teams, date ranges, and search terms",
+      "benefit": "users can quickly find relevant transactions without scanning entire history",
+      "acceptanceCriteria": [
+        "Transactions table supports filtering by transaction_type through indexed enum column",
+        "JSONB involved_teams field supports array containment queries for team-based filtering",
+        "Transaction_details JSONB field supports full-text search for player names",
+        "Created_at timestamp supports date range queries with proper indexing",
+        "Schema supports pagination with efficient LIMIT/OFFSET queries on indexed columns"
+      ]
+    },
+    {
+      "id": "PTS-020",
+      "title": "Support Dynasty League Continuity in Historical Data",
+      "user": "System",
+      "goal": "maintain proper linking of teams and stats across seasons in dynasty leagues",
+      "benefit": "dynasty league members see continuous history while redraft leagues show season breaks",
+      "acceptanceCriteria": [
+        "Teams table stable_fantasy_user_id field links team continuity across seasons",
+        "League_history dynasty_continuity_data JSONB maps teams across season transitions",
+        "Pick'ems stats properly aggregate across all seasons for dynasty leagues using stable IDs",
+        "Historical queries respect dynasty vs redraft league type for proper season grouping",
+        "Schema supports team ownership changes within dynasty continuity tracking"
+      ]
+    }
+  ]
+}

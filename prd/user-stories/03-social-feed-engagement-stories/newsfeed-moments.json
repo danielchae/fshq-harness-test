@@ -1,0 +1,150 @@
+{
+  "subcomponentId": "newsfeed-moments",
+  "componentId": "social-feed-engagement",
+  "tracesTo": [
+    "SOW: Newsfeed & Moments",
+    "UserFlow: Weekly Member Engagement, Feed Interaction, Pick'ems & History Browsing"
+  ],
+  "stories": [
+    {
+      "id": "NF-001",
+      "title": "Display Chronological Feed of League Moments",
+      "user": "League Member",
+      "goal": "view a chronological feed of all league activity and moments",
+      "benefit": "I can stay up-to-date with everything happening in my league in one central location",
+      "acceptanceCriteria": [
+        "Feed displays moments in reverse chronological order (newest first) by default",
+        "Each moment card shows timestamp, moment type, and relevant content preview",
+        "Feed includes all moment types: trades, match results, commissioner posts, user posts, power rankings, predictions",
+        "Infinite scroll loads older moments as user scrolls down",
+        "Feed automatically updates with new moments without requiring page refresh"
+      ]
+    },
+    {
+      "id": "NF-002",
+      "title": "Generate Automated Trade Moments",
+      "user": "System",
+      "goal": "automatically create feed moments when trades are processed in the connected fantasy league",
+      "benefit": "league members are immediately notified of trade activity without manual posting",
+      "acceptanceCriteria": [
+        "System detects new trades from Sleeper API sync and creates trade moment records",
+        "Trade moment displays teams involved, players/picks exchanged, and trade timestamp",
+        "Trade moment includes visual representation of assets moving between teams",
+        "System handles multi-team trades correctly showing all parties involved",
+        "Trade moments appear in feed immediately upon detection during sync"
+      ]
+    },
+    {
+      "id": "NF-003",
+      "title": "Generate Automated Match Result Moments",
+      "user": "System",
+      "goal": "automatically create feed moments when weekly matchups are completed",
+      "benefit": "members can quickly see all match results without navigating to separate pages",
+      "acceptanceCriteria": [
+        "System creates match result moments after stat corrections are finalized",
+        "Match result moment displays both teams, final scores, and winning team",
+        "Moment highlights close games and blowouts with appropriate visual emphasis",
+        "System creates separate moments for playoff matchups with special formatting",
+        "Match result moments link to full matchup detail page"
+      ]
+    },
+    {
+      "id": "NF-004",
+      "title": "Publish Commissioner Content as Feed Moments",
+      "user": "Commissioner",
+      "goal": "have my published power rankings and predictions automatically appear in the feed",
+      "benefit": "my weekly content reaches all league members through the main feed",
+      "acceptanceCriteria": [
+        "Published power rankings create a feed moment with rankings preview and link to full rankings page",
+        "Published matchup predictions create feed moment showing featured matchup and prediction",
+        "Commissioner desk publish action creates all applicable moments in single transaction",
+        "Moments include commissioner commentary snippets as preview text",
+        "Feed moments link back to full content pages for complete details"
+      ]
+    },
+    {
+      "id": "NF-005",
+      "title": "Create User-Generated Post Moments",
+      "user": "League Member",
+      "goal": "create a post that appears in the league feed for other members to see",
+      "benefit": "I can share thoughts, trash talk, or league-related content with everyone",
+      "acceptanceCriteria": [
+        "User can create text post with compose interface in feed or dedicated modal",
+        "Post supports basic text formatting (paragraphs, line breaks)",
+        "Created post appears in feed immediately with author attribution and timestamp",
+        "User can edit or delete their own posts after creation",
+        "Posts display user's role (Manager/Fan) and team affiliation if applicable"
+      ]
+    },
+    {
+      "id": "NF-006",
+      "title": "Implement Engagement-Based Feed Sorting",
+      "user": "System",
+      "goal": "surface recently engaged moments higher in feed to promote active discussions",
+      "benefit": "members see trending conversations and don't miss active discussions buried by new posts",
+      "acceptanceCriteria": [
+        "Feed sorting algorithm considers recency of comments and reactions in addition to moment creation time",
+        "Moments with recent engagement (within 24 hours) receive sorting boost",
+        "User can toggle between 'Recent' (engagement-aware) and 'Chronological' (strict time order) sorting",
+        "Engagement bumping applies to all moment types equally",
+        "System prevents spam or abuse from manipulating feed order through rate limiting"
+      ]
+    },
+    {
+      "id": "NF-007",
+      "title": "Bump Moments on New Comments",
+      "user": "System",
+      "goal": "move moments to top of engagement-aware feed when new comments are added",
+      "benefit": "active discussions remain visible and members can easily find ongoing conversations",
+      "acceptanceCriteria": [
+        "Adding comment to moment updates moment's 'last activity' timestamp",
+        "Moment with new comment moves higher in feed when 'Recent' sorting is active",
+        "Bumping respects pinned moments which remain at top regardless of activity",
+        "System tracks separate creation time and last activity time for each moment",
+        "Feed UI indicates when moment was bumped vs originally created"
+      ]
+    },
+    {
+      "id": "NF-008",
+      "title": "Bump Moments on New Reactions",
+      "user": "System",
+      "goal": "update moment position in feed when users add emoji reactions",
+      "benefit": "moments receiving engagement stay prominent even without text comments",
+      "acceptanceCriteria": [
+        "Adding reaction to moment updates moment's last activity timestamp",
+        "Reactions contribute to engagement score for sorting purposes",
+        "Multiple reactions from same user within short time window count as single engagement event",
+        "Removing reactions does not trigger negative bump or reverse sorting",
+        "Feed sorting balances reactions and comments appropriately (comments weighted higher)"
+      ]
+    },
+    {
+      "id": "NF-009",
+      "title": "Display Moment Type Indicators",
+      "user": "League Member",
+      "goal": "quickly identify the type of each moment in the feed at a glance",
+      "benefit": "I can scan the feed efficiently and focus on moment types most interesting to me",
+      "acceptanceCriteria": [
+        "Each moment card displays clear visual indicator of moment type (icon or badge)",
+        "Moment types include: Trade, Match Result, Power Rankings, Prediction, Commissioner Post, User Post, Transaction",
+        "Type indicators use consistent color scheme and iconography across feed",
+        "User can filter feed by moment type to see only specific categories",
+        "Mobile view maintains type indicators in condensed card format"
+      ]
+    },
+    {
+      "id": "NF-010",
+      "title": "Generate Automated Transaction Moments for Waivers and Free Agents",
+      "user": "System",
+      "goal": "automatically create feed moments for significant waiver and free agent transactions",
+      "benefit": "members stay informed about roster moves without checking transaction page separately",
+      "acceptanceCriteria": [
+        "System creates moments for waiver claims and free agent pickups detected in sync",
+        "Transaction moments display team, players acquired/dropped, and transaction type",
+        "System uses thresholds to avoid flooding feed (e.g., only notable players or batch summaries)",
+        "Transaction moments automatically promoted to newsfeed when they receive engagement",
+        "Moments link to full transaction detail and transaction history page"
+      ]
+    }
+  ]
+}

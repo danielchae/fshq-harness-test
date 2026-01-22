@@ -1,0 +1,1267 @@
+{
+  "overview": "FSHQ.gg Business Logic & Calculation Functions specification defines all core business operations, CRUD functions, validation rules, and mathematical calculations required for the Fantasy Sports Clubhouse platform. This specification covers user authentication flows, league connection and sync operations, membership management, role-based access control, commissioner content lifecycle, pick'ems submission and grading logic, engagement metrics calculations, and data synchronization workflows. All functions specify clear input/output contracts, data store changes, validation rules, and business constraints to enable direct implementation. Functions focus on WHAT operations need to happen rather than HOW to implement them, providing complete specifications for building a robust fantasy sports community platform with automated content generation, real-time engagement tracking, and multi-league support.",
+
+  "business_functions": {
+    "userRegistration": {
+      "function_name": "registerNewUser",
+      "purpose": "Create new user account with email/password authentication via Supabase Auth",
+      "input_parameters": [
+        {
+          "name": "email",
+          "type": "string",
+          "format": "email",
+          "required": true,
+          "validation": "Valid email format, max 255 characters"
+        },
+        {
+          "name": "password",
+          "type": "string",
+          "required": true,
+          "validation": "Minimum 8 characters, max 128 characters"
+        },
+        {
+          "name": "displayName",
+          "type": "string",
+          "required": false,
+          "validation": "1-50 characters if provided"
+        }
+      ],
+      "output_data": {
+        "success": "boolean",
+        "user": {
+          "id": "uuid",
+          "email": "string",
+          "displayName": "string",
+          "createdAt": "timestamp"
+        },
+        "session": {
+          "accessToken": "string",
+          "refreshToken": "string",
+          "expiresAt": "timestamp"
+        },
+        "verificationEmailSent": "boolean"
+      },
+      "data_store_changes": [
+        "INSERT into users table via Supabase Auth",
+        "INSERT into user_preferences with default values",
+        "CREATE session tokens in Supabase Auth"
+      ],
+      "business_rules": [
+        "Email must not already exist in system (enforced by unique constraint)",
+        "Password must meet minimum strength requirements (8+ characters)",
+        "Verification email automatically sent after registration",
+        "User account created but not verified until email confirmed",
+        "Rate limit of 5 registration attempts per IP per 15 minutes"
+      ],
+      "validation_rules": [
+        "Email format validated against RFC 5322 standard",
+        "Password cannot contain only whitespace",
+        "Display name cannot contain special characters except hyphen and underscore",
+        "All fields sanitized for XSS prevention"
+      ]
+    },
+
+    "userLogin": {
+      "function_name": "authenticateUser",
+      "purpose": "Authenticate user credentials and create session",
+      "input_parameters": [
+        {
+          "name": "email",
+          "type": "string",
+          "format": "email",
+          "required": true
+        },
+        {
+          "name": "password",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "rememberMe",
+          "type": "boolean",
+          "required": false,
+          "default": false
+        }
+      ],
+      "output_data": {
+        "success": "boolean",
+        "user": {
+          "id": "uuid",
+          "email": "string",
+          "displayName": "string",
+          "emailVerified": "boolean",
+          "leagueMemberships": "array"
+        },
+        "session": {
+          "accessToken": "string",
+          "refreshToken": "string",
+          "expiresAt": "timestamp"
+        }
+      },
+      "data_store_changes": [
+        "UPDATE users.last_login_at timestamp",
+        "CREATE new session in Supabase Auth",
+        "UPDATE user_preferences if rememberMe flag changes"
+      ],
+      "business_rules": [
+        "User must have verified email to login (configurable)",
+        "Failed login attempts increment counter for rate limiting",
+        "After 5 failed attempts from same IP, enforce 15-minute lockout",
+        "Remember me extends session to 30 days instead of 1 hour",
+        "Session tokens stored in httpOnly cookies for security"
+      ],
+      "validation_rules": [
+        "Email and password must not be empty",
+        "Credentials validated via Supabase Auth signIn",
+        "Session validated before returning user data",
+        "All failed attempts logged for security monitoring"
+      ]
+    },
+
+    "createLeague": {
+      "function_name": "connectExternalLeague",
+      "purpose": "Create new league by connecting external fantasy platform league and performing initial sync",
+      "input_parameters": [
+        {
+          "name": "userId",
+          "type": "uuid",
+          "required": true,
+          "description": "Authenticated user who will become initial admin"
+        },
+        {
+          "name": "externalPlatform",
+          "type": "enum",
+          "values": ["sleeper"],
+          "required": true
+        },
+        {
+          "name": "externalLeagueId",
+          "type": "string",
+          "required": true,
+          "description": "Platform-specific league identifier"
+        },
+        {
+          "name": "isDynasty",
+          "type": "boolean",
+          "required": false,
+          "default": false
+        }
+      ],
+      "output_data": {
+        "success": "boolean",
+        "league": {
+          "id": "uuid",
+          "name": "string",
+          "slug": "string",
+          "externalPlatform": "string",
+          "externalLeagueId": "string",
+          "teamCount": "integer",
+          "season": "integer",
+          "syncStatus": "string"
+        },
+        "syncJobId": "uuid"
+      },
+      "data_store_changes": [
+        "INSERT into leagues table with external_platform and external_league_id",
+        "INSERT into league_settings with default values (visibility=private, join_rule=approval_required, fan_access_enabled=true)",
+        "INSERT into league_memberships with role=admin, status=approved for creator user",
+        "INSERT into url_slugs with generated unique slug",
+        "INSERT into teams table for each team from external platform",
+        "TRIGGER initial sync job creation in background queue"
+      ],
+      "business_rules": [
+        "League ID must be valid and exist on external platform",
+        "External league cannot already be connected to FSHQ (check by external_league_id + platform)",
+        "User who creates league automatically becomes admin with full permissions",
+        "Unique URL slug generated from league name with collision handling (append numbers if needed)",
+        "Initial sync fetches: league metadata, teams, current season matchups, roster data",
+        "If sync fails, league record preserved but marked as connection_failed for retry"
+      ],
+      "validation_rules": [
+        "External league ID validated by calling external platform API",
+        "League must have at least 2 teams to be valid",
+        "Season and team_count extracted from external platform data",
+        "User must be authenticated to create league",
+        "Rate limit of 10 league creations per user per hour"
+      ]
+    },
+
+    "updateLeagueSettings": {
+      "function_name": "modifyLeagueConfiguration",
+      "purpose": "Update league visibility, join rules, and feature settings (admin only)",
+      "input_parameters": [
+        {
+          "name": "userId",
+          "type": "uuid",
+          "required": true
+        },
+        {
+          "name": "leagueId",
+          "type": "uuid",
+          "required": true
+        },
+        {
+          "name": "settings",
+          "type": "object",
+          "required": true,
+          "properties": {
+            "visibility": {
+              "type": "enum",
+              "values": ["public", "private"],
+              "required": false
+            },
+            "joinRule": {
+              "type": "enum",
+              "values": ["auto_join", "approval_required"],
+              "required": false
+            },
+            "fanAccessEnabled": {
+              "type": "boolean",
+              "required": false
+            }
+          }
+        }
+      ],
+      "output_data": {
+        "success": "boolean",
+        "updatedSettings": "object"
+      },
+      "data_store_changes": [
+        "UPDATE league_settings table with new values",
+        "UPDATE leagues.updated_at timestamp"
+      ],
+      "business_rules": [
+        "Only users with admin role can update league settings (verified via RLS policy)",
+        "Changing visibility from private to public makes league discoverable",
+        "Changing join_rule from auto_join to approval_required affects future join requests only",
+        "Disabling fan_access prevents new fan role assignments but doesn't affect existing fans",
+        "Settings changes logged in audit trail for accountability"
+      ],
+      "validation_rules": [
+        "User must be admin of the league",
+        "League must exist",
+        "All enum values validated against allowed values",
+        "At least one setting must be changed"
+      ]
+    },
+
+    "requestJoinLeague": {
+      "function_name": "submitMembershipRequest",
+      "purpose": "Create membership request for user to join league with role and optional team claim",
+      "input_parameters": [
+        {
+          "name": "userId",
+          "type": "uuid",
+          "required": true
+        },
+        {
+          "name": "leagueId",
+          "type": "uuid",
+          "required": true
+        },
+        {
+          "name": "role",
+          "type": "enum",
+          "values": ["manager", "fan"],
+          "required": true
+        },
+        {
+          "name": "teamId",
+          "type": "uuid",
+          "required": false,
+          "description": "Team to claim if role is manager"
+        },
+        {
+          "name": "sleeperUserId",
+          "type": "string",
+          "required": false,
+          "description": "For team claim validation"
+        }
+      ],
+      "output_data": {
+        "success": "boolean",
+        "membership": {
+          "id": "uuid",
+          "status": "string",
+          "role": "string",
+          "requiresApproval": "boolean"
+        }
+      },
+      "data_store_changes": [
+        "INSERT into league_memberships with status=pending or approved based on join_rule",
+        "UPDATE teams.claimed_by_user_id if team claim auto-approved"
+      ],
+      "business_rules": [
+        "If league join_rule is auto_join, membership automatically approved with status=approved",
+        "If league join_rule is approval_required, membership created with status=pending",
+        "User cannot join league they are already member of (prevent duplicates)",
+        "Manager role requires teamId parameter, fan role does not",
+        "Team claim validation: if sleeperUserId provided, verify it matches team's external_roster_id owner",
+        "Invalid team claim creates pending membership for admin manual review",
+        "Admin notified of pending memberships requiring approval"
+      ],
+      "validation_rules": [
+        "User must be authenticated",
+        "League must exist and be accessible (public or user has invite)",
+        "If role is manager, teamId must be provided and team must exist in league",
+        "Team cannot already be claimed by another user",
+        "Fan role only available if league fan_access_enabled is true"
+      ]
+    },
+
+    "approveMembership": {
+      "function_name": "processJoinApproval",
+      "purpose": "Approve or reject pending membership request (admin only)",
+      "input_parameters": [
+        {
+          "name": "adminUserId",
+          "type": "uuid",
+          "required": true
+        },
+        {
+          "name": "membershipId",
+          "type": "uuid",
+          "required": true
+        },
+        {
+          "name": "action",
+          "type": "enum",
+          "values": ["approve", "reject"],
+          "required": true
+        },
+        {
+          "name": "rejectionReason",
+          "type": "string",
+          "required": false,
+          "description": "Reason for rejection (optional)"
+        }
+      ],
+      "output_data": {
+        "success": "boolean",
+        "updatedMembership": "object"
+      },
+      "data_store_changes": [
+        "UPDATE league_memberships.status to 'approved' or 'rejected'",
+        "UPDATE league_memberships.approved_by_user_id with admin user ID",
+        "UPDATE teams.claimed_by_user_id if manager membership approved with team",
+        "INSERT notification record for user about approval/rejection"
+      ],
+      "business_rules": [
+        "Only admins can approve/reject memberships",
+        "Membership must be in pending status to be processed",
+        "Approval grants user access to league based on their requested role",
+        "Rejection removes membership request but preserves record for audit",
+        "User notified via email and in-app notification of approval/rejection",
+        "Approved managers automatically linked to their claimed team"
+      ],
+      "validation_rules": [
+        "Admin user must have admin role in the league",
+        "Membership must exist and be in pending status",
+        "If approving manager with team, verify team still unclaimed"
+      ]
+    },
+
+    "createCommissionerDraft": {
+      "function_name": "initializeWeeklyContentDraft",
+      "purpose": "Create new draft content for commissioner desk for specific week",
+      "input_parameters": [
+        {
+          "name": "commissionerUserId",
+          "type": "uuid",
+          "required": true
+        },
+        {
+          "name": "leagueId",
+          "type": "uuid",
+          "required": true
+        },
+        {
+          "name": "season",
+          "type": "integer",
+          "required": true
+        },
+        {
+          "name": "weekNumber",
+          "type": "integer",
+          "required": true
+        },
+        {
+          "name": "copyFromPreviousWeek",
+          "type": "boolean",
+          "required": false,
+          "default": false
+        }
+      ],
+      "output_data": {
+        "success": "boolean",
+        "draft": {
+          "powerRankingsId": "uuid",
+          "matchupPredictionsId": "uuid",
+          "deskSessionId": "uuid"
+        }
+      },
+      "data_store_changes": [
+        "INSERT into power_rankings table with status=draft",
+        "INSERT into matchup_predictions table with status=draft (if predictions section not skipped)",
+        "INSERT into commissioner_desk_sessions for tracking"
+      ],
+      "business_rules": [
+        "User must have admin or designated commissioner role",
+        "Cannot create draft if published content already exists for week (must edit published instead)",
+        "If copyFromPreviousWeek=true, initialize rankings with previous week's order and matchup structure",
+        "All content sections default to empty/unpublished state",
+        "Draft creation logged with timestamp and creator user ID",
+        "Autosave begins on any edit to draft content"
+      ],
+      "validation_rules": [
+        "User must be commissioner or admin",
+        "Season and week must be valid for league",
+        "League must exist",
+        "No existing draft for this league/season/week combination"
+      ]
+    },
+
+    "autosaveDraft": {
+      "function_name": "saveDraftContentIncremental",
+      "purpose": "Automatically save draft content changes every 30 seconds or 3 seconds after user stops typing",
+      "input_parameters": [
+        {
+          "name": "userId",
+          "type": "uuid",
+          "required": true
+        },
+        {
+          "name": "leagueId",
+          "type": "uuid",
+          "required": true
+        },
+        {
+          "name": "season",
+          "type": "integer",
+          "required": true
+        },
+        {
+          "name": "weekNumber",
+          "type": "integer",
+          "required": true
+        },
+        {
+          "name": "draftContent",
+          "type": "object",
+          "required": true,
+          "properties": {
+            "powerRankings": "object",
+            "matchupPredictions": "object",
+            "matchupOfWeek": "object"
+          }
+        }
+      ],
+      "output_data": {
+        "success": "boolean",
+        "savedAt": "timestamp",
+        "version": "integer"
+      },
+      "data_store_changes": [
+        "UPDATE power_rankings content and updated_at",
+        "UPDATE matchup_predictions content and updated_at",
+        "UPDATE commissioner_desk_sessions.last_saved_at",
+        "INCREMENT version number for optimistic locking"
+      ],
+      "business_rules": [
+        "Autosave triggered every 30 seconds while user active in editor",
+        "Debounced save triggers 3 seconds after user stops typing",
+        "Partial/incomplete content allowed in draft state",
+        "Version number incremented on each save for conflict detection",
+        "If save fails due to network error, queue for retry when connection restored",
+        "Offline changes stored in browser localStorage and synced when online"
+      ],
+      "validation_rules": [
+        "User must be creator of draft or have admin role",
+        "Draft must exist for the specified week",
+        "Content structure validated but completeness not required for draft"
+      ]
+    },
+
+    "publishWeeklyContent": {
+      "function_name": "publishCommissionerContent",
+      "purpose": "Publish completed commissioner content atomically, creating feed moments and updating pages",
+      "input_parameters": [
+        {
+          "name": "userId",
+          "type": "uuid",
+          "required": true
+        },
+        {
+          "name": "leagueId",
+          "type": "uuid",
+          "required": true
+        },
+        {
+          "name": "season",
+          "type": "integer",
+          "required": true
+        },
+        {
+          "name": "weekNumber",
+          "type": "integer",
+          "required": true
+        },
+        {
+          "name": "contentToPublish",
+          "type": "object",
+          "required": true,
+          "properties": {
+            "powerRankings": {
+              "skip": "boolean",
+              "entries": "array"
+            },
+            "matchupPredictions": {
+              "skip": "boolean",
+              "predictions": "array",
+              "featuredMatchupId": "uuid"
+            }
+          }
+        }
+      ],
+      "output_data": {
+        "success": "boolean",
+        "publishedAt": "timestamp",
+        "momentsCreated": "array of moment IDs"
+      },
+      "data_store_changes": [
+        "UPDATE power_rankings.status to 'published' and set published_at timestamp",
+        "UPDATE matchup_predictions.status to 'published' and set published_at timestamp",
+        "INSERT into feed_moments for each published content type (separate moment per type)",
+        "UPDATE commissioner_desk_sessions with publication status"
+      ],
+      "business_rules": [
+        "Power rankings must include all teams with unique ranks 1-N if not skipped",
+        "Matchup predictions must reference valid matchups for the week if not skipped",
+        "Featured matchup must be one of the predicted matchups",
+        "Commentary fields have 500 character max length",
+        "Single publish action updates all pages and creates all moments atomically (transaction)",
+        "If any part of publish fails, entire operation rolls back to preserve draft",
+        "Published content creates separate feed moments for rankings, matchup, and predictions",
+        "Skipped sections do not create feed moments or validate content",
+        "User must be commissioner or admin to publish"
+      ],
+      "validation_rules": [
+        "All non-skipped required fields must be complete",
+        "Power rankings: no duplicate ranks, all teams included",
+        "Matchup predictions: all matchup IDs must exist and be for correct week",
+        "Content structure validated against schema",
+        "User has publish permissions"
+      ]
+    },
+
+    "submitPickems": {
+      "function_name": "recordUserPicksForWeek",
+      "purpose": "Submit or update user's pick'ems predictions for week's matchups",
+      "input_parameters": [
+        {
+          "name": "userId",
+          "type": "uuid",
+          "required": true
+        },
+        {
+          "name": "leagueId",
+          "type": "uuid",
+          "required": true
+        },
+        {
+          "name": "season",
+          "type": "integer",
+          "required": true
+        },
+        {
+          "name": "weekNumber",
+          "type": "integer",
+          "required": true
+        },
+        {
+          "name": "picks",
+          "type": "array",
+          "required": true,
+          "items": {
+            "matchupId": "uuid",
+            "predictedWinnerTeamId": "uuid"
+          }
+        }
+      ],
+      "output_data": {
+        "success": "boolean",
+        "entries": "array of pickems_entry objects",
+        "lockedPicks": "array of matchup IDs that were already locked"
+      },
+      "data_store_changes": [
+        "UPSERT into pickems_entries for each pick (update if exists, insert if new)",
+        "UPDATE pickems_entries.updated_at timestamp",
+        "SET pickems_entries.locked_at when matchup lock time reached"
+      ],
+      "business_rules": [
+        "Partial submissions allowed - user can pick only some matchups",
+        "Picks can be updated before matchup lock time (per-matchup lock based on game start)",
+        "Picks cannot be created or modified after individual matchup has locked",
+        "Lock time is per-matchup, not per-week (different games lock at different times)",
+        "Attempted edits to locked matchups are rejected with specific error",
+        "User can pick any team in the matchup as predicted winner",
+        "Picks stored immediately, no 'submit' required - each selection auto-saves"
+      ],
+      "validation_rules": [
+        "User must be league member (any role: admin, manager, fan)",
+        "Matchup IDs must exist and be for specified week",
+        "Predicted winner team ID must be one of the two teams in the matchup",
+        "Matchup must not be locked when pick submitted",
+        "User cannot pick for matchups after lock time"
+      ]
+    },
+
+    "gradePickems": {
+      "function_name": "calculatePickemsResults",
+      "purpose": "Grade completed matchups against user picks and update leaderboards",
+      "input_parameters": [
+        {
+          "name": "leagueId",
+          "type": "uuid",
+          "required": true
+        },
+        {
+          "name": "season",
+          "type": "integer",
+          "required": true
+        },
+        {
+          "name": "weekNumber",
+          "type": "integer",
+          "required": true
+        },
+        {
+          "name": "matchupId",
+          "type": "uuid",
+          "required": false,
+          "description": "Grade specific matchup, or all if not provided"
+        }
+      ],
+      "output_data": {
+        "success": "boolean",
+        "gradedCount": "integer",
+        "correctPicksCount": "integer",
+        "incorrectPicksCount": "integer",
+        "leaderboardUpdated": "boolean"
+      },
+      "data_store_changes": [
+        "UPDATE pickems_entries.is_correct based on matchup winner",
+        "UPDATE pickems_entries.graded_at timestamp",
+        "UPDATE pickems_leaderboard_stats with new correct/incorrect counts",
+        "RECALCULATE leaderboard rankings and accuracy percentages"
+      ],
+      "business_rules": [
+        "Grading only occurs after matchup is completed and winner determined",
+        "Stat correction window: matchups monitored for 72 hours after completion",
+        "If stat correction changes winner, picks are automatically re-graded",
+        "Grading triggered by scheduled cron job every 2 hours during season",
+        "Manual grading can be triggered by admin for specific matchup",
+        "Only matchups with finalized scores are graded (not provisional)",
+        "Leaderboard updated atomically after all picks graded for fairness"
+      ],
+      "validation_rules": [
+        "Matchup must have final winner determined",
+        "All pickems_entries for matchup must have locked_at timestamp",
+        "Winner team ID must be one of the matchup teams",
+        "Grading idempotent - can be run multiple times safely"
+      ]
+    },
+
+    "addCommentToMoment": {
+      "function_name": "createCommentOnMoment",
+      "purpose": "Add user comment or reply to feed moment",
+      "input_parameters": [
+        {
+          "name": "userId",
+          "type": "uuid",
+          "required": true
+        },
+        {
+          "name": "momentId",
+          "type": "uuid",
+          "required": true
+        },
+        {
+          "name": "commentText",
+          "type": "string",
+          "required": true,
+          "validation": "1-2000 characters"
+        },
+        {
+          "name": "parentCommentId",
+          "type": "uuid",
+          "required": false,
+          "description": "For threaded replies"
+        }
+      ],
+      "output_data": {
+        "success": "boolean",
+        "comment": {
+          "id": "uuid",
+          "momentId": "uuid",
+          "commentText": "string",
+          "authorUserId": "uuid",
+          "authorName": "string",
+          "createdAt": "timestamp"
+        }
+      },
+      "data_store_changes": [
+        "INSERT into comments table",
+        "INCREMENT feed_moments.comment_count",
+        "UPDATE feed_moments.last_activity_at for engagement bumping",
+        "INSERT into notifications for moment author and parent comment author"
+      ],
+      "business_rules": [
+        "User must be league member to comment",
+        "Comments immediately visible to all league members",
+        "Comment adds to moment's engagement metrics, may trigger feed promotion",
+        "Parent comment must exist and belong to same moment if replying",
+        "Moment bumped to top of 'recent' feed sort when commented on",
+        "Author can delete own comment within grace period (24 hours)",
+        "Admins can delete any comment (soft delete to preserve thread structure)"
+      ],
+      "validation_rules": [
+        "User authenticated and league member",
+        "Moment must exist and user has access to it",
+        "Comment text not empty after trimming whitespace",
+        "Comment text sanitized for XSS",
+        "Parent comment validation if replying"
+      ]
+    },
+
+    "addReaction": {
+      "function_name": "createEmojiReaction",
+      "purpose": "Add emoji reaction to moment, comment, or transaction",
+      "input_parameters": [
+        {
+          "name": "userId",
+          "type": "uuid",
+          "required": true
+        },
+        {
+          "name": "reactableType",
+          "type": "enum",
+          "values": ["moment", "comment", "transaction"],
+          "required": true
+        },
+        {
+          "name": "reactableId",
+          "type": "uuid",
+          "required": true
+        },
+        {
+          "name": "emoji",
+          "type": "string",
+          "required": true,
+          "validation": "Valid unicode emoji character"
+        }
+      ],
+      "output_data": {
+        "success": "boolean",
+        "reaction": {
+          "id": "uuid",
+          "emoji": "string",
+          "createdAt": "timestamp"
+        }
+      },
+      "data_store_changes": [
+        "INSERT into reactions table with unique constraint on (user_id, reactable_type, reactable_id, emoji)",
+        "INCREMENT reaction count on target entity",
+        "UPDATE last_activity_at for engagement bumping if moment"
+      ],
+      "business_rules": [
+        "User can only add each emoji once per entity (prevent spam)",
+        "User can add multiple different emojis to same entity",
+        "Reactions contribute to engagement metrics for feed promotion",
+        "Reactions immediately visible to all league members",
+        "User can remove own reaction by clicking emoji again (DELETE)",
+        "Reaction aggregation shows total count per emoji type"
+      ],
+      "validation_rules": [
+        "User must be league member",
+        "Reactable entity must exist and be accessible to user",
+        "Emoji validated as single unicode emoji character",
+        "Duplicate reaction for same emoji returns existing reaction (idempotent)"
+      ]
+    },
+
+    "promoteTransactionToFeed": {
+      "function_name": "createMomentFromTransaction",
+      "purpose": "Promote transaction to feed when engagement threshold reached",
+      "input_parameters": [
+        {
+          "name": "transactionId",
+          "type": "uuid",
+          "required": true
+        },
+        {
+          "name": "leagueId",
+          "type": "uuid",
+          "required": true
+        }
+      ],
+      "output_data": {
+        "success": "boolean",
+        "moment": {
+          "id": "uuid",
+          "momentType": "transaction",
+          "referenceId": "uuid",
+          "createdAt": "timestamp"
+        }
+      },
+      "data_store_changes": [
+        "INSERT into feed_moments with moment_type='transaction' and reference_id=transaction_id",
+        "UPDATE transactions.promoted_to_feed=true",
+        "SET transactions.promoted_at timestamp"
+      ],
+      "business_rules": [
+        "Promotion triggered when transaction engagement count exceeds threshold (default: 5 interactions)",
+        "Engagement count = comments + reactions on transaction",
+        "Once promoted, transaction appears in main feed with full transaction details",
+        "Promotion is one-way - transaction stays in feed once promoted",
+        "Threshold configurable per league in league_settings",
+        "Duplicate moments not created if transaction already promoted"
+      ],
+      "validation_rules": [
+        "Transaction must exist and belong to league",
+        "Engagement count must meet or exceed threshold",
+        "Transaction not already promoted (promoted_to_feed=false)",
+        "League feed moments enabled in settings"
+      ]
+    },
+
+    "syncLeagueData": {
+      "function_name": "synchronizeExternalLeagueData",
+      "purpose": "Fetch and update league data from external platform (Sleeper)",
+      "input_parameters": [
+        {
+          "name": "leagueId",
+          "type": "uuid",
+          "required": true
+        },
+        {
+          "name": "syncType",
+          "type": "enum",
+          "values": ["full", "differential"],
+          "required": true
+        },
+        {
+          "name": "forcedByUserId",
+          "type": "uuid",
+          "required": false,
+          "description": "Admin who manually triggered sync"
+        }
+      ],
+      "output_data": {
+        "success": "boolean",
+        "syncJobId": "uuid",
+        "entitiesSynced": {
+          "teams": "integer",
+          "matchups": "integer",
+          "transactions": "integer",
+          "rosters": "integer"
+        },
+        "errors": "array of error messages"
+      },
+      "data_store_changes": [
+        "UPSERT teams data (update if exists, insert if new)",
+        "UPSERT matchups for current week",
+        "INSERT new transactions since last sync",
+        "UPDATE team rosters and win/loss records",
+        "UPDATE leagues.last_synced_at timestamp",
+        "INSERT into sync_jobs table for tracking"
+      ],
+      "business_rules": [
+        "Full sync fetches all data from external platform (used on initial connection)",
+        "Differential sync fetches only changes since last sync (faster, used for ongoing updates)",
+        "Sync scheduled automatically: every 15 minutes during game days, hourly otherwise",
+        "Manual sync allowed by admins with 15-minute cooldown between requests",
+        "Stat corrections detected by comparing scores after 72-hour window",
+        "If stat correction changes matchup winner, trigger re-grading of affected picks",
+        "Sync failures logged and retried with exponential backoff",
+        "Partial sync failures preserve successfully synced data"
+      ],
+      "validation_rules": [
+        "League must exist with valid external_league_id",
+        "External platform API must be reachable",
+        "Sync job not already in progress for this league (prevent duplicates)",
+        "Rate limit respected for external API calls",
+        "Manual sync only allowed for admin users"
+      ]
+    }
+  },
+
+  "calculation_functions": {
+    "calculatePickemsAccuracy": {
+      "function_name": "computeUserPickemsAccuracy",
+      "formula": "accuracy_percentage = (correct_picks / total_picks) * 100",
+      "input_parameters": [
+        {
+          "name": "userId",
+          "type": "uuid",
+          "required": true
+        },
+        {
+          "name": "leagueId",
+          "type": "uuid",
+          "required": true
+        },
+        {
+          "name": "scope",
+          "type": "enum",
+          "values": ["weekly", "season", "alltime"],
+          "required": true
+        },
+        {
+          "name": "season",
+          "type": "integer",
+          "required": false,
+          "description": "Required for weekly and season scopes"
+        },
+        {
+          "name": "weekNumber",
+          "type": "integer",
+          "required": false,
+          "description": "Required for weekly scope"
+        }
+      ],
+      "output_format": {
+        "accuracy_percentage": "float (2 decimal places)",
+        "correct_picks": "integer",
+        "total_picks": "integer",
+        "rank": "integer"
+      },
+      "edge_cases": [
+        {
+          "condition": "total_picks = 0 (user did not participate)",
+          "result": "accuracy_percentage = null, correct_picks = 0, total_picks = 0"
+        },
+        {
+          "condition": "some matchups not graded yet",
+          "result": "only count graded matchups in calculation, indicate pending_picks count"
+        },
+        {
+          "condition": "stat correction changed results after initial grading",
+          "result": "recalculate with updated winner, correct_picks may decrease"
+        }
+      ],
+      "precision_requirements": {
+        "percentage": "2 decimal places (e.g., 72.58%)",
+        "counts": "whole integers"
+      },
+      "rounding_rules": "Standard rounding to 2 decimal places (0.5 rounds up)"
+    },
+
+    "calculateLeaderboardRank": {
+      "function_name": "determineUserLeaderboardPosition",
+      "formula": "rank = COUNT(users with higher accuracy) + 1, with ties handling",
+      "input_parameters": [
+        {
+          "name": "leagueId",
+          "type": "uuid",
+          "required": true
+        },
+        {
+          "name": "scope",
+          "type": "enum",
+          "values": ["weekly", "season", "alltime"],
+          "required": true
+        },
+        {
+          "name": "roleFilter",
+          "type": "enum",
+          "values": ["all", "manager", "fan"],
+          "required": false,
+          "default": "all"
+        }
+      ],
+      "output_format": {
+        "leaderboard": "array of objects",
+        "item_fields": {
+          "rank": "integer",
+          "userId": "uuid",
+          "displayName": "string",
+          "role": "string",
+          "correct_picks": "integer",
+          "total_picks": "integer",
+          "accuracy_percentage": "float"
+        }
+      },
+      "edge_cases": [
+        {
+          "condition": "tied accuracy percentages",
+          "result": "users with same percentage share same rank, next rank skips (e.g., 1, 1, 3, 4)"
+        },
+        {
+          "condition": "user with 0 picks",
+          "result": "excluded from leaderboard or shown at bottom with N/A rank depending on scope"
+        },
+        {
+          "condition": "roleFilter applied",
+          "result": "only users with matching role included, rankings recalculated for subset"
+        }
+      ],
+      "precision_requirements": {
+        "rank": "integer, no decimals",
+        "accuracy": "2 decimal places for sorting"
+      },
+      "rounding_rules": "Ranks are integers, accuracy used for tie-breaking with 2 decimal precision"
+    },
+
+    "calculateEngagementScore": {
+      "function_name": "computeMomentEngagementMetrics",
+      "formula": "engagement_score = (comment_count * comment_weight) + (reaction_count * reaction_weight)",
+      "input_parameters": [
+        {
+          "name": "momentId",
+          "type": "uuid",
+          "required": true
+        },
+        {
+          "name": "comment_weight",
+          "type": "float",
+          "required": false,
+          "default": 5.0,
+          "description": "Weight for comments (higher engagement value)"
+        },
+        {
+          "name": "reaction_weight",
+          "type": "float",
+          "required": false,
+          "default": 1.0,
+          "description": "Weight for reactions"
+        }
+      ],
+      "output_format": {
+        "engagement_score": "float",
+        "comment_count": "integer",
+        "reaction_count": "integer",
+        "unique_participants": "integer"
+      },
+      "edge_cases": [
+        {
+          "condition": "no engagement (0 comments and 0 reactions)",
+          "result": "engagement_score = 0.0"
+        },
+        {
+          "condition": "high comment count from single user",
+          "result": "all comments counted equally regardless of author"
+        },
+        {
+          "condition": "transaction reaching promotion threshold",
+          "result": "check if engagement_score >= threshold to trigger feed promotion"
+        }
+      ],
+      "precision_requirements": {
+        "engagement_score": "1 decimal place",
+        "counts": "whole integers"
+      },
+      "rounding_rules": "Score rounded to 1 decimal place, counts are exact integers"
+    },
+
+    "calculatePowerRankingsMovement": {
+      "function_name": "computeRankChangeFromPreviousWeek",
+      "formula": "rank_change = previous_week_rank - current_week_rank (positive = moved up, negative = moved down)",
+      "input_parameters": [
+        {
+          "name": "teamId",
+          "type": "uuid",
+          "required": true
+        },
+        {
+          "name": "season",
+          "type": "integer",
+          "required": true
+        },
+        {
+          "name": "currentWeek",
+          "type": "integer",
+          "required": true
+        }
+      ],
+      "output_format": {
+        "current_rank": "integer",
+        "previous_rank": "integer",
+        "rank_change": "integer (can be negative)",
+        "movement_direction": "enum (up, down, same, new)"
+      },
+      "edge_cases": [
+        {
+          "condition": "team not ranked in previous week (week 1 or first appearance)",
+          "result": "rank_change = null, movement_direction = 'new'"
+        },
+        {
+          "condition": "team rank unchanged from previous week",
+          "result": "rank_change = 0, movement_direction = 'same'"
+        },
+        {
+          "condition": "previous week rankings not published",
+          "result": "rank_change = null, previous_rank = null"
+        }
+      ],
+      "precision_requirements": {
+        "ranks": "whole integers",
+        "rank_change": "whole integer (can be negative)"
+      },
+      "rounding_rules": "No rounding needed, ranks are integers"
+    },
+
+    "calculateMatchupPredictionAccuracy": {
+      "function_name": "computeCommissionerPredictionCorrectness",
+      "formula": "commissioner_accuracy = (correct_predictions / total_predictions) * 100",
+      "input_parameters": [
+        {
+          "name": "leagueId",
+          "type": "uuid",
+          "required": true
+        },
+        {
+          "name": "season",
+          "type": "integer",
+          "required": true
+        },
+        {
+          "name": "scope",
+          "type": "enum",
+          "values": ["weekly", "season"],
+          "required": true
+        },
+        {
+          "name": "weekNumber",
+          "type": "integer",
+          "required": false,
+          "description": "Required for weekly scope"
+        }
+      ],
+      "output_format": {
+        "accuracy_percentage": "float (2 decimal places)",
+        "correct_predictions": "integer",
+        "total_predictions": "integer",
+        "featured_matchup_correct": "boolean"
+      },
+      "edge_cases": [
+        {
+          "condition": "no predictions made for week/season",
+          "result": "accuracy_percentage = null, counts = 0"
+        },
+        {
+          "condition": "matchups not yet completed",
+          "result": "only count completed matchups with determined winners"
+        },
+        {
+          "condition": "stat correction changed winner after grading",
+          "result": "recalculate accuracy with corrected winner"
+        }
+      ],
+      "precision_requirements": {
+        "percentage": "2 decimal places",
+        "counts": "whole integers"
+      },
+      "rounding_rules": "Standard rounding to 2 decimal places"
+    },
+
+    "calculateStreakLength": {
+      "function_name": "computePickemsWinningStreak",
+      "formula": "streak_length = COUNT(consecutive weeks with accuracy >= threshold), resets on miss",
+      "input_parameters": [
+        {
+          "name": "userId",
+          "type": "uuid",
+          "required": true
+        },
+        {
+          "name": "leagueId",
+          "type": "uuid",
+          "required": true
+        },
+        {
+          "name": "season",
+          "type": "integer",
+          "required": true
+        },
+        {
+          "name": "accuracy_threshold",
+          "type": "float",
+          "required": false,
+          "default": 0.5,
+          "description": "Minimum accuracy to maintain streak (50% default)"
+        }
+      ],
+      "output_format": {
+        "current_streak": "integer",
+        "longest_streak": "integer",
+        "streak_type": "enum (winning, losing)"
+      },
+      "edge_cases": [
+        {
+          "condition": "user did not participate in a week",
+          "result": "streak broken, reset to 0"
+        },
+        {
+          "condition": "week not yet graded",
+          "result": "do not include in streak calculation, use most recent completed week"
+        },
+        {
+          "condition": "tied accuracy exactly at threshold",
+          "result": "counts as meeting threshold, streak continues"
+        }
+      ],
+      "precision_requirements": {
+        "streak_length": "whole integers",
+        "threshold": "2 decimal places"
+      },
+      "rounding_rules": "Streaks are exact counts, no rounding"
+    },
+
+    "calculateWeeklyParticipationRate": {
+      "function_name": "computeLeaguePickemsParticipation",
+      "formula": "participation_rate = (users_who_submitted_picks / total_league_members) * 100",
+      "input_parameters": [
+        {
+          "name": "leagueId",
+          "type": "uuid",
+          "required": true
+        },
+        {
+          "name": "season",
+          "type": "integer",
+          "required": true
+        },
+        {
+          "name": "weekNumber",
+          "type": "integer",
+          "required": true
+        }
+      ],
+      "output_format": {
+        "participation_rate": "float (1 decimal place)",
+        "participants_count": "integer",
+        "total_members": "integer"
+      },
+      "edge_cases": [
+        {
+          "condition": "no league members",
+          "result": "participation_rate = null, both counts = 0"
+        },
+        {
+          "condition": "week not yet locked",
+          "result": "calculate based on current submissions, indicate 'in_progress'"
+        },
+        {
+          "condition": "partial picks counted as participation",
+          "result": "user counts as participant if submitted at least 1 pick"
+        }
+      ],
+      "precision_requirements": {
+        "rate": "1 decimal place (e.g., 68.4%)",
+        "counts": "whole integers"
+      },
+      "rounding_rules": "Rate rounded to 1 decimal place, counts exact"
+    }
+  }
+}

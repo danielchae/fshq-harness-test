@@ -1,0 +1,163 @@
+{
+  "subcomponentId": "gap-claim-release-grace",
+  "componentId": "onboarding-access-control",
+  "tracesTo": [
+    "SOW: Onboarding, Roles & Access Control",
+    "SOW: League Connection & Identity",
+    "Gap Analysis: Priority 2 - Quality Enhancements"
+  ],
+  "stories": [
+    {
+      "id": "CRG-001",
+      "title": "Release Team Claim Within Grace Period",
+      "user": "Manager",
+      "goal": "release my team claim within 24 hours if I claimed the wrong team by mistake",
+      "benefit": "I can correct my mistake without needing to contact league admins or wait for approval",
+      "acceptanceCriteria": [
+        "User can access 'Release Team Claim' option in profile or settings within 24 hours of claiming",
+        "System displays warning dialog explaining consequences of releasing claim",
+        "User confirms release action with secondary confirmation prompt",
+        "System immediately releases team claim and removes manager role assignment",
+        "Released team returns to available teams list for other users to claim",
+        "User is redirected to role selection to reclaim correct team or join as fan",
+        "System logs claim release with timestamp for audit purposes"
+      ]
+    },
+    {
+      "id": "CRG-002",
+      "title": "View Grace Period Status and Countdown",
+      "user": "Manager",
+      "goal": "see how much time remains in my grace period for releasing team claim",
+      "benefit": "I know when my claim becomes permanent and can act quickly if I made a mistake",
+      "acceptanceCriteria": [
+        "User profile displays grace period status for recent team claims",
+        "System shows countdown timer indicating time remaining in 24-hour grace period",
+        "Countdown displays in clear format (e.g., '18 hours 23 minutes remaining')",
+        "System displays 'Claim Locked' status after grace period expires",
+        "User receives notification 1 hour before grace period expires",
+        "System provides clear explanation of what happens when grace period expires"
+      ]
+    },
+    {
+      "id": "CRG-003",
+      "title": "Prevent Content Loss During Grace Period Release",
+      "user": "Manager",
+      "goal": "ensure my posts and interactions are handled appropriately if I release team claim",
+      "benefit": "I don't lose my content or cause data inconsistencies when correcting a claim mistake",
+      "acceptanceCriteria": [
+        "System warns user if they have created posts or comments before releasing claim",
+        "System preserves all user-generated content when claim is released",
+        "Released content remains attributed to user but team association is removed or updated",
+        "User can optionally choose to delete posts made with wrong team identity during release",
+        "System updates user attribution on existing content to reflect role change",
+        "System maintains content integrity and prevents broken references after release"
+      ]
+    },
+    {
+      "id": "CRG-004",
+      "title": "Notify Admins of Grace Period Releases",
+      "user": "League Admin",
+      "goal": "be informed when users release team claims within grace period",
+      "benefit": "I can monitor claim activity and identify potential onboarding issues or confusion",
+      "acceptanceCriteria": [
+        "System sends notification to league admins when user releases claim in grace period",
+        "Notification includes user identity, team that was released, and time of release",
+        "Admin can view grace period release history in admin dashboard",
+        "Dashboard displays release reasons if user provided feedback during release",
+        "Admin can identify patterns indicating confusing team claim process",
+        "System provides analytics on grace period release rates for process improvement"
+      ]
+    },
+    {
+      "id": "CRG-005",
+      "title": "Reclaim Different Team After Grace Period Release",
+      "user": "Manager",
+      "goal": "immediately claim the correct team after releasing wrong team in grace period",
+      "benefit": "I can fix my mistake quickly in single session without losing access or waiting",
+      "acceptanceCriteria": [
+        "System immediately returns user to team selection interface after releasing claim",
+        "User can browse available teams and claim correct team without delay",
+        "System validates new claim using same platform username/ID verification process",
+        "New claim starts fresh 24-hour grace period independently",
+        "System prevents users from repeatedly claiming and releasing same team (maximum 2 releases per day)",
+        "User receives confirmation of successful reclaim with new grace period countdown"
+      ]
+    },
+    {
+      "id": "CRG-006",
+      "title": "Request Admin Override for Post-Grace Period Changes",
+      "user": "Manager",
+      "goal": "request admin help to change team claim after grace period has expired",
+      "benefit": "I have recourse if I discover mistake after grace period without being permanently stuck",
+      "acceptanceCriteria": [
+        "User can submit 'Request Team Change' form from profile after grace period expires",
+        "Form requires user to explain reason for requested change",
+        "System creates admin approval request with user details and explanation",
+        "Admin receives notification of team change request",
+        "Request enters admin queue for manual review and approval",
+        "User receives notification when admin approves or denies request",
+        "Approved requests allow admin to manually reassign user to different team"
+      ]
+    },
+    {
+      "id": "CRG-007",
+      "title": "Extend Grace Period for Complex Situations",
+      "user": "League Admin",
+      "goal": "manually extend grace period for users in special circumstances",
+      "benefit": "I can accommodate users who need more time due to platform issues or legitimate confusion",
+      "acceptanceCriteria": [
+        "Admin can view all users currently in grace period from admin dashboard",
+        "Admin can select user and extend their grace period by specified time increment",
+        "System updates grace period countdown for selected user",
+        "User receives notification that their grace period has been extended",
+        "Admin can add note explaining reason for extension",
+        "System logs grace period extensions for audit purposes"
+      ]
+    },
+    {
+      "id": "CRG-008",
+      "title": "Configure Grace Period Duration",
+      "user": "League Admin",
+      "goal": "adjust the grace period duration for my league based on our needs",
+      "benefit": "I can set appropriate grace period that balances flexibility with stability",
+      "acceptanceCriteria": [
+        "Admin can access grace period configuration in league settings",
+        "Admin can set grace period duration in hours (minimum 1 hour, maximum 72 hours)",
+        "System provides recommended grace period based on league size and complexity",
+        "Changes to grace period duration apply to future claims immediately",
+        "Existing grace periods continue with originally assigned duration",
+        "System displays warning if grace period is set too short or too long"
+      ]
+    },
+    {
+      "id": "CRG-009",
+      "title": "Display Grace Period Education During Claiming",
+      "user": "New User",
+      "goal": "understand grace period policy before claiming team",
+      "benefit": "I know I have safety net if I make mistake and can claim with confidence",
+      "acceptanceCriteria": [
+        "Team selection interface displays clear explanation of grace period policy",
+        "System shows grace period duration and what actions are allowed during period",
+        "User sees examples of common mistakes grace period helps resolve",
+        "System provides link to detailed help article about claim process",
+        "Grace period information is displayed before user confirms team claim",
+        "System includes grace period details in claim confirmation message"
+      ]
+    },
+    {
+      "id": "CRG-010",
+      "title": "Prevent Team Hopping via Grace Period Abuse",
+      "user": "System",
+      "goal": "prevent users from exploiting grace period to frequently change teams",
+      "benefit": "team claims remain stable and users can't manipulate system for unfair advantages",
+      "acceptanceCriteria": [
+        "System limits users to maximum 2 claim releases per 7-day period",
+        "System flags users who repeatedly use grace period releases",
+        "Admin receives notification if user attempts excessive claim releases",
+        "System temporarily blocks claim ability for users who abuse grace period",
+        "User receives clear message explaining why claim ability is restricted",
+        "Admin can review flagged users and manually restore claim ability if appropriate"
+      ]
+    }
+  ]
+}
