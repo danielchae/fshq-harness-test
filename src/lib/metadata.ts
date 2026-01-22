@@ -2,7 +2,16 @@ import type { Metadata } from 'next';
 
 const SITE_NAME = 'FSHQ.gg';
 const SITE_DESCRIPTION = "Your Fantasy Sports Clubhouse - Connect leagues, track pick'ems, and compete on leaderboards";
-const SITE_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://fshq.gg';
+
+// Ensure URL has protocol prefix
+function normalizeUrl(url: string): string {
+  if (!url.startsWith('http://') && !url.startsWith('https://')) {
+    return `https://${url}`;
+  }
+  return url;
+}
+
+const SITE_URL = normalizeUrl(process.env.NEXT_PUBLIC_APP_URL || 'https://fshq.gg');
 
 /**
  * Base metadata configuration for FSHQ.gg
