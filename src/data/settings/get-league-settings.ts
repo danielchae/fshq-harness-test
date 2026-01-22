@@ -1,4 +1,4 @@
-import { unstable_cache } from 'next/cache';
+import { revalidateTag, unstable_cache } from 'next/cache';
 
 import { prisma } from '@/lib/db';
 
@@ -154,18 +154,17 @@ export async function updateLeagueSettings(input: UpdateLeagueSettingsInput): Pr
       leagueUpdateData.joinRule = updates.joinRule === 'auto-join' ? 'auto_join' : 'approval_required';
     }
 
-    console.log('[updateLeagueSettings] Updating league with:', leagueUpdateData, 'for league id:', league.id);
-
-    const updatedLeagueResult = await prisma.league.update({
+    await prisma.league.update({
       where: { id: league.id },
       data: leagueUpdateData,
     });
 
-    console.log('[updateLeagueSettings] League update result:', {
-      id: updatedLeagueResult.id,
-      visibility: updatedLeagueResult.visibility,
-    });
+    // Invalidate the league cache since visibility changed
+    revalidateTag(`league-${slug}`);
   }
+
+  // Invalidate settings cache
+  revalidateTag(`settings-${slug}`);
 
   // Fetch the updated league for the response
   const updatedLeague = await prisma.league.findUnique({
