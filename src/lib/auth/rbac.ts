@@ -79,7 +79,11 @@ export async function getAuthState(): Promise<{
   }
 
   // Check for NextAuth session token
-  const sessionToken = cookieStore.get('authjs.session-token')?.value;
+  // In development (HTTP): authjs.session-token
+  // In production (HTTPS): __Secure-authjs.session-token
+  const sessionToken =
+    cookieStore.get('authjs.session-token')?.value ||
+    cookieStore.get('__Secure-authjs.session-token')?.value;
   if (sessionToken) {
     // Check role from session token pattern (for testing)
     for (const { pattern, role } of TOKEN_ROLE_PATTERNS) {

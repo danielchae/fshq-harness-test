@@ -87,7 +87,11 @@ function isAuthenticated(request: NextRequest): boolean {
   }
 
   // Check for NextAuth session token
-  const sessionToken = request.cookies.get('authjs.session-token')?.value;
+  // In development (HTTP): authjs.session-token
+  // In production (HTTPS): __Secure-authjs.session-token
+  const sessionToken =
+    request.cookies.get('authjs.session-token')?.value ||
+    request.cookies.get('__Secure-authjs.session-token')?.value;
   if (sessionToken) {
     return true;
   }
