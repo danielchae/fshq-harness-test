@@ -90,7 +90,7 @@ const circuitBreakers = new Map<string, CircuitBreakerState>();
 /**
  * State change listeners for monitoring
  */
-const stateChangeListeners: Array<(endpoint: string, oldState: CircuitState, newState: CircuitState) => void> = [];
+const stateChangeListeners: ((endpoint: string, oldState: CircuitState, newState: CircuitState) => void)[] = [];
 
 /**
  * Get or create circuit breaker state for an endpoint

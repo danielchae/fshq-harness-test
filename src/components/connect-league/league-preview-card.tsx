@@ -70,9 +70,7 @@ export function LeaguePreviewCard({ league, onConfirm, onBack, onJoinExisting }:
             {league.avatar ? (
               <img
                 src={
-                  league.avatar.startsWith('http')
-                    ? league.avatar
-                    : `https://sleepercdn.com/avatars/${league.avatar}`
+                  league.avatar.startsWith('http') ? league.avatar : `https://sleepercdn.com/avatars/${league.avatar}`
                 }
                 alt={league.name}
                 className="size-16 rounded-lg object-cover"

@@ -6,6 +6,7 @@ export interface TeamRanking {
   teamId: string;
   teamName: string;
   ownerUsername: string;
+  avatarUrl?: string;
   record: {
     wins: number;
     losses: number;
@@ -106,14 +107,65 @@ function calculateMovement(previousRank: number | null, currentRank: number): nu
 }
 
 /**
- * Create an empty power rankings response
+ * Create initial power rankings from league teams
  * Used when no rankings exist for the requested week
+ * Fetches all teams and orders them by record (wins desc, losses asc)
  */
-function createEmptyRankingsResponse(
+async function createInitialRankingsFromTeams(
+  leagueId: string,
   leagueSlug: string,
   weekNumber: number,
   season: number
-): PowerRankingsData {
+): Promise<PowerRankingsData> {
+  // Fetch all teams for this league
+  const teams = await prisma.team.findMany({
+    where: { leagueId },
+    select: {
+      id: true,
+      name: true,
+      ownerUsername: true,
+      avatarUrl: true,
+      wins: true,
+      losses: true,
+      ties: true,
+    },
+    orderBy: [
+      { wins: 'desc' },
+      { losses: 'asc' },
+      { name: 'asc' },
+    ],
+  });
+
+  // Convert teams to initial rankings
+  const rankings: TeamRanking[] = teams.map((team, index) => ({
+    id: `initial-${team.id}`,
+    teamId: team.id,
+    teamName: team.name,
+    ownerUsername: team.ownerUsername ?? '',
+    avatarUrl: team.avatarUrl ?? undefined,
+    record: {
+      wins: team.wins,
+      losses: team.losses,
+      ties: team.ties,
+    },
+    rank: index + 1,
+    previousRank: undefined,
+    commentary: '',
+  }));
+
+  return {
+    leagueSlug,
+    seasonId: `season-${season}`,
+    weekNumber,
+    rankings,
+    status: 'draft',
+  };
+}
+
+/**
+ * Create an empty power rankings response (no league found)
+ */
+function createEmptyRankingsResponse(leagueSlug: string, weekNumber: number, season: number): PowerRankingsData {
   return {
     leagueSlug,
     seasonId: `season-${season}`,
@@ -158,6 +210,7 @@ export async function getPowerRankings(input: GetPowerRankingsInput): Promise<Po
               id: true,
               name: true,
               ownerUsername: true,
+              avatarUrl: true,
               wins: true,
               losses: true,
               ties: true,
@@ -169,9 +222,9 @@ export async function getPowerRankings(input: GetPowerRankingsInput): Promise<Po
     },
   });
 
-  // If no power ranking in database, return empty state
+  // If no power ranking in database, return initial rankings from league teams
   if (!powerRanking) {
-    return createEmptyRankingsResponse(leagueSlug, weekNumber, currentSeason);
+    return createInitialRankingsFromTeams(league.id, leagueSlug, weekNumber, currentSeason);
   }
 
   // Build the PowerRankingsData response from database
@@ -180,6 +233,7 @@ export async function getPowerRankings(input: GetPowerRankingsInput): Promise<Po
     teamId: entry.teamId,
     teamName: entry.team.name,
     ownerUsername: entry.team.ownerUsername ?? '',
+    avatarUrl: entry.team.avatarUrl ?? undefined,
     record: {
       wins: entry.team.wins,
       losses: entry.team.losses,
@@ -268,6 +322,7 @@ export async function updatePowerRankings(input: UpdatePowerRankingsInput): Prom
               id: true,
               name: true,
               ownerUsername: true,
+              avatarUrl: true,
               wins: true,
               losses: true,
               ties: true,
@@ -287,6 +342,7 @@ export async function updatePowerRankings(input: UpdatePowerRankingsInput): Prom
     teamId: entry.teamId,
     teamName: entry.team.name,
     ownerUsername: entry.team.ownerUsername ?? '',
+    avatarUrl: entry.team.avatarUrl ?? undefined,
     record: {
       wins: entry.team.wins,
       losses: entry.team.losses,
@@ -363,6 +419,7 @@ export async function updateTeamCommentary(input: UpdateTeamCommentaryInput): Pr
           id: true,
           name: true,
           ownerUsername: true,
+          avatarUrl: true,
           wins: true,
           losses: true,
           ties: true,
@@ -378,6 +435,7 @@ export async function updateTeamCommentary(input: UpdateTeamCommentaryInput): Pr
     teamId: entry.teamId,
     teamName: entry.team.name,
     ownerUsername: entry.team.ownerUsername ?? '',
+    avatarUrl: entry.team.avatarUrl ?? undefined,
     record: {
       wins: entry.team.wins,
       losses: entry.team.losses,

@@ -5,6 +5,7 @@ import { unstable_cache } from 'next/cache';
 import { auth } from '@/lib/auth';
 import { getAccessibleLeagueBySlug } from '@/lib/auth/rls-policies';
 import { prisma } from '@/lib/db';
+import { getCurrentNFLWeek, NFL_TOTAL_WEEKS } from '@/lib/nfl-week';
 
 import type {
   PickDistribution,
@@ -15,10 +16,6 @@ import type {
   UserPick,
   WeeklyScore,
 } from '@/types/pickems';
-
-// Constants for pickems
-const DEFAULT_CURRENT_WEEK = 10;
-const TOTAL_WEEKS = 17;
 
 // Result type for savePicks that includes lock error state
 export interface SavePicksResult {
@@ -31,16 +28,6 @@ export interface GetPickemsInput {
   leagueSlug: string;
   weekNumber?: number;
   userId?: string;
-}
-
-/**
- * Get the current week based on season start date
- * For now, returns DEFAULT_CURRENT_WEEK (can be enhanced to calculate dynamically)
- */
-function getCurrentWeek(): number {
-  // In production, this would calculate based on the season start date
-  // For now, use the default week which matches the mock behavior
-  return DEFAULT_CURRENT_WEEK;
 }
 
 /**
@@ -147,7 +134,7 @@ async function getRevealedPicks(
  * Shows weekly score and league average.
  */
 export async function getPickems(input: GetPickemsInput): Promise<PickemsResponse> {
-  const currentWeek = getCurrentWeek();
+  const currentWeek = await getCurrentNFLWeek();
   const { leagueSlug, weekNumber = currentWeek } = input;
 
   // Get authenticated user from session
@@ -177,7 +164,7 @@ export async function getPickems(input: GetPickemsInput): Promise<PickemsRespons
     return {
       matchups: [],
       currentWeek,
-      totalWeeks: TOTAL_WEEKS,
+      totalWeeks: NFL_TOTAL_WEEKS,
       picks: [],
       hasSubmittedPicks: false,
       isWeekComplete: false,
@@ -322,7 +309,7 @@ export async function getPickems(input: GetPickemsInput): Promise<PickemsRespons
   return {
     matchups: pickemMatchups,
     currentWeek,
-    totalWeeks: TOTAL_WEEKS,
+    totalWeeks: NFL_TOTAL_WEEKS,
     picks,
     lockTimeGlobal,
     weeklyScore,
@@ -364,7 +351,8 @@ export interface SavePicksInput {
  * and upserts PickemEntry records for each matchup.
  */
 export async function savePicks(input: SavePicksInput): Promise<SavePicksResult> {
-  const { leagueSlug, weekNumber = DEFAULT_CURRENT_WEEK, season = new Date().getFullYear(), picks } = input;
+  const currentWeekDefault = await getCurrentNFLWeek();
+  const { leagueSlug, weekNumber = currentWeekDefault, season = new Date().getFullYear(), picks } = input;
 
   // Get authenticated user from session
   const session = await auth();

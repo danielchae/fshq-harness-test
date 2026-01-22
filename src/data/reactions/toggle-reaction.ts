@@ -3,6 +3,7 @@
 
 import { requireLeagueAccess, RLSError } from '@/lib/auth/rls-policies';
 import { prisma } from '@/lib/db';
+import { getCurrentNFLWeek } from '@/lib/nfl-week';
 
 export interface ToggleReactionInput {
   targetId: string;
@@ -231,8 +232,8 @@ export async function getReactionCounts(
  * This is called asynchronously to not block the main response.
  */
 async function updateEngagementMetrics(leagueId: string, action: 'added' | 'removed'): Promise<void> {
-  // Get current week number (simplified - in production this would come from NFL state)
-  const currentWeek = Math.ceil((Date.now() - new Date('2025-09-01').getTime()) / (7 * 24 * 60 * 60 * 1000));
+  // Get current week number from NFL state
+  const currentWeek = await getCurrentNFLWeek();
 
   try {
     if (action === 'added') {

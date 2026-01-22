@@ -4,7 +4,7 @@ import { AccessDenied } from '@/components/commissioner-desk/access-denied';
 import { DeskContent } from '@/components/commissioner-desk/desk-content';
 import { PageHeader } from '@/components/layout/page-header';
 import { getDeskData } from '@/data/desk/get-desk-data';
-import { checkRole } from '@/lib/auth/rbac';
+import { getUserRole } from '@/lib/auth/get-user-role';
 
 interface DeskPageProps {
   params: Promise<{ slug: string }>;
@@ -13,8 +13,9 @@ interface DeskPageProps {
 export default async function DeskPage({ params }: DeskPageProps) {
   const { slug } = await params;
 
-  // Check user role for commissioner access using RBAC
-  const isCommissioner = await checkRole('commissioner');
+  // Check user role for commissioner access using actual database lookup
+  const userRole = await getUserRole(slug);
+  const isCommissioner = userRole === 'commissioner';
 
   // If user is not a commissioner, show access denied
   if (!isCommissioner) {

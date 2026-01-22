@@ -4,6 +4,7 @@
 import { unstable_cache } from 'next/cache';
 
 import { prisma } from '@/lib/db';
+import { getCurrentNFLWeek, NFL_TOTAL_WEEKS } from '@/lib/nfl-week';
 
 import type { DisplayMatchup, MatchupsResponse, MatchupTeamDisplay } from '@/types/matchups';
 import type { Decimal } from '@prisma/client/runtime/client';
@@ -13,10 +14,6 @@ export interface GetMatchupsInput {
   weekNumber?: number;
   includePredictions?: boolean; // Include commissioner predictions
 }
-
-// Default values for current week and total weeks
-const DEFAULT_CURRENT_WEEK = 3;
-const DEFAULT_TOTAL_WEEKS = 17; // NFL regular season weeks
 
 /**
  * Helper to convert Decimal to number for score fields
@@ -147,14 +144,10 @@ async function fetchMatchupsFromDb(
     };
   });
 
-  // Calculate current week based on the latest incomplete matchup or default
-  // For now, use the requested week as current if matchups exist
-  const currentWeek = matchups.length > 0 ? weekNumber : DEFAULT_CURRENT_WEEK;
-
   return {
     matchups: displayMatchups,
-    currentWeek,
-    totalWeeks: DEFAULT_TOTAL_WEEKS,
+    currentWeek: weekNumber,
+    totalWeeks: NFL_TOTAL_WEEKS,
   };
 }
 
@@ -169,7 +162,8 @@ async function fetchMatchupsFromDb(
  * @returns MatchupsResponse with bracket data
  */
 export async function getMatchups(input: GetMatchupsInput): Promise<MatchupsResponse> {
-  const { leagueSlug, weekNumber = DEFAULT_CURRENT_WEEK, includePredictions = true } = input;
+  const currentNFLWeek = await getCurrentNFLWeek();
+  const { leagueSlug, weekNumber = currentNFLWeek, includePredictions = true } = input;
 
   const cacheKey = ['matchups', leagueSlug, String(weekNumber), includePredictions ? 'predictions' : 'base'];
   const getCachedMatchups = unstable_cache(
@@ -194,6 +188,6 @@ export async function getMatchups(input: GetMatchupsInput): Promise<MatchupsResp
   return {
     matchups: [],
     currentWeek: weekNumber,
-    totalWeeks: DEFAULT_TOTAL_WEEKS,
+    totalWeeks: NFL_TOTAL_WEEKS,
   };
 }

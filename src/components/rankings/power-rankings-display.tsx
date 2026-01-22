@@ -10,6 +10,7 @@ import { Card } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { getCurrentNFLWeekSync, NFL_TOTAL_WEEKS } from '@/lib/nfl-week';
 
 import type { PowerRankingsData, TeamRanking } from '@/data/power-rankings/get-power-rankings';
 
@@ -19,8 +20,11 @@ interface PowerRankingsDisplayProps {
   availableWeeks?: number[];
 }
 
-export function PowerRankingsDisplay({ leagueSlug, initialWeek = 3, availableWeeks }: PowerRankingsDisplayProps) {
-  const [selectedWeek, setSelectedWeek] = useState(initialWeek);
+export function PowerRankingsDisplay({ leagueSlug, initialWeek, availableWeeks }: PowerRankingsDisplayProps) {
+  // Use calculated current week as fallback if no initial week provided
+  const defaultWeek = initialWeek ?? getCurrentNFLWeekSync();
+
+  const [selectedWeek, setSelectedWeek] = useState(defaultWeek);
   const [rankings, setRankings] = useState<TeamRanking[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -28,7 +32,7 @@ export function PowerRankingsDisplay({ leagueSlug, initialWeek = 3, availableWee
   const [showTrajectory, setShowTrajectory] = useState(false);
 
   // Default available weeks if not provided
-  const weeks = availableWeeks || Array.from({ length: 17 }, (_, i) => i + 1);
+  const weeks = availableWeeks || Array.from({ length: NFL_TOTAL_WEEKS }, (_, i) => i + 1);
 
   const fetchRankings = useCallback(async () => {
     setIsLoading(true);

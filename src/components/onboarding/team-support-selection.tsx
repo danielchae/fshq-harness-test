@@ -7,7 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 
-import type { Team } from '@/data/fixtures/teams';
+import type { Team } from '@/data/teams/get-teams';
 
 interface TeamSupportSelectionProps {
   teams: Team[];

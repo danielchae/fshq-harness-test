@@ -9,16 +9,18 @@
  * Push notifications are ready for integration with OneSignal/FCM.
  */
 
+import { Prisma } from '@prisma/client';
+
 import { prisma } from '@/lib/db';
 import {
-  sendPickReminderEmail,
-  sendStatCorrectionEmail,
-  sendPowerRankingsPublishedEmail,
-  sendMatchupResultEmail,
-  sendCommentReplyEmail,
-  sendMembershipApprovedEmail,
-  sendTeamClaimedEmail,
   isEmailEnabled,
+  sendCommentReplyEmail,
+  sendMatchupResultEmail,
+  sendMembershipApprovedEmail,
+  sendPickReminderEmail,
+  sendPowerRankingsPublishedEmail,
+  sendStatCorrectionEmail,
+  sendTeamClaimedEmail,
 } from '@/lib/email';
 
 // Notification types
@@ -170,7 +172,7 @@ export async function markAsRead(userId: string, notificationId: string): Promis
       preferences: {
         ...prefs,
         notificationsList: updatedNotifications,
-      },
+      } as unknown as Prisma.InputJsonValue,
     },
   });
 }
@@ -195,7 +197,7 @@ export async function markAllAsRead(userId: string): Promise<void> {
       preferences: {
         ...prefs,
         notificationsList: updatedNotifications,
-      },
+      } as unknown as Prisma.InputJsonValue,
     },
   });
 }
@@ -258,7 +260,7 @@ export async function sendNotification(input: SendNotificationInput): Promise<{ 
           preferences: {
             ...userPrefs,
             notificationsList: updatedNotifications,
-          },
+          } as unknown as Prisma.InputJsonValue,
         },
       });
     }
@@ -395,12 +397,7 @@ async function sendEmailNotificationByType(
  *
  * To enable, set ONESIGNAL_APP_ID and ONESIGNAL_API_KEY environment variables
  */
-async function sendPushNotification(
-  userId: string,
-  title: string,
-  message: string,
-  _link?: string
-): Promise<void> {
+async function sendPushNotification(userId: string, title: string, message: string, _link?: string): Promise<void> {
   // Check if push notifications are configured
   const oneSignalAppId = process.env.ONESIGNAL_APP_ID;
   const oneSignalApiKey = process.env.ONESIGNAL_API_KEY;
@@ -415,7 +412,7 @@ async function sendPushNotification(
     const response = await fetch('https://onesignal.com/api/v1/notifications', {
       method: 'POST',
       headers: {
-        'Authorization': `Basic ${oneSignalApiKey}`,
+        Authorization: `Basic ${oneSignalApiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
@@ -648,7 +645,7 @@ export async function notifyMatchupResult(
   opponentScore: number
 ): Promise<void> {
   const score = `${yourScore.toFixed(1)} - ${opponentScore.toFixed(1)}`;
-  
+
   // Send in-app notification
   await sendNotification({
     userId,
@@ -693,11 +690,7 @@ export async function notifyMatchupResult(
 /**
  * Send team claimed notification
  */
-export async function notifyTeamClaimed(
-  userId: string,
-  leagueSlug: string,
-  teamName: string
-): Promise<void> {
+export async function notifyTeamClaimed(userId: string, leagueSlug: string, teamName: string): Promise<void> {
   // Send in-app notification
   await sendNotification({
     userId,
@@ -736,10 +729,7 @@ export async function notifyTeamClaimed(
 /**
  * Send membership approved notification
  */
-export async function notifyMembershipApproved(
-  userId: string,
-  leagueSlug: string
-): Promise<void> {
+export async function notifyMembershipApproved(userId: string, leagueSlug: string): Promise<void> {
   // Get league info
   const league = await prisma.league.findUnique({
     where: { slug: leagueSlug },

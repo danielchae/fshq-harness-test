@@ -8,8 +8,9 @@
  * - Filtering by transaction type (trade, add, drop, waiver)
  */
 
-import type { SleeperTransaction, SleeperTransactionType, SleeperTransactionStatus } from '@/types/sleeper';
-import { SLEEPER_API_BASE, MAX_RETRIES } from './fetch-league';
+import { MAX_RETRIES, SLEEPER_API_BASE } from './fetch-league';
+
+import type { SleeperTransaction, SleeperTransactionStatus, SleeperTransactionType } from '@/types/sleeper';
 
 // ============================================================================
 // Configuration

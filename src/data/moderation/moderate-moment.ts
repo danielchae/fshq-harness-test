@@ -7,7 +7,7 @@
  * @module src/data/moderation/moderate-moment
  */
 
-import { revalidatePath } from 'next/cache';
+import { revalidatePath, revalidateTag } from 'next/cache';
 
 import { canModerateLeague, RLSError } from '@/lib/auth/rls-policies';
 import { prisma } from '@/lib/db';
@@ -94,9 +94,10 @@ export async function pinMoment(input: PinMomentInput): Promise<ModerationResult
       },
     });
 
-    // Revalidate feed caches
+    // Revalidate feed caches (paths for server components, tag for client-side fetches)
     revalidatePath(`/leagues/${moment.league.slug}`);
     revalidatePath(`/leagues/${moment.league.slug}/feed`);
+    revalidateTag(`feed-${moment.league.slug}`);
 
     return { success: true, pinned: pin };
   } catch (error) {
@@ -169,10 +170,11 @@ export async function hideMoment(input: HideMomentInput): Promise<ModerationResu
       },
     });
 
-    // Revalidate feed caches
+    // Revalidate feed caches (paths for server components, tag for client-side fetches)
     revalidatePath(`/leagues/${moment.league.slug}`);
     revalidatePath(`/leagues/${moment.league.slug}/feed`);
     revalidatePath(`/leagues/${moment.league.slug}/moderation`);
+    revalidateTag(`feed-${moment.league.slug}`);
 
     return { success: true, hidden: true };
   } catch (error) {
@@ -249,10 +251,11 @@ export async function deleteMoment(input: DeleteMomentInput): Promise<Moderation
       });
     }
 
-    // Revalidate feed caches
+    // Revalidate feed caches (paths for server components, tag for client-side fetches)
     revalidatePath(`/leagues/${moment.league.slug}`);
     revalidatePath(`/leagues/${moment.league.slug}/feed`);
     revalidatePath(`/leagues/${moment.league.slug}/moderation`);
+    revalidateTag(`feed-${moment.league.slug}`);
 
     return { success: true, deleted: true };
   } catch (error) {

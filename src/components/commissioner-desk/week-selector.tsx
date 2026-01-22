@@ -4,7 +4,7 @@ import { Check, Circle, Clock, FileText } from 'lucide-react';
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
-import type { Week } from '@/data/fixtures/desk';
+import type { Week } from '@/data/desk/get-desk-data';
 
 interface WeekSelectorProps {
   weeks: Week[];

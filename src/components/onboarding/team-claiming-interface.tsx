@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 
-import type { Team } from '@/data/fixtures/teams';
+import type { Team } from '@/data/teams/get-teams';
 
 interface TeamClaimingInterfaceProps {
   teams: Team[];
@@ -38,7 +38,7 @@ export function TeamClaimingInterface({
       (team) =>
         team.name.toLowerCase().includes(query) ||
         team.ownerUsername.toLowerCase().includes(query) ||
-        team.sleeperUsername.toLowerCase().includes(query)
+        (team.sleeperUsername?.toLowerCase().includes(query) ?? false)
     );
   }, [teams, searchQuery]);
 

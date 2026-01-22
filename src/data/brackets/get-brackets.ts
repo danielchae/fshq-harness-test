@@ -4,6 +4,7 @@
 import { unstable_cache } from 'next/cache';
 
 import { prisma } from '@/lib/db';
+import { getCurrentNFLWeek, getCurrentNFLWeekSync } from '@/lib/nfl-week';
 
 import type {
   BracketMatchup,
@@ -21,7 +22,6 @@ export interface GetBracketInput {
 }
 
 // Default values
-const DEFAULT_CURRENT_WEEK = 15;
 const DEFAULT_PLAYOFFS_START_WEEK = 14;
 const DEFAULT_SEASON = 2025;
 
@@ -123,7 +123,7 @@ function buildBracketFromMatchups(
   type: 'winners' | 'consolation'
 ): { bracket: PlayoffBracket | null; minWeek: number; maxWeek: number } {
   if (matchups.length === 0) {
-    return { bracket: null, minWeek: DEFAULT_PLAYOFFS_START_WEEK, maxWeek: DEFAULT_CURRENT_WEEK };
+    return { bracket: null, minWeek: DEFAULT_PLAYOFFS_START_WEEK, maxWeek: getCurrentNFLWeekSync() };
   }
 
   // Group matchups by round
@@ -399,10 +399,11 @@ async function fetchBracketFromDb(leagueSlug: string, requestedSeason?: number):
 
     const availableSeasons = seasonsWithPlayoffs.map((s) => s.season);
 
+    const currentWeek = await getCurrentNFLWeek();
     return {
       playoffsStartWeek: DEFAULT_PLAYOFFS_START_WEEK,
       hasStarted: false,
-      currentWeek: DEFAULT_CURRENT_WEEK,
+      currentWeek,
       bracket: null,
       hasConsolation: false,
       consolationBracket: null,
@@ -412,24 +413,14 @@ async function fetchBracketFromDb(leagueSlug: string, requestedSeason?: number):
   }
 
   // Build winners bracket
-  const { bracket, minWeek, maxWeek } = buildBracketFromMatchups(
-    playoffMatchups,
-    league.id,
-    season,
-    'winners'
-  );
+  const { bracket, minWeek, maxWeek } = buildBracketFromMatchups(playoffMatchups, league.id, season, 'winners');
 
   // Build consolation bracket if there are consolation matchups
   const hasConsolation = consolationMatchups.length > 0;
   let consolationBracket: PlayoffBracket | null = null;
 
   if (hasConsolation) {
-    const consolationResult = buildBracketFromMatchups(
-      consolationMatchups,
-      league.id,
-      season,
-      'consolation'
-    );
+    const consolationResult = buildBracketFromMatchups(consolationMatchups, league.id, season, 'consolation');
     consolationBracket = consolationResult.bracket;
   }
 
@@ -503,11 +494,12 @@ export async function getBracket(input: GetBracketInput): Promise<BracketRespons
 
   // Fallback: return empty response if league not found
   const currentSeason = season ?? DEFAULT_SEASON;
+  const currentWeek = await getCurrentNFLWeek();
 
   return {
     playoffsStartWeek: DEFAULT_PLAYOFFS_START_WEEK,
     hasStarted: false,
-    currentWeek: DEFAULT_CURRENT_WEEK,
+    currentWeek,
     bracket: null,
     hasConsolation: false,
     availableSeasons: [currentSeason],

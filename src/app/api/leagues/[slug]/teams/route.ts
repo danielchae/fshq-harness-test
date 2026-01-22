@@ -1,22 +1,42 @@
-import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getTeams } from '@/data/teams/get-teams';
+import { auth } from '@/lib/auth';
+import { checkLeaguePublicAccess } from '@/lib/auth/public-access';
+import { getUserRoleBySlug } from '@/lib/auth/rls-policies';
 
 interface RouteContext {
   params: Promise<{ slug: string }>;
 }
 
-export async function GET(request: NextRequest, context: RouteContext) {
-  // Check authentication via session token cookie
-  const cookieStore = await cookies();
-  const sessionToken = cookieStore.get('authjs.session-token')?.value;
-  if (!sessionToken) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+// GET /api/leagues/[slug]/teams - Get teams for a league
+// Allows public access for public leagues
+export async function GET(_request: NextRequest, context: RouteContext) {
+  const { slug } = await context.params;
+
+  // Check if league is public
+  const publicAccess = await checkLeaguePublicAccess(slug);
+
+  if (!publicAccess.exists) {
+    return NextResponse.json({ error: 'League not found' }, { status: 404 });
+  }
+
+  // Get session (may be null for public visitors)
+  const session = await auth();
+  const userId = session?.user?.id;
+
+  // If league is private, require authentication and membership
+  if (!publicAccess.isPublic) {
+    if (!userId) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+    }
+    const role = await getUserRoleBySlug(userId, slug);
+    if (!role) {
+      return NextResponse.json({ error: 'Access denied' }, { status: 403 });
+    }
   }
 
   try {
-    const { slug } = await context.params;
     const teams = await getTeams({ leagueSlug: slug });
 
     // Transform to match the expected API response format

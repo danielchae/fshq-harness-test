@@ -61,10 +61,7 @@ export function leagueRoute<T extends LeagueSubRoute = ''>(
  * <Link href={leagueHistoryRoute('my-league', '2024')}>
  * // Result: '/leagues/my-league/history/2024'
  */
-export function leagueHistoryRoute(
-  slug: string,
-  year: string | number
-): Route<`/leagues/${string}/history/${string}`> {
+export function leagueHistoryRoute(slug: string, year: string | number): Route<`/leagues/${string}/history/${string}`> {
   return `/leagues/${slug}/history/${year}` as Route<`/leagues/${string}/history/${string}`>;
 }
 
@@ -75,10 +72,7 @@ export function leagueHistoryRoute(
  * <Link href={leagueMomentRoute('my-league', 'moment-123')}>
  * // Result: '/leagues/my-league/moment/moment-123'
  */
-export function leagueMomentRoute(
-  slug: string,
-  momentId: string
-): Route<`/leagues/${string}/moment/${string}`> {
+export function leagueMomentRoute(slug: string, momentId: string): Route<`/leagues/${string}/moment/${string}`> {
   return `/leagues/${slug}/moment/${momentId}` as Route<`/leagues/${string}/moment/${string}`>;
 }
 

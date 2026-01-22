@@ -13,7 +13,7 @@ export default async function MatchupsPage({ params }: MatchupsPageProps) {
   return (
     <div className="space-y-6">
       <PageHeader icon={CalendarDays} title="Matchups" description="View weekly matchups and head-to-head results" />
-      <MatchupsDisplay leagueSlug={slug} initialWeek={3} />
+      <MatchupsDisplay leagueSlug={slug} />
     </div>
   );
 }

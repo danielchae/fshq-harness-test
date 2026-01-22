@@ -12,9 +12,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { asRoute } from '@/types/routes';
 
 import type { PublishResponse } from '@/types/publish';
-import { asRoute } from '@/types/routes';
 
 interface PublishConfirmationModalProps {
   open: boolean;

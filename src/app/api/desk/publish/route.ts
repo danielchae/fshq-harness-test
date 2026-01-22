@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 
 import { publishContent, validateContent } from '@/data/desk/publish-content';
+import { auth } from '@/lib/auth';
+import { getUserRoleBySlug, hasRolePermission } from '@/lib/auth/rls-policies';
 
 import type { PublishRequest } from '@/types/publish';
 
@@ -8,10 +10,22 @@ import type { PublishRequest } from '@/types/publish';
 // Wires to publishContentAction server action with auth and transaction handling
 export async function POST(request: Request) {
   try {
+    // Verify user is authenticated
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ success: false, error: 'Authentication required' }, { status: 401 });
+    }
+
     const body = (await request.json()) as PublishRequest;
 
     if (!body.leagueSlug || !body.seasonId || !body.weekNumber) {
       return NextResponse.json({ success: false, error: 'Missing required fields' }, { status: 400 });
+    }
+
+    // Check user has commissioner role in this league
+    const role = await getUserRoleBySlug(session.user.id, body.leagueSlug);
+    if (!role || !hasRolePermission(role, 'commissioner')) {
+      return NextResponse.json({ success: false, error: 'Commissioner role required' }, { status: 403 });
     }
 
     const result = await publishContent(body);
@@ -30,6 +44,15 @@ export async function POST(request: Request) {
 // GET /api/desk/publish/validate - Validate content before publishing
 export async function GET(request: Request) {
   try {
+    // Verify user is authenticated
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { isValid: false, errors: [{ section: 'general', message: 'Authentication required' }] },
+        { status: 401 }
+      );
+    }
+
     const { searchParams } = new URL(request.url);
     const leagueSlug = searchParams.get('leagueSlug');
     const weekNumber = searchParams.get('weekNumber');
@@ -41,6 +64,15 @@ export async function GET(request: Request) {
       return NextResponse.json(
         { isValid: false, errors: [{ section: 'general', message: 'Missing required parameters' }] },
         { status: 400 }
+      );
+    }
+
+    // Check user has commissioner role in this league
+    const role = await getUserRoleBySlug(session.user.id, leagueSlug);
+    if (!role || !hasRolePermission(role, 'commissioner')) {
+      return NextResponse.json(
+        { isValid: false, errors: [{ section: 'general', message: 'Commissioner role required' }] },
+        { status: 403 }
       );
     }
 

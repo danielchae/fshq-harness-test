@@ -1,13 +1,14 @@
 'use client';
 
 import { AlertCircle, RefreshCw, Trophy } from 'lucide-react';
-import { use } from 'react';
+import { use, useEffect } from 'react';
 
 import { PageHeader } from '@/components/layout/page-header';
 import { LeaderboardTable } from '@/components/leaderboard/leaderboard-table';
 import { RoleFilter } from '@/components/leaderboard/role-filter';
 import { ScopeToggle } from '@/components/leaderboard/scope-toggle';
 import { UserStatsCard } from '@/components/leaderboard/user-stats-card';
+import { WeekSelector } from '@/components/leaderboard/week-selector';
 import { TableSkeleton } from '@/components/skeletons/table-skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -33,7 +34,15 @@ function LeaderboardContent({ slug }: { slug: string }) {
     refetch,
     setScope,
     setRoleFilter,
+    setWeekNumber,
   } = useLeaderboard({ leagueSlug: slug });
+
+  // When switching to weekly scope, initialize weekNumber to currentWeek if not set
+  useEffect(() => {
+    if (scope === 'weekly' && weekNumber === undefined && currentWeek > 0) {
+      setWeekNumber(currentWeek);
+    }
+  }, [scope, weekNumber, currentWeek, setWeekNumber]);
 
   const getScopeTitle = () => {
     switch (scope) {
@@ -62,6 +71,13 @@ function LeaderboardContent({ slug }: { slug: string }) {
   const filterControls = (
     <>
       <ScopeToggle value={scope} onValueChange={setScope} />
+      {scope === 'weekly' && currentWeek > 0 && (
+        <WeekSelector
+          value={weekNumber ?? currentWeek}
+          currentWeek={currentWeek}
+          onValueChange={setWeekNumber}
+        />
+      )}
       <RoleFilter value={roleFilter} onValueChange={setRoleFilter} />
     </>
   );

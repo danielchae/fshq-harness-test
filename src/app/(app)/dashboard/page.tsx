@@ -17,12 +17,13 @@ export default async function DashboardPage() {
 
   // Fetch user's leagues to determine where to redirect
   const leagues = await getUserLeagues(userId);
+  const firstLeague = leagues[0];
 
-  if (leagues.length === 0) {
+  if (!firstLeague) {
     // No leagues - redirect to connect a league
     redirect('/connect-league');
   } else {
     // Has leagues - redirect to their most recent league's feed
-    redirect(leagueRoute(leagues[0].slug));
+    redirect(leagueRoute(firstLeague.slug));
   }
 }

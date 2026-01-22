@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 
 import { approveMember, denyMember, getPendingMembers } from '@/data/members/get-members';
+import { auth } from '@/lib/auth';
+import { getUserRoleBySlug, hasRolePermission } from '@/lib/auth/rls-policies';
 
 interface RouteContext {
   params: Promise<{ slug: string }>;
@@ -8,9 +10,21 @@ interface RouteContext {
 
 // GET /api/leagues/[slug]/members/pending - Get pending membership requests
 export async function GET(_request: Request, { params }: RouteContext) {
+  // Verify user is authenticated
+  const session = await auth();
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+  }
+
   const { slug } = await params;
 
   try {
+    // Check user has commissioner role in this league
+    const role = await getUserRoleBySlug(session.user.id, slug);
+    if (!role || !hasRolePermission(role, 'commissioner')) {
+      return NextResponse.json({ error: 'Commissioner role required' }, { status: 403 });
+    }
+
     const pendingMembers = await getPendingMembers({ leagueSlug: slug });
     return NextResponse.json(pendingMembers);
   } catch (error) {
@@ -21,9 +35,21 @@ export async function GET(_request: Request, { params }: RouteContext) {
 
 // POST /api/leagues/[slug]/members/pending - Approve a pending member
 export async function POST(request: Request, { params }: RouteContext) {
+  // Verify user is authenticated
+  const session = await auth();
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+  }
+
   const { slug } = await params;
 
   try {
+    // Check user has commissioner role in this league
+    const role = await getUserRoleBySlug(session.user.id, slug);
+    if (!role || !hasRolePermission(role, 'commissioner')) {
+      return NextResponse.json({ error: 'Commissioner role required' }, { status: 403 });
+    }
+
     const body = await request.json();
     const { pendingMemberId, action } = body as { pendingMemberId: string; action: 'approve' | 'deny' };
 

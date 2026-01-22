@@ -72,7 +72,7 @@ export async function claimTeam(input: ClaimTeamInput): Promise<ClaimTeamResult>
       // Update existing membership with teamId
       // Preserve commissioner role if they have it, otherwise upgrade to manager
       const newRole = existingMembership.role === 'commissioner' ? 'commissioner' : 'manager';
-      
+
       await tx.leagueMembership.update({
         where: { id: existingMembership.id },
         data: {
@@ -106,7 +106,7 @@ export async function claimTeam(input: ClaimTeamInput): Promise<ClaimTeamResult>
   });
 
   // Invalidate the server-side teams cache so the list refreshes
-  revalidateTag(`teams-${leagueSlug}`);
+  revalidateTag(`teams-${leagueSlug}`, 'max');
 
   // Transform to Team type expected by frontend
   const transformedTeam: Team = {

@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useState } from 'react';
 
+import { getCurrentNFLWeekSync } from '@/lib/nfl-week';
+
 import type {
   LeaderboardEntry,
   LeaderboardResponse,
@@ -81,7 +83,7 @@ export function useLeaderboard({
     standings: data?.standings || [],
     scope,
     roleFilter,
-    currentWeek: data?.currentWeek || 1,
+    currentWeek: data?.currentWeek || getCurrentNFLWeekSync(),
     weekNumber: data?.weekNumber,
     seasonYear: data?.seasonYear,
     leagueAverage: data?.leagueAverage || 0,

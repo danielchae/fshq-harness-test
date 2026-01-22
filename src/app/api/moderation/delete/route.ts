@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 
-import { deleteHiddenMoment } from '@/data/moderation/get-hidden-moments';
+import { deleteMoment } from '@/data/moderation/moderate-moment';
 import { auth } from '@/lib/auth';
 
 export async function DELETE(request: Request) {
@@ -12,16 +12,17 @@ export async function DELETE(request: Request) {
     }
 
     const body = await request.json();
-    const { momentId } = body;
+    const { momentId, hardDelete = true } = body;
 
     if (!momentId) {
       return NextResponse.json({ success: false, error: 'momentId is required' }, { status: 400 });
     }
 
-    // Pass userId for RLS validation
-    const result = await deleteHiddenMoment({
+    // Pass userId for RLS validation - use hardDelete to permanently remove
+    const result = await deleteMoment({
       momentId,
       userId: session.user.id,
+      hardDelete,
     });
 
     if (!result.success) {

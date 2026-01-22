@@ -53,3 +53,12 @@ export {
 
 // Export role utilities
 export { getUserRole, hasRole } from './get-user-role';
+
+// Export public access utilities
+export {
+  checkLeaguePublicAccess,
+  isLeaguePublicById,
+  getPublicContentSettings,
+  getAccessContext,
+  type PublicAccessContext,
+} from './public-access';

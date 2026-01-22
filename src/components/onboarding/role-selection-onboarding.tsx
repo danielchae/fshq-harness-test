@@ -5,12 +5,12 @@ import { useRouter } from 'next/navigation';
 import { useCallback, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
+import { leagueRoute } from '@/types/routes';
 import { RoleCard } from './role-card';
 import { TeamClaimingInterface } from './team-claiming-interface';
 import { TeamSupportSelection } from './team-support-selection';
 
-import type { Team } from '@/data/fixtures/teams';
-import { leagueRoute } from '@/types/routes';
+import type { Team } from '@/data/teams/get-teams';
 
 export interface RoleSelectionOnboardingProps {
   leagueSlug: string;

@@ -1,6 +1,8 @@
-import { prisma } from '@/lib/db';
-import { syncSleeperLeague } from '@/jobs/sync-sleeper-league';
+import { Prisma } from '@prisma/client';
+
 import { fetchLeagueHistory } from '@/integrations/sleeper/fetch-league-history';
+import { syncSleeperLeague } from '@/jobs/sync-sleeper-league';
+import { prisma } from '@/lib/db';
 
 import type { SleeperLeague, SleeperLeagueUser, SleeperRoster } from '@/types/sleeper';
 import type { SyncProgressResponse, SyncResult } from '@/types/sync';
@@ -120,7 +122,7 @@ export async function getSyncProgress(input: SyncLeagueInput): Promise<SyncProgr
 
 /**
  * Sync historical seasons from Sleeper API to SeasonHistory table
- * 
+ *
  * This function:
  * 1. Fetches all previous seasons by following previous_league_id chain
  * 2. Creates SeasonHistory records for each completed season
@@ -142,7 +144,7 @@ async function syncLeagueHistory(sleeperLeagueId: string, dbLeagueId: string): P
   }
 
   const { seasons } = historyResult;
-  
+
   if (seasons.length === 0) {
     console.log(`[syncLeagueHistory] No historical seasons found for league ${sleeperLeagueId}`);
     return 0;
@@ -189,17 +191,20 @@ async function syncLeagueHistory(sleeperLeagueId: string, dbLeagueId: string): P
           thirdPlace: season.thirdPlace?.name ?? null,
           playoffTeams: Math.min(season.totalRosters, 6), // Estimate playoff teams
           highestWeeklyScore: highestWeeklyScore,
-          championshipScore: season.champion && season.runnerUp 
-            ? `${season.champion.pointsFor.toFixed(1)} - ${season.runnerUp.pointsFor.toFixed(1)}`
-            : null,
+          championshipScore:
+            season.champion && season.runnerUp
+              ? `${season.champion.pointsFor.toFixed(1)} - ${season.runnerUp.pointsFor.toFixed(1)}`
+              : null,
           regularSeasonWinner: season.champion?.name ?? null, // Use champion as regular season winner estimate
           seasonSummary: `${season.name} - ${season.year} Season`,
-          dynastyContinuityData: season.isDynasty ? { sleeperLeagueId: season.leagueId } : null,
+          dynastyContinuityData: season.isDynasty ? { sleeperLeagueId: season.leagueId } : Prisma.JsonNull,
         },
       });
 
       syncedCount++;
-      console.log(`[syncLeagueHistory] Synced season ${season.year}: Champion ${season.champion?.name}, Runner-up ${season.runnerUp?.name}`);
+      console.log(
+        `[syncLeagueHistory] Synced season ${season.year}: Champion ${season.champion?.name}, Runner-up ${season.runnerUp?.name}`
+      );
     } catch (error) {
       console.error(`[syncLeagueHistory] Error syncing season ${season.year}:`, error);
       // Continue with other seasons even if one fails
@@ -214,7 +219,9 @@ async function syncLeagueHistory(sleeperLeagueId: string, dbLeagueId: string): P
  * Manually trigger a history sync for an existing league
  * Useful for leagues that were synced before history support was added
  */
-export async function resyncLeagueHistory(leagueSlug: string): Promise<{ success: boolean; seasonsAdded: number; error?: string }> {
+export async function resyncLeagueHistory(
+  leagueSlug: string
+): Promise<{ success: boolean; seasonsAdded: number; error?: string }> {
   try {
     // Find the league
     const league = await prisma.league.findUnique({
@@ -231,14 +238,14 @@ export async function resyncLeagueHistory(leagueSlug: string): Promise<{ success
     }
 
     const seasonsAdded = await syncLeagueHistory(league.platformLeagueId, league.id);
-    
+
     return { success: true, seasonsAdded };
   } catch (error) {
     console.error('[resyncLeagueHistory] Error:', error);
-    return { 
-      success: false, 
-      seasonsAdded: 0, 
-      error: error instanceof Error ? error.message : 'Unknown error' 
+    return {
+      success: false,
+      seasonsAdded: 0,
+      error: error instanceof Error ? error.message : 'Unknown error',
     };
   }
 }

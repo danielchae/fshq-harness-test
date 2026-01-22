@@ -1,8 +1,9 @@
 // Data layer for league members
 // Replaced mock implementation with Prisma queries
 
-import { prisma } from '@/lib/db';
 import { unstable_cache } from 'next/cache';
+
+import { prisma } from '@/lib/db';
 
 import type { LeagueMember, MemberRole, PendingMember } from '@/types/member';
 import type { MembershipRole, MembershipStatus } from '@prisma/client';

@@ -16,9 +16,11 @@ export async function GET(request: Request) {
   const sort = sortParam === 'recent' || sortParam === 'chronological' ? (sortParam as FeedSortOption) : undefined;
   const typeParam = searchParams.get('type');
   const type = typeParam as MomentType | undefined;
+  // Check if client requested cache bypass (after moderation actions)
+  const noCache = searchParams.has('_t');
 
   try {
-    const data = await getFeed({ leagueSlug, cursor, limit, sort, type });
+    const data = await getFeed({ leagueSlug, cursor, limit, sort, type, noCache });
     return NextResponse.json(data);
   } catch {
     return NextResponse.json({ error: 'Failed to fetch feed' }, { status: 500 });

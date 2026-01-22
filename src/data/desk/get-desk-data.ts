@@ -1,16 +1,20 @@
 import { prisma } from '@/lib/db';
+import { getCurrentNFLWeekSync, NFL_TOTAL_WEEKS } from '@/lib/nfl-week';
 
 // Types for commissioner desk data (production version without mock dependencies)
 export interface Season {
   id: string;
   year: number;
   name: string;
+  label: string; // For UI display (same as name)
   isCurrent: boolean;
 }
 
 export interface Week {
+  id: string; // For UI key (e.g., "week-1")
   number: number;
   name: string;
+  label: string; // For UI display (same as name)
   status: 'published' | 'draft' | 'empty';
   startDate?: string;
   endDate?: string;
@@ -60,32 +64,10 @@ export class CommissionerAuthError extends Error {
 
 /**
  * Calculate current NFL week based on date
- * NFL regular season typically starts first Thursday of September
+ * Uses shared utility from @/lib/nfl-week
  */
 function calculateCurrentWeek(): number {
-  const now = new Date();
-  const year = now.getFullYear();
-  
-  // Approximate NFL season start (first Thursday of September)
-  // This is a simplified calculation - in production, you'd use actual NFL schedule data
-  const seasonStart = new Date(year, 8, 1); // September 1st as base
-  
-  // Find the first Thursday
-  while (seasonStart.getDay() !== 4) {
-    seasonStart.setDate(seasonStart.getDate() + 1);
-  }
-  
-  // If we're before the season, return week 1
-  if (now < seasonStart) {
-    return 1;
-  }
-  
-  // Calculate weeks since season start
-  const msPerWeek = 7 * 24 * 60 * 60 * 1000;
-  const weeksSinceStart = Math.floor((now.getTime() - seasonStart.getTime()) / msPerWeek);
-  
-  // NFL regular season is 18 weeks, cap at 18
-  return Math.min(Math.max(1, weeksSinceStart + 1), 18);
+  return getCurrentNFLWeekSync();
 }
 
 /**
@@ -95,19 +77,21 @@ function calculateCurrentWeek(): number {
 function generateSeasons(league: { season: number; createdAt: Date }): Season[] {
   const currentYear = new Date().getFullYear();
   const seasons: Season[] = [];
-  
+
   // Include current season and any previous seasons the league has existed for
   const leagueStartYear = league.createdAt.getFullYear();
-  
+
   for (let year = currentYear; year >= leagueStartYear && year >= currentYear - 5; year--) {
+    const name = `${year} Season`;
     seasons.push({
       id: `season-${year}`,
       year,
-      name: `${year} Season`,
+      name,
+      label: name,
       isCurrent: year === league.season,
     });
   }
-  
+
   return seasons;
 }
 
@@ -117,15 +101,18 @@ function generateSeasons(league: { season: number; createdAt: Date }): Season[] 
  */
 function generateWeeks(): Week[] {
   const weeks: Week[] = [];
-  
+
   for (let i = 1; i <= 18; i++) {
+    const name = `Week ${i}`;
     weeks.push({
+      id: `week-${i}`,
       number: i,
-      name: `Week ${i}`,
+      name,
+      label: name,
       status: 'empty',
     });
   }
-  
+
   return weeks;
 }
 
@@ -147,13 +134,15 @@ export async function getDeskData(input: GetDeskDataInput): Promise<DeskData> {
   if (!league) {
     // Return empty state for non-existent league
     const currentYear = new Date().getFullYear();
+    const seasonName = `${currentYear} Season`;
     const emptySeason: Season = {
       id: `season-${currentYear}`,
       year: currentYear,
-      name: `${currentYear} Season`,
+      name: seasonName,
+      label: seasonName,
       isCurrent: true,
     };
-    
+
     return {
       seasons: [emptySeason],
       weeks: generateWeeks(),
@@ -167,7 +156,7 @@ export async function getDeskData(input: GetDeskDataInput): Promise<DeskData> {
 
   // Generate seasons from league data
   const seasons = generateSeasons(league);
-  
+
   // Find the selected or current season
   const currentSeason = seasonId
     ? seasons.find((s) => s.id === seasonId) || seasons[0]!
@@ -250,7 +239,8 @@ export async function getDeskData(input: GetDeskDataInput): Promise<DeskData> {
   for (const prediction of matchupPredictions) {
     // Generate content from prediction
     const matchup = prediction.matchup;
-    const content = prediction.hypeText ||
+    const content =
+      prediction.hypeText ||
       `${matchup.homeTeam.name} vs ${matchup.awayTeam.name} - Winner: ${prediction.predictedWinner.name}`;
 
     drafts.push({
@@ -269,11 +259,7 @@ export async function getDeskData(input: GetDeskDataInput): Promise<DeskData> {
 
   // Build weeks list with status based on database data
   const baseWeeks = generateWeeks();
-  const weeksWithStatus: Week[] = await buildWeeksWithStatus(
-    league.id,
-    currentSeason.year,
-    baseWeeks
-  );
+  const weeksWithStatus: Week[] = await buildWeeksWithStatus(league.id, currentSeason.year, baseWeeks);
 
   return {
     seasons,
@@ -289,11 +275,7 @@ export async function getDeskData(input: GetDeskDataInput): Promise<DeskData> {
 /**
  * Builds weeks list with status based on power rankings and predictions in database
  */
-async function buildWeeksWithStatus(
-  leagueId: string,
-  season: number,
-  baseWeeks: Week[]
-): Promise<Week[]> {
+async function buildWeeksWithStatus(leagueId: string, season: number, baseWeeks: Week[]): Promise<Week[]> {
   // Get all power rankings for this league/season to determine week statuses
   const rankings = await prisma.powerRanking.findMany({
     where: {
@@ -309,7 +291,10 @@ async function buildWeeksWithStatus(
   });
 
   // Create a map of week statuses
-  const weekStatusMap = new Map<number, { status: 'published' | 'draft' | 'empty'; lastEdited?: string; publishedAt?: string }>();
+  const weekStatusMap = new Map<
+    number,
+    { status: 'published' | 'draft' | 'empty'; lastEdited?: string; publishedAt?: string }
+  >();
 
   for (const ranking of rankings) {
     const existingStatus = weekStatusMap.get(ranking.weekNumber);

@@ -18,6 +18,12 @@ interface UseFeedReturn {
   hasMore: boolean;
   loadMore: () => void;
   retry: () => void;
+  /** Remove a moment from the local state (optimistic update after delete/hide) */
+  removeMoment: (momentId: string) => void;
+  /** Add a moment to the beginning of the feed (optimistic update after create) */
+  addMoment: (moment: Moment) => void;
+  /** Refetch the feed from scratch, bypassing cache */
+  refetch: () => void;
 }
 
 export function useFeed({ leagueSlug, sort, type }: UseFeedOptions): UseFeedReturn {
@@ -28,9 +34,11 @@ export function useFeed({ leagueSlug, sort, type }: UseFeedOptions): UseFeedRetu
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(true);
   const abortControllerRef = useRef<AbortController | null>(null);
+  // Track a cache-bust key to force refetch
+  const [cacheBustKey, setCacheBustKey] = useState(0);
 
   const fetchFeed = useCallback(
-    async (cursor?: string) => {
+    async (cursor?: string, bustCache?: boolean) => {
       // Cancel any pending request
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
@@ -59,9 +67,15 @@ export function useFeed({ leagueSlug, sort, type }: UseFeedOptions): UseFeedRetu
         if (type) {
           url.searchParams.set('type', type);
         }
+        // Add cache-bust parameter to bypass browser and server cache
+        if (bustCache) {
+          url.searchParams.set('_t', Date.now().toString());
+        }
 
         const response = await fetch(url.toString(), {
           signal: controller.signal,
+          // Bypass browser cache when busting
+          ...(bustCache && { cache: 'no-store' }),
         });
 
         if (!response.ok) {
@@ -91,20 +105,21 @@ export function useFeed({ leagueSlug, sort, type }: UseFeedOptions): UseFeedRetu
     [leagueSlug, sort, type]
   );
 
-  // Initial fetch and re-fetch when sort or type changes
+  // Initial fetch and re-fetch when sort, type, or cacheBustKey changes
   useEffect(() => {
     // Reset state when filters change
     setMoments([]);
     setNextCursor(null);
     setHasMore(true);
-    fetchFeed();
+    // Bust cache if cacheBustKey > 0 (meaning refetch was called)
+    fetchFeed(undefined, cacheBustKey > 0);
 
     return () => {
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
       }
     };
-  }, [fetchFeed]);
+  }, [fetchFeed, cacheBustKey]);
 
   const loadMore = useCallback(() => {
     if (!isLoadingMore && hasMore && nextCursor) {
@@ -119,6 +134,27 @@ export function useFeed({ leagueSlug, sort, type }: UseFeedOptions): UseFeedRetu
     fetchFeed();
   }, [fetchFeed]);
 
+  // Remove a moment from local state (used after delete/hide)
+  const removeMoment = useCallback((momentId: string) => {
+    setMoments((prev) => prev.filter((m) => m.id !== momentId));
+  }, []);
+
+  // Add a moment to the beginning (used after create)
+  const addMoment = useCallback((moment: Moment) => {
+    setMoments((prev) => {
+      // Don't add if already exists
+      if (prev.some((m) => m.id === moment.id)) {
+        return prev;
+      }
+      return [moment, ...prev];
+    });
+  }, []);
+
+  // Force refetch from server, bypassing cache
+  const refetch = useCallback(() => {
+    setCacheBustKey((k) => k + 1);
+  }, []);
+
   return {
     moments,
     isLoading,
@@ -127,5 +163,8 @@ export function useFeed({ leagueSlug, sort, type }: UseFeedOptions): UseFeedRetu
     hasMore,
     loadMore,
     retry,
+    removeMoment,
+    addMoment,
+    refetch,
   };
 }

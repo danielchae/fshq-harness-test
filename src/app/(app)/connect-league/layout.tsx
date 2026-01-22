@@ -18,7 +18,7 @@ export default async function ConnectLeagueLayout({ children }: { children: Reac
   const session = await auth();
   const userId = session?.user?.id;
   const leagues = await getUserLeagues(userId);
-  const hasLeagues = leagues.length > 0;
+  const firstLeague = leagues[0];
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -30,11 +30,11 @@ export default async function ConnectLeagueLayout({ children }: { children: Reac
               <span className="sr-only">Home</span>
             </Link>
           </Button>
-          {hasLeagues && (
+          {firstLeague && (
             <Button variant="ghost" size="sm" asChild className="gap-2">
-              <Link href={leagueRoute(leagues[0].slug)}>
+              <Link href={leagueRoute(firstLeague.slug)}>
                 <Trophy className="h-4 w-4" />
-                <span className="hidden sm:inline">{leagues[0].name}</span>
+                <span className="hidden sm:inline">{firstLeague.name}</span>
               </Link>
             </Button>
           )}
@@ -45,9 +45,7 @@ export default async function ConnectLeagueLayout({ children }: { children: Reac
           userAvatarUrl={session?.user?.image || undefined}
         />
       </header>
-      <main className="container mx-auto flex-1 py-8 px-4">
-        {children}
-      </main>
+      <main className="container mx-auto flex-1 py-8 px-4">{children}</main>
     </div>
   );
 }

@@ -8,8 +8,9 @@
  * - Matchup completion status determination
  */
 
+import { MAX_RETRIES, SLEEPER_API_BASE } from './fetch-league';
+
 import type { SleeperMatchup } from '@/types/sleeper';
-import { SLEEPER_API_BASE, MAX_RETRIES } from './fetch-league';
 
 // ============================================================================
 // Configuration
@@ -136,7 +137,7 @@ export function invalidateLeagueMatchupsCache(leagueId: string): void {
     }
   });
 
-  keysToDelete.forEach(key => matchupsCache.delete(key));
+  keysToDelete.forEach((key) => matchupsCache.delete(key));
 }
 
 /**
@@ -594,9 +595,7 @@ export function isWeekComplete(matchupWeek: number, currentNFLWeek: number): boo
  * @returns Array of roster_ids on bye
  */
 export function getByeWeekTeams(matchups: SleeperMatchup[]): number[] {
-  return matchups
-    .filter((matchup) => matchup.matchup_id === null)
-    .map((matchup) => matchup.roster_id);
+  return matchups.filter((matchup) => matchup.matchup_id === null).map((matchup) => matchup.roster_id);
 }
 
 /**

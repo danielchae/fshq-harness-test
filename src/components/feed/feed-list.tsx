@@ -1,7 +1,7 @@
 'use client';
 
 import { AlertTriangle, MessageSquare, RefreshCw } from 'lucide-react';
-import { useCallback, useState } from 'react';
+import { useState } from 'react';
 
 import { ErrorBoundary } from '@/components/error-boundary';
 import { EmptyState } from '@/components/skeletons/empty-state';
@@ -15,7 +15,7 @@ import { FeedSortToggle } from './feed-sort-toggle';
 import { PostComposer } from './post-composer';
 import { TypeFilterDropdown } from './type-filter-dropdown';
 
-import type { Moment, MomentType } from '@/types/feed';
+import type { MomentType } from '@/types/feed';
 import type { FeedSortOption } from './feed-sort-toggle';
 import type { TypeFilterValue } from './type-filter-dropdown';
 
@@ -26,38 +26,15 @@ interface FeedListProps {
 export function FeedList({ leagueSlug }: FeedListProps) {
   const [sortOption, setSortOption] = useState<FeedSortOption>('chronological');
   const [typeFilter, setTypeFilter] = useState<TypeFilterValue>('all');
-  const [optimisticMoments, setOptimisticMoments] = useState<Moment[]>([]);
-  const [hiddenMomentIds, setHiddenMomentIds] = useState<Set<string>>(new Set());
 
   // Convert 'all' to undefined for the API call
   const typeForApi: MomentType | undefined = typeFilter === 'all' ? undefined : typeFilter;
 
-  const { moments, isLoading, isLoadingMore, error, hasMore, loadMore, retry } = useFeed({
+  const { moments, isLoading, isLoadingMore, error, hasMore, loadMore, retry, removeMoment, addMoment } = useFeed({
     leagueSlug,
     sort: sortOption,
     type: typeForApi,
   });
-
-  const handleMomentHidden = useCallback((momentId: string) => {
-    setHiddenMomentIds((prev) => {
-      const next = new Set(prev);
-      next.add(momentId);
-      return next;
-    });
-  }, []);
-
-  // Combine optimistic moments with fetched moments, prefer server data when available
-  const serverMomentIds = new Set(moments.map((moment) => moment.id));
-  const mergedMoments = [
-    ...optimisticMoments.filter((moment) => !serverMomentIds.has(moment.id)),
-    ...moments,
-  ];
-  const allMoments = mergedMoments.filter((moment) => !hiddenMomentIds.has(moment.id));
-
-  // Handle new post created (optimistic update)
-  const handlePostCreated = useCallback((newMoment: Moment) => {
-    setOptimisticMoments((prev) => [newMoment, ...prev]);
-  }, []);
 
   // Filter controls - always show above feed
   const filterControls = (
@@ -68,7 +45,7 @@ export function FeedList({ leagueSlug }: FeedListProps) {
   );
 
   // Post composer - always visible
-  const postComposer = <PostComposer leagueSlug={leagueSlug} onPostCreated={handlePostCreated} />;
+  const postComposer = <PostComposer leagueSlug={leagueSlug} onPostCreated={addMoment} />;
 
   // Loading state
   if (isLoading) {
@@ -111,8 +88,8 @@ export function FeedList({ leagueSlug }: FeedListProps) {
     );
   }
 
-  // Empty state - still show composer and optimistic posts
-  if (allMoments.length === 0) {
+  // Empty state
+  if (moments.length === 0) {
     return (
       <>
         {postComposer}
@@ -144,8 +121,8 @@ export function FeedList({ leagueSlug }: FeedListProps) {
         endMessage="No more items"
       >
         <div className="space-y-4">
-          {allMoments.map((moment) => (
-            <FeedMoment key={moment.id} moment={moment} onMomentHidden={handleMomentHidden} />
+          {moments.map((moment) => (
+            <FeedMoment key={moment.id} moment={moment} onMomentRemoved={removeMoment} />
           ))}
         </div>
       </InfiniteScroll>

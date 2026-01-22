@@ -14,15 +14,10 @@ interface LeagueHeaderProps {
   userName?: string;
   userEmail?: string;
   userAvatarUrl?: string;
+  isPublicVisitor?: boolean;
 }
 
-export function LeagueHeader({
-  leagueName,
-  leagueSlug,
-  userName,
-  userEmail,
-  userAvatarUrl,
-}: LeagueHeaderProps) {
+export function LeagueHeader({ leagueName, leagueSlug, userName, userEmail, userAvatarUrl, isPublicVisitor = false }: LeagueHeaderProps) {
   const { toggleSidebar } = useSidebar();
 
   return (
@@ -48,6 +43,8 @@ export function LeagueHeader({
         userName={userName}
         userEmail={userEmail}
         userAvatarUrl={userAvatarUrl}
+        isPublicVisitor={isPublicVisitor}
+        leagueSlug={leagueSlug}
       />
     </header>
   );

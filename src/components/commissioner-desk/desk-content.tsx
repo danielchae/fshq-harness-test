@@ -13,7 +13,7 @@ import { PublishButton, PublishConfirmationModal, ValidationAlert } from './publ
 import { SeasonSelector } from './season-selector';
 import { WeekSelector } from './week-selector';
 
-import type { DeskDraft, Season, Week } from '@/data/fixtures/desk';
+import type { DeskDraft, Season, Week } from '@/data/desk/get-desk-data';
 import type { PublishResponse } from '@/types/publish';
 import type { AutosaveStatus } from './autosave-indicator';
 

@@ -510,11 +510,7 @@ export async function fetchSleeperUserWithResult(
  * @param season - Season year (default: current year)
  * @returns Array of league IDs
  */
-export async function fetchUserLeagueIds(
-  userId: string,
-  sport: string = 'nfl',
-  season?: string
-): Promise<string[]> {
+export async function fetchUserLeagueIds(userId: string, sport = 'nfl', season?: string): Promise<string[]> {
   if (!userId || typeof userId !== 'string' || userId.trim() === '') {
     console.error('[fetchUserLeagueIds] Invalid user ID provided');
     return [];

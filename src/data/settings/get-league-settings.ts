@@ -1,6 +1,7 @@
 import { unstable_cache } from 'next/cache';
 
 import { prisma } from '@/lib/db';
+
 import type { LeagueSettings, LeagueSettingsUpdate } from '@/types/league-settings';
 
 export interface GetLeagueSettingsInput {
@@ -84,14 +85,10 @@ export async function getLeagueSettings(input: GetLeagueSettingsInput): Promise<
   const { slug } = input;
 
   // Use unstable_cache for caching with a tag for invalidation
-  const cachedGetSettings = unstable_cache(
-    async () => getLeagueSettingsImpl(slug),
-    [`settings-${slug}`],
-    {
-      tags: [`settings-${slug}`],
-      revalidate: 300, // Cache for 5 minutes
-    }
-  );
+  const cachedGetSettings = unstable_cache(async () => getLeagueSettingsImpl(slug), [`settings-${slug}`], {
+    tags: [`settings-${slug}`],
+    revalidate: 300, // Cache for 5 minutes
+  });
 
   return cachedGetSettings();
 }
@@ -148,14 +145,25 @@ export async function updateLeagueSettings(input: UpdateLeagueSettingsInput): Pr
 
   // Also update league visibility/joinRule if needed
   if (updates.visibility !== undefined || updates.joinRule !== undefined) {
-    await prisma.league.update({
+    const leagueUpdateData: { visibility?: 'public' | 'private'; joinRule?: 'auto_join' | 'approval_required' } = {};
+
+    if (updates.visibility !== undefined) {
+      leagueUpdateData.visibility = updates.visibility as 'public' | 'private';
+    }
+    if (updates.joinRule !== undefined) {
+      leagueUpdateData.joinRule = updates.joinRule === 'auto-join' ? 'auto_join' : 'approval_required';
+    }
+
+    console.log('[updateLeagueSettings] Updating league with:', leagueUpdateData, 'for league id:', league.id);
+
+    const updatedLeagueResult = await prisma.league.update({
       where: { id: league.id },
-      data: {
-        ...(updates.visibility && { visibility: updates.visibility as 'public' | 'private' }),
-        ...(updates.joinRule && {
-          joinRule: updates.joinRule === 'auto-join' ? 'auto_join' : 'approval_required',
-        }),
-      },
+      data: leagueUpdateData,
+    });
+
+    console.log('[updateLeagueSettings] League update result:', {
+      id: updatedLeagueResult.id,
+      visibility: updatedLeagueResult.visibility,
     });
   }
 

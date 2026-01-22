@@ -117,16 +117,16 @@ async function fetchWithTimeout(url: string, timeoutMs: number = REQUEST_TIMEOUT
 async function fetchLeague(leagueId: string): Promise<SleeperLeague | null> {
   try {
     const response = await fetchWithTimeout(`${SLEEPER_API_BASE}/league/${leagueId}`);
-    
+
     if (response.status === 404) {
       return null;
     }
-    
+
     if (!response.ok) {
       console.error(`[fetchLeagueHistory] API error fetching league ${leagueId}: ${response.status}`);
       return null;
     }
-    
+
     const data = await response.json();
     return data as SleeperLeague;
   } catch (error) {
@@ -141,12 +141,12 @@ async function fetchLeague(leagueId: string): Promise<SleeperLeague | null> {
 async function fetchRosters(leagueId: string): Promise<SleeperRoster[]> {
   try {
     const response = await fetchWithTimeout(`${SLEEPER_API_BASE}/league/${leagueId}/rosters`);
-    
+
     if (!response.ok) {
       console.error(`[fetchLeagueHistory] API error fetching rosters for ${leagueId}: ${response.status}`);
       return [];
     }
-    
+
     const data = await response.json();
     return data as SleeperRoster[];
   } catch (error) {
@@ -161,20 +161,20 @@ async function fetchRosters(leagueId: string): Promise<SleeperRoster[]> {
 async function fetchLeagueUsers(leagueId: string): Promise<Map<string, string>> {
   try {
     const response = await fetchWithTimeout(`${SLEEPER_API_BASE}/league/${leagueId}/users`);
-    
+
     if (!response.ok) {
       return new Map();
     }
-    
+
     const users = await response.json();
     const userMap = new Map<string, string>();
-    
+
     for (const user of users) {
       if (user.user_id && user.display_name) {
         userMap.set(user.user_id, user.metadata?.team_name || user.display_name);
       }
     }
-    
+
     return userMap;
   } catch (error) {
     console.error(`[fetchLeagueHistory] Error fetching users for ${leagueId}:`, error);
@@ -190,7 +190,11 @@ async function fetchLeagueUsers(leagueId: string): Promise<Map<string, string>> 
 function determineStandings(
   rosters: SleeperRoster[],
   userMap: Map<string, string>
-): { champion?: LeagueHistorySeason['champion']; runnerUp?: LeagueHistorySeason['runnerUp']; thirdPlace?: LeagueHistorySeason['thirdPlace'] } {
+): {
+  champion?: LeagueHistorySeason['champion'];
+  runnerUp?: LeagueHistorySeason['runnerUp'];
+  thirdPlace?: LeagueHistorySeason['thirdPlace'];
+} {
   if (rosters.length === 0) {
     return {};
   }
@@ -199,11 +203,11 @@ function determineStandings(
   const sortedRosters = [...rosters].sort((a, b) => {
     const winsA = a.settings?.wins ?? 0;
     const winsB = b.settings?.wins ?? 0;
-    
+
     if (winsB !== winsA) {
       return winsB - winsA;
     }
-    
+
     // Tie-breaker: points scored
     const ptsA = (a.settings?.fpts ?? 0) + (a.settings?.fpts_decimal ?? 0) / 100;
     const ptsB = (b.settings?.fpts ?? 0) + (b.settings?.fpts_decimal ?? 0) / 100;
@@ -222,27 +226,33 @@ function determineStandings(
   const thirdPlace = sortedRosters[2];
 
   return {
-    champion: champion ? {
-      name: getName(champion),
-      rosterId: champion.roster_id,
-      ownerId: champion.owner_id ?? undefined,
-      wins: champion.settings?.wins ?? 0,
-      losses: champion.settings?.losses ?? 0,
-      pointsFor: (champion.settings?.fpts ?? 0) + (champion.settings?.fpts_decimal ?? 0) / 100,
-    } : undefined,
-    runnerUp: runnerUp ? {
-      name: getName(runnerUp),
-      rosterId: runnerUp.roster_id,
-      ownerId: runnerUp.owner_id ?? undefined,
-      wins: runnerUp.settings?.wins ?? 0,
-      losses: runnerUp.settings?.losses ?? 0,
-      pointsFor: (runnerUp.settings?.fpts ?? 0) + (runnerUp.settings?.fpts_decimal ?? 0) / 100,
-    } : undefined,
-    thirdPlace: thirdPlace ? {
-      name: getName(thirdPlace),
-      rosterId: thirdPlace.roster_id,
-      ownerId: thirdPlace.owner_id ?? undefined,
-    } : undefined,
+    champion: champion
+      ? {
+          name: getName(champion),
+          rosterId: champion.roster_id,
+          ownerId: champion.owner_id ?? undefined,
+          wins: champion.settings?.wins ?? 0,
+          losses: champion.settings?.losses ?? 0,
+          pointsFor: (champion.settings?.fpts ?? 0) + (champion.settings?.fpts_decimal ?? 0) / 100,
+        }
+      : undefined,
+    runnerUp: runnerUp
+      ? {
+          name: getName(runnerUp),
+          rosterId: runnerUp.roster_id,
+          ownerId: runnerUp.owner_id ?? undefined,
+          wins: runnerUp.settings?.wins ?? 0,
+          losses: runnerUp.settings?.losses ?? 0,
+          pointsFor: (runnerUp.settings?.fpts ?? 0) + (runnerUp.settings?.fpts_decimal ?? 0) / 100,
+        }
+      : undefined,
+    thirdPlace: thirdPlace
+      ? {
+          name: getName(thirdPlace),
+          rosterId: thirdPlace.roster_id,
+          ownerId: thirdPlace.owner_id ?? undefined,
+        }
+      : undefined,
   };
 }
 
@@ -280,7 +290,7 @@ export async function fetchLeagueHistory(leagueId: string): Promise<FetchLeagueH
 
   while (currentId && iterationCount < MAX_SEASONS) {
     iterationCount++;
-    
+
     // Add delay between API calls to respect rate limits
     if (iterationCount > 1) {
       await sleep(API_CALL_DELAY_MS);
@@ -288,7 +298,7 @@ export async function fetchLeagueHistory(leagueId: string): Promise<FetchLeagueH
 
     // Fetch league data
     const league = await fetchLeague(currentId);
-    
+
     if (!league) {
       // If this is the first league and we can't fetch it, return error
       if (iterationCount === 1) {
@@ -306,10 +316,7 @@ export async function fetchLeagueHistory(leagueId: string): Promise<FetchLeagueH
     // Only include completed seasons in history (skip current in-progress seasons)
     if (league.status === 'complete') {
       // Fetch rosters and users for standings
-      const [rosters, userMap] = await Promise.all([
-        fetchRosters(currentId),
-        fetchLeagueUsers(currentId),
-      ]);
+      const [rosters, userMap] = await Promise.all([fetchRosters(currentId), fetchLeagueUsers(currentId)]);
 
       // Determine standings
       const standings = determineStandings(rosters, userMap);
@@ -359,7 +366,7 @@ export async function fetchLeagueHistory(leagueId: string): Promise<FetchLeagueH
 export async function fetchPreviousSeasons(leagueId: string): Promise<FetchLeagueHistoryResponse> {
   // First get the current league to find previous_league_id
   const currentLeague = await fetchLeague(leagueId);
-  
+
   if (!currentLeague) {
     return {
       success: false,

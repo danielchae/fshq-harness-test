@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useState } from 'react';
 
+import { getCurrentNFLWeekSync, NFL_TOTAL_WEEKS } from '@/lib/nfl-week';
+
 import type { DisplayMatchup, MatchupsResponse } from '@/types/matchups';
 
 interface UseMatchupsOptions {
@@ -21,12 +23,15 @@ interface UseMatchupsReturn {
 }
 
 export function useMatchups({ leagueSlug, initialWeek }: UseMatchupsOptions): UseMatchupsReturn {
+  // Use calculated current week as fallback if no initial week provided
+  const defaultWeek = initialWeek ?? getCurrentNFLWeekSync();
+
   const [matchups, setMatchups] = useState<DisplayMatchup[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [currentWeek, setCurrentWeek] = useState(initialWeek || 3);
-  const [selectedWeek, setSelectedWeek] = useState(initialWeek || 3);
-  const [totalWeeks, setTotalWeeks] = useState(17);
+  const [currentWeek, setCurrentWeek] = useState(defaultWeek);
+  const [selectedWeek, setSelectedWeek] = useState(defaultWeek);
+  const [totalWeeks, setTotalWeeks] = useState(NFL_TOTAL_WEEKS);
 
   const fetchMatchups = useCallback(async () => {
     setIsLoading(true);

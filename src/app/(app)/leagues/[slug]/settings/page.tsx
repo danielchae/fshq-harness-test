@@ -66,11 +66,7 @@ export default async function LeagueSettingsPage({ params }: LeagueSettingsPageP
       <LeagueDescriptionEditor leagueSlug={slug} initialDescription={settings.description} />
 
       {/* Data Sync */}
-      <ResyncLeague
-        leagueSlug={slug}
-        platform={settings.platform}
-        platformLeagueId={settings.platformLeagueId}
-      />
+      <ResyncLeague leagueSlug={slug} platform={settings.platform} platformLeagueId={settings.platformLeagueId} />
     </div>
   );
 }

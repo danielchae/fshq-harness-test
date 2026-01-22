@@ -119,11 +119,10 @@ async function fetchUserStats(leagueSlug: string, userId: string): Promise<UserS
   // If user has no stats, return default with hasNoPicks = true
   if (!userSeasonStats || userSeasonStats.totalPicks === 0) {
     // Calculate league average even if user has no picks
-    const leagueAverage = allLeagueStats.length > 0
-      ? Math.round(
-          (allLeagueStats.reduce((sum, s) => sum + s.accuracy, 0) / allLeagueStats.length) * 10
-        ) / 10
-      : 0;
+    const leagueAverage =
+      allLeagueStats.length > 0
+        ? Math.round((allLeagueStats.reduce((sum, s) => sum + s.accuracy, 0) / allLeagueStats.length) * 10) / 10
+        : 0;
 
     return {
       ...DEFAULT_USER_STATS,
@@ -137,11 +136,10 @@ async function fetchUserStats(leagueSlug: string, userId: string): Promise<UserS
   const accuracy = Math.round(userSeasonStats.accuracy * 1000) / 10; // Convert to percentage with 1 decimal
 
   // Calculate league average accuracy
-  const leagueAverage = allLeagueStats.length > 0
-    ? Math.round(
-        (allLeagueStats.reduce((sum, s) => sum + s.accuracy, 0) / allLeagueStats.length) * 1000
-      ) / 10
-    : 0;
+  const leagueAverage =
+    allLeagueStats.length > 0
+      ? Math.round((allLeagueStats.reduce((sum, s) => sum + s.accuracy, 0) / allLeagueStats.length) * 1000) / 10
+      : 0;
 
   const isAboveAverage = accuracy > leagueAverage;
 
@@ -154,9 +152,7 @@ async function fetchUserStats(leagueSlug: string, userId: string): Promise<UserS
 
   if (userMembership) {
     // Determine role category - managers and commissioners compete separately from fans
-    const userRoleCategory = ['manager', 'commissioner', 'admin'].includes(userMembership.role)
-      ? 'manager'
-      : 'fan';
+    const userRoleCategory = ['manager', 'commissioner', 'admin'].includes(userMembership.role) ? 'manager' : 'fan';
 
     // Filter users by same role category
     const roleFilteredStats = allLeagueStats.filter((s) => {
@@ -177,13 +173,14 @@ async function fetchUserStats(leagueSlug: string, userId: string): Promise<UserS
   }
 
   // Build rank object
-  const rank: UserStats['rank'] = overallRank > 0
-    ? {
-        overall: overallRank,
-        totalParticipants,
-        roleSpecific: roleSpecificRank,
-      }
-    : undefined;
+  const rank: UserStats['rank'] =
+    overallRank > 0
+      ? {
+          overall: overallRank,
+          totalParticipants,
+          roleSpecific: roleSpecificRank,
+        }
+      : undefined;
 
   return {
     record: {
@@ -203,14 +200,10 @@ async function fetchUserStats(leagueSlug: string, userId: string): Promise<UserS
  * Uses unstable_cache with tag: user-stats-{leagueSlug}-{userId}
  */
 const getCachedUserStats = (leagueSlug: string, userId: string) =>
-  unstable_cache(
-    async () => fetchUserStats(leagueSlug, userId),
-    [`user-stats-${leagueSlug}-${userId}`],
-    {
-      tags: [`user-stats-${leagueSlug}-${userId}`, `user-stats-${leagueSlug}`, `leaderboard-${leagueSlug}`],
-      revalidate: 60, // Cache for 1 minute - leaderboard data should be relatively fresh
-    }
-  );
+  unstable_cache(async () => fetchUserStats(leagueSlug, userId), [`user-stats-${leagueSlug}-${userId}`], {
+    tags: [`user-stats-${leagueSlug}-${userId}`, `user-stats-${leagueSlug}`, `leaderboard-${leagueSlug}`],
+    revalidate: 60, // Cache for 1 minute - leaderboard data should be relatively fresh
+  });
 
 /**
  * Get user stats for a specific league

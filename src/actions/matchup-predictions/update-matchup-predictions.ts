@@ -69,12 +69,12 @@ function buildMatchupPredictionResponse(
     };
     homeTeamProjected: unknown;
     awayTeamProjected: unknown;
-    predictions: Array<{
+    predictions: {
       id: string;
       isFeatured: boolean;
       hypeText: string | null;
       predictedWinnerId: string;
-    }>;
+    }[];
   },
   leagueSlug: string
 ): MatchupPrediction {
@@ -95,9 +95,7 @@ function buildMatchupPredictionResponse(
         losses: matchup.homeTeam.losses,
         ties: matchup.homeTeam.ties,
       },
-      projectedScore: matchup.homeTeamProjected
-        ? Number(matchup.homeTeamProjected)
-        : undefined,
+      projectedScore: matchup.homeTeamProjected ? Number(matchup.homeTeamProjected) : undefined,
     },
     awayTeam: {
       id: matchup.awayTeam.id,
@@ -109,9 +107,7 @@ function buildMatchupPredictionResponse(
         losses: matchup.awayTeam.losses,
         ties: matchup.awayTeam.ties,
       },
-      projectedScore: matchup.awayTeamProjected
-        ? Number(matchup.awayTeamProjected)
-        : undefined,
+      projectedScore: matchup.awayTeamProjected ? Number(matchup.awayTeamProjected) : undefined,
     },
     isFeatured: prediction?.isFeatured ?? false,
     hypeText: prediction?.hypeText ?? '',
@@ -195,14 +191,7 @@ async function fetchMatchupPredictionsData(
 export const updateMatchupPredictionAction = authActionClient
   .schema(updateMatchupPredictionSchema)
   .action(async ({ parsedInput, ctx }) => {
-    const {
-      leagueSlug,
-      weekNumber,
-      matchupId,
-      isFeatured,
-      hypeText,
-      predictedWinnerId,
-    } = parsedInput;
+    const { leagueSlug, weekNumber, matchupId, isFeatured, hypeText, predictedWinnerId } = parsedInput;
     const { userId } = ctx;
 
     // Get the league by slug

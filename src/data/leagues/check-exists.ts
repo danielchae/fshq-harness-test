@@ -1,10 +1,10 @@
 // Data layer for checking if a league already exists in FSHQ
 // Queries by external platform league ID to prevent duplicates during sync
 
+import { Platform } from '@prisma/client';
 import { unstable_cache } from 'next/cache';
 
 import { prisma } from '@/lib/db';
-import { Platform } from '@prisma/client';
 
 export interface CheckLeagueExistsInput {
   sleeperLeagueId: string;

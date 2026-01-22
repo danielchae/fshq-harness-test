@@ -13,14 +13,10 @@
  */
 
 import { createHash } from 'crypto';
+
 import { prisma } from '@/lib/db';
-import type {
-  SleeperLeague,
-  SleeperRoster,
-  SleeperMatchup,
-  SleeperTransaction,
-  SleeperPlayer,
-} from '@/types/sleeper';
+
+import type { SleeperLeague, SleeperMatchup, SleeperPlayer, SleeperRoster, SleeperTransaction } from '@/types/sleeper';
 
 // ============================================================================
 // Types
@@ -29,13 +25,7 @@ import type {
 /**
  * Supported entity types for differential sync
  */
-export type SyncEntityType =
-  | 'league'
-  | 'roster'
-  | 'team'
-  | 'matchup'
-  | 'transaction'
-  | 'player';
+export type SyncEntityType = 'league' | 'roster' | 'team' | 'matchup' | 'transaction' | 'player';
 
 /**
  * Result of a checksum comparison
@@ -198,10 +188,7 @@ export function computeStrongChecksum(data: unknown, options: ChecksumOptions = 
 /**
  * Compare two checksums to determine if they represent changes.
  */
-export function hasChanges(
-  oldChecksum: string | null | undefined,
-  newChecksum: string
-): boolean {
+export function hasChanges(oldChecksum: string | null | undefined, newChecksum: string): boolean {
   return oldChecksum !== newChecksum;
 }
 
@@ -249,15 +236,17 @@ export function computeRosterChecksum(roster: SleeperRoster): string {
     starters: roster.starters,
     reserve: roster.reserve,
     taxi: roster.taxi,
-    settings: roster.settings ? {
-      wins: roster.settings.wins,
-      losses: roster.settings.losses,
-      ties: roster.settings.ties,
-      fpts: roster.settings.fpts,
-      fpts_decimal: roster.settings.fpts_decimal,
-      fpts_against: roster.settings.fpts_against,
-      fpts_against_decimal: roster.settings.fpts_against_decimal,
-    } : null,
+    settings: roster.settings
+      ? {
+          wins: roster.settings.wins,
+          losses: roster.settings.losses,
+          ties: roster.settings.ties,
+          fpts: roster.settings.fpts,
+          fpts_decimal: roster.settings.fpts_decimal,
+          fpts_against: roster.settings.fpts_against,
+          fpts_against_decimal: roster.settings.fpts_against_decimal,
+        }
+      : null,
   };
 
   return computeChecksum(dataForChecksum);
@@ -384,12 +373,7 @@ export function compareRostersBatch(
   rosters: SleeperRoster[],
   storedChecksums: Map<string, string>
 ): DifferentialSyncResult<SleeperRoster> {
-  return compareBatch(
-    rosters,
-    storedChecksums,
-    (roster) => String(roster.roster_id),
-    computeRosterChecksum
-  );
+  return compareBatch(rosters, storedChecksums, (roster) => String(roster.roster_id), computeRosterChecksum);
 }
 
 /**
@@ -414,12 +398,7 @@ export function compareTransactionsBatch(
   transactions: SleeperTransaction[],
   storedChecksums: Map<string, string>
 ): DifferentialSyncResult<SleeperTransaction> {
-  return compareBatch(
-    transactions,
-    storedChecksums,
-    (tx) => tx.transaction_id,
-    computeTransactionChecksum
-  );
+  return compareBatch(transactions, storedChecksums, (tx) => tx.transaction_id, computeTransactionChecksum);
 }
 
 // ============================================================================
@@ -435,23 +414,14 @@ const checksumCache = new Map<string, ChecksumMetadata>();
 /**
  * Generate a unique key for an entity's checksum.
  */
-export function getChecksumKey(
-  leagueId: string,
-  entityType: SyncEntityType,
-  entityId: string
-): string {
+export function getChecksumKey(leagueId: string, entityType: SyncEntityType, entityId: string): string {
   return `${leagueId}:${entityType}:${entityId}`;
 }
 
 /**
  * Store a checksum in the cache.
  */
-export function storeChecksum(
-  leagueId: string,
-  entityType: SyncEntityType,
-  entityId: string,
-  checksum: string
-): void {
+export function storeChecksum(leagueId: string, entityType: SyncEntityType, entityId: string, checksum: string): void {
   const key = getChecksumKey(leagueId, entityType, entityId);
   checksumCache.set(key, {
     entityId,
@@ -465,11 +435,7 @@ export function storeChecksum(
 /**
  * Store multiple checksums at once.
  */
-export function storeChecksums(
-  leagueId: string,
-  entityType: SyncEntityType,
-  checksums: Map<string, string>
-): void {
+export function storeChecksums(leagueId: string, entityType: SyncEntityType, checksums: Map<string, string>): void {
   for (const [entityId, checksum] of checksums) {
     storeChecksum(leagueId, entityType, entityId, checksum);
   }
@@ -478,11 +444,7 @@ export function storeChecksums(
 /**
  * Get a stored checksum from the cache.
  */
-export function getStoredChecksum(
-  leagueId: string,
-  entityType: SyncEntityType,
-  entityId: string
-): string | null {
+export function getStoredChecksum(leagueId: string, entityType: SyncEntityType, entityId: string): string | null {
   const key = getChecksumKey(leagueId, entityType, entityId);
   const metadata = checksumCache.get(key);
   return metadata?.checksum ?? null;
@@ -491,10 +453,7 @@ export function getStoredChecksum(
 /**
  * Get all stored checksums for a specific entity type in a league.
  */
-export function getStoredChecksums(
-  leagueId: string,
-  entityType: SyncEntityType
-): Map<string, string> {
+export function getStoredChecksums(leagueId: string, entityType: SyncEntityType): Map<string, string> {
   const prefix = `${leagueId}:${entityType}:`;
   const result = new Map<string, string>();
 
@@ -693,7 +652,4 @@ export function computeLeagueDataChecksum(
 // Exports
 // ============================================================================
 
-export {
-  sortObjectKeys,
-  excludeFields,
-};
+export { sortObjectKeys, excludeFields };

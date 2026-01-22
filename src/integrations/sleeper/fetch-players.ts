@@ -8,8 +8,9 @@
  * - Player lookup map by ID for efficient access
  */
 
+import { MAX_RETRIES, SLEEPER_API_BASE } from './fetch-league';
+
 import type { SleeperPlayer, SleeperPlayersResponse } from '@/types/sleeper';
-import { SLEEPER_API_BASE, MAX_RETRIES } from './fetch-league';
 
 // ============================================================================
 // Configuration
@@ -69,7 +70,7 @@ let playersCache: CacheEntry | null = null;
 /**
  * Get cache key for players (sport-based)
  */
-function getCacheKey(sport: string = 'nfl'): string {
+function getCacheKey(sport = 'nfl'): string {
   return `sleeper:players:${sport}`;
 }
 
@@ -226,9 +227,7 @@ function isValidPlayer(player: unknown): player is SleeperPlayer {
  * @param options - Optional fetch configuration
  * @returns SleeperPlayersResponse (player_id -> SleeperPlayer map) or null on error
  */
-export async function fetchSleeperPlayers(
-  options: FetchOptions = {}
-): Promise<SleeperPlayersResponse | null> {
+export async function fetchSleeperPlayers(options: FetchOptions = {}): Promise<SleeperPlayersResponse | null> {
   const { skipCache = false, timeout = REQUEST_TIMEOUT_MS } = options;
 
   // Check cache first (unless skipped)
@@ -305,10 +304,7 @@ export async function fetchSleeperPlayers(
   }
 
   // All retries exhausted
-  console.error(
-    `[fetchSleeperPlayers] Failed to fetch players after ${MAX_RETRIES + 1} attempts:`,
-    lastError?.message
-  );
+  console.error(`[fetchSleeperPlayers] Failed to fetch players after ${MAX_RETRIES + 1} attempts:`, lastError?.message);
   return null;
 }
 
@@ -318,9 +314,7 @@ export async function fetchSleeperPlayers(
  * @param options - Optional fetch configuration
  * @returns Result object with success status and data or error details
  */
-export async function fetchSleeperPlayersWithResult(
-  options: FetchOptions = {}
-): Promise<FetchSleeperPlayersResult> {
+export async function fetchSleeperPlayersWithResult(options: FetchOptions = {}): Promise<FetchSleeperPlayersResult> {
   const { skipCache = false, timeout = REQUEST_TIMEOUT_MS } = options;
 
   // Check cache first (unless skipped)
@@ -466,10 +460,7 @@ export function getPlayerById(
  * @param position - Position to filter by (QB, RB, WR, TE, K, DEF)
  * @returns Array of matching players
  */
-export function filterPlayersByPosition(
-  players: SleeperPlayersResponse,
-  position: string
-): SleeperPlayer[] {
+export function filterPlayersByPosition(players: SleeperPlayersResponse, position: string): SleeperPlayer[] {
   return Object.values(players).filter((player) => player.position === position);
 }
 
@@ -480,10 +471,7 @@ export function filterPlayersByPosition(
  * @param team - Team abbreviation to filter by (KC, SF, etc.)
  * @returns Array of matching players
  */
-export function filterPlayersByTeam(
-  players: SleeperPlayersResponse,
-  team: string
-): SleeperPlayer[] {
+export function filterPlayersByTeam(players: SleeperPlayersResponse, team: string): SleeperPlayer[] {
   return Object.values(players).filter((player) => player.team === team);
 }
 
@@ -494,10 +482,7 @@ export function filterPlayersByTeam(
  * @param status - Status to filter by (Active, Inactive, Injured Reserve, etc.)
  * @returns Array of matching players
  */
-export function filterPlayersByStatus(
-  players: SleeperPlayersResponse,
-  status: string
-): SleeperPlayer[] {
+export function filterPlayersByStatus(players: SleeperPlayersResponse, status: string): SleeperPlayer[] {
   return Object.values(players).filter((player) => player.status === status);
 }
 
@@ -518,9 +503,7 @@ export function getActivePlayers(players: SleeperPlayersResponse): SleeperPlayer
  * @returns Array of injured players (with non-null injury_status)
  */
 export function getInjuredPlayers(players: SleeperPlayersResponse): SleeperPlayer[] {
-  return Object.values(players).filter(
-    (player) => player.injury_status !== null && player.injury_status !== undefined
-  );
+  return Object.values(players).filter((player) => player.injury_status !== null && player.injury_status !== undefined);
 }
 
 /**
@@ -530,10 +513,7 @@ export function getInjuredPlayers(players: SleeperPlayersResponse): SleeperPlaye
  * @param query - Search query string
  * @returns Array of matching players
  */
-export function searchPlayersByName(
-  players: SleeperPlayersResponse,
-  query: string
-): SleeperPlayer[] {
+export function searchPlayersByName(players: SleeperPlayersResponse, query: string): SleeperPlayer[] {
   const lowerQuery = query.toLowerCase();
   return Object.values(players).filter((player) => {
     const fullName = player.full_name?.toLowerCase() || '';

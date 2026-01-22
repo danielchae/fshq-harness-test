@@ -4,8 +4,8 @@ import { RefreshCw } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface ResyncLeagueProps {
   leagueSlug: string;
@@ -86,14 +86,10 @@ export function ResyncLeague({ leagueSlug, platform, platformLeagueId }: ResyncL
           <RefreshCw className="h-5 w-5" />
           Resync League Data
         </CardTitle>
-        <CardDescription>
-          Pull the latest teams, matchups, and transactions from Sleeper.
-        </CardDescription>
+        <CardDescription>Pull the latest teams, matchups, and transactions from Sleeper.</CardDescription>
       </CardHeader>
       <CardContent className="flex items-center justify-between gap-4">
-        <div className="text-sm text-muted-foreground">
-          {helperText}
-        </div>
+        <div className="text-sm text-muted-foreground">{helperText}</div>
         <Button onClick={handleResync} disabled={!canSync || isSyncing}>
           <RefreshCw className={isSyncing ? 'mr-2 h-4 w-4 animate-spin' : 'mr-2 h-4 w-4'} />
           {isSyncing ? 'Resyncing...' : 'Resync Now'}

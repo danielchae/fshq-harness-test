@@ -18,11 +18,11 @@ interface GravatarOptions {
 
 /**
  * Generates a Gravatar URL from an email address
- * 
+ *
  * @param email - The user's email address
  * @param options - Configuration options
  * @returns Gravatar URL string
- * 
+ *
  * @example
  * ```ts
  * const url = getGravatarUrl('user@example.com', { size: 80 });
@@ -31,34 +31,34 @@ interface GravatarOptions {
  */
 export function getGravatarUrl(email: string | undefined | null, options: GravatarOptions = {}): string {
   const { size = 80, defaultImage = 'mp', forceDefault = false } = options;
-  
+
   if (!email) {
     // Return default Gravatar when no email
     return `https://www.gravatar.com/avatar/00000000000000000000000000000000?s=${size}&d=${defaultImage}`;
   }
-  
+
   // Normalize email: trim and lowercase (Gravatar requirement)
   const normalizedEmail = email.trim().toLowerCase();
-  
+
   // Generate proper MD5 hash
   const hash = md5(normalizedEmail);
-  
+
   // Build URL with query params
   const params = new URLSearchParams({
     s: size.toString(),
     d: defaultImage,
   });
-  
+
   if (forceDefault) {
     params.set('f', 'y');
   }
-  
+
   return `https://www.gravatar.com/avatar/${hash}?${params.toString()}`;
 }
 
 /**
  * Gets the avatar URL with Gravatar as fallback
- * 
+ *
  * @param avatarUrl - Custom avatar URL (if any)
  * @param email - User's email for Gravatar fallback
  * @param options - Gravatar options

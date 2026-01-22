@@ -6,9 +6,9 @@ import { useCallback, useState } from 'react';
 import { LeagueIdInput } from '@/components/connect-league/league-id-input';
 import { LeaguePreviewCard } from '@/components/connect-league/league-preview-card';
 import { SyncProgress } from '@/components/connect-league/sync-progress';
+import { leagueRoute } from '@/types/routes';
 
 import type { SleeperLeague } from '@/types/sleeper';
-import { leagueRoute } from '@/types/routes';
 
 type WizardStep = 'input' | 'confirmation' | 'sync';
 

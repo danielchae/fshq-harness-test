@@ -31,10 +31,7 @@ function TeamDisplay({ team, isWinner, isComplete, side }: TeamDisplayProps) {
       )}
     >
       <div
-        className={cn(
-          'flex items-center gap-3 min-w-0',
-          isAway ? 'flex-row-reverse justify-start' : 'justify-start'
-        )}
+        className={cn('flex items-center gap-3 min-w-0', isAway ? 'flex-row-reverse justify-start' : 'justify-start')}
       >
         <div className="relative shrink-0">
           <Avatar className="h-10 w-10">
@@ -53,10 +50,7 @@ function TeamDisplay({ team, isWinner, isComplete, side }: TeamDisplayProps) {
           )}
         </div>
         <div className={cn('flex flex-col min-w-0', isComplete && !isWinner && 'opacity-60', isAway && 'items-end')}>
-          <p
-            data-testid="team-name"
-            className={cn('font-semibold text-sm', isWinner && 'text-green-600')}
-          >
+          <p data-testid="team-name" className={cn('font-semibold text-sm', isWinner && 'text-green-600')}>
             {team.name}
           </p>
           {team.record && (
@@ -65,9 +59,7 @@ function TeamDisplay({ team, isWinner, isComplete, side }: TeamDisplayProps) {
               {team.record.ties > 0 && `-${team.record.ties}`}
             </p>
           )}
-          {team.ownerUsername && (
-            <p className="text-xs text-muted-foreground truncate">{team.ownerUsername}</p>
-          )}
+          {team.ownerUsername && <p className="text-xs text-muted-foreground truncate">{team.ownerUsername}</p>}
         </div>
       </div>
       {team.score !== undefined && (
@@ -102,11 +94,7 @@ export function MatchupBlock({ matchup }: MatchupBlockProps) {
       <CardContent className="pt-4">
         {isFeatured && (
           <div className="mb-3 flex items-center gap-2">
-            <Badge
-              data-testid="featured-badge"
-              variant="secondary"
-              className="bg-yellow-100 text-yellow-800"
-            >
+            <Badge data-testid="featured-badge" variant="secondary" className="bg-yellow-100 text-yellow-800">
               <Star className="h-3 w-3 mr-1 fill-current" />
               Featured Matchup
             </Badge>

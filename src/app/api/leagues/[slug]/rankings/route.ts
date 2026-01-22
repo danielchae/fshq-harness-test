@@ -1,22 +1,46 @@
-import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getPowerRankings } from '@/data/power-rankings/get-power-rankings';
+import { auth } from '@/lib/auth';
+import { checkLeaguePublicAccess, getPublicContentSettings } from '@/lib/auth/public-access';
+import { getUserRoleBySlug } from '@/lib/auth/rls-policies';
 
 interface RouteContext {
   params: Promise<{ slug: string }>;
 }
 
 // GET /api/leagues/[slug]/rankings - Get power rankings for a week
+// Allows public access for public leagues (if rankings are enabled in public content)
 export async function GET(request: NextRequest, context: RouteContext) {
-  // Check authentication via session token cookie
-  const cookieStore = await cookies();
-  const sessionToken = cookieStore.get('authjs.session-token')?.value;
-  if (!sessionToken) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const { slug } = await context.params;
+
+  // Check if league is public
+  const publicAccess = await checkLeaguePublicAccess(slug);
+
+  if (!publicAccess.exists) {
+    return NextResponse.json({ error: 'League not found' }, { status: 404 });
   }
 
-  const { slug } = await context.params;
+  // Get session (may be null for public visitors)
+  const session = await auth();
+  const userId = session?.user?.id;
+
+  // If league is private, require authentication and membership
+  if (!publicAccess.isPublic) {
+    if (!userId) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+    }
+    const role = await getUserRoleBySlug(userId, slug);
+    if (!role) {
+      return NextResponse.json({ error: 'Access denied' }, { status: 403 });
+    }
+  } else if (!userId) {
+    // Public visitor - check if rankings are enabled for public viewing
+    const publicContent = await getPublicContentSettings(slug);
+    if (!publicContent?.rankings) {
+      return NextResponse.json({ error: 'Rankings are not publicly visible' }, { status: 403 });
+    }
+  }
   const { searchParams } = new URL(request.url);
 
   // Get week parameter, default to most recent week (3)

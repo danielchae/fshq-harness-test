@@ -1,6 +1,20 @@
 'use client';
 
-import { BarChart3, CalendarDays, GitBranch, History, Home, ScrollText, Settings, Shield, Target, Trophy, UserCog, Users, UsersRound } from 'lucide-react';
+import {
+  BarChart3,
+  CalendarDays,
+  GitBranch,
+  History,
+  Home,
+  ScrollText,
+  Settings,
+  Shield,
+  Target,
+  Trophy,
+  UserCog,
+  Users,
+  UsersRound,
+} from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
@@ -17,15 +31,17 @@ import {
   SidebarSeparator,
   SidebarTrigger,
 } from '@/components/ui/sidebar';
+import { leagueRoute } from '@/types/routes';
 
 import type { UserRole } from '@/lib/auth/get-user-role';
-import { leagueRoute, type LeagueSubRoute } from '@/types/routes';
+import type { LeagueSubRoute } from '@/types/routes';
 
 interface LeagueSidebarProps {
   leagueSlug: string;
   leagueName: string;
   leagueAvatarUrl?: string;
   userRole: UserRole;
+  isPublicVisitor?: boolean;
 }
 
 interface NavItem {
@@ -34,7 +50,7 @@ interface NavItem {
   icon: React.ComponentType<{ className?: string }>;
 }
 
-export function LeagueSidebar({ leagueSlug, leagueName, leagueAvatarUrl, userRole }: LeagueSidebarProps) {
+export function LeagueSidebar({ leagueSlug, leagueName, leagueAvatarUrl, userRole, isPublicVisitor = false }: LeagueSidebarProps) {
   const pathname = usePathname();
 
   const baseRoute = `/leagues/${leagueSlug}`;
@@ -57,27 +73,30 @@ export function LeagueSidebar({ leagueSlug, leagueName, leagueAvatarUrl, userRol
 
   const adminNavItems: NavItem[] = [];
 
-  // Commissioner can see Commissioner Desk
-  if (userRole === 'commissioner') {
-    adminNavItems.push({
-      label: 'Commissioner Desk',
-      subRoute: '/desk',
-      icon: UserCog,
-    });
-  }
+  // Public visitors don't see admin items
+  if (!isPublicVisitor) {
+    // Commissioner can see Commissioner Desk
+    if (userRole === 'commissioner') {
+      adminNavItems.push({
+        label: 'Commissioner Desk',
+        subRoute: '/desk',
+        icon: UserCog,
+      });
+    }
 
-  // Admin (and commissioner who has admin privileges) can see Moderation and Settings
-  if (userRole === 'admin' || userRole === 'commissioner') {
-    adminNavItems.push({
-      label: 'Moderation',
-      subRoute: '/moderation',
-      icon: Shield,
-    });
-    adminNavItems.push({
-      label: 'Settings',
-      subRoute: '/settings',
-      icon: Settings,
-    });
+    // Admin (and commissioner who has admin privileges) can see Moderation and Settings
+    if (userRole === 'admin' || userRole === 'commissioner') {
+      adminNavItems.push({
+        label: 'Moderation',
+        subRoute: '/moderation',
+        icon: Shield,
+      });
+      adminNavItems.push({
+        label: 'Settings',
+        subRoute: '/settings',
+        icon: Settings,
+      });
+    }
   }
 
   const getHref = (subRoute: LeagueSubRoute) => `${baseRoute}${subRoute}`;

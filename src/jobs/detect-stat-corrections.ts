@@ -431,7 +431,7 @@ export async function sendNotifications(notifications: NotificationPayload[]): P
           notification.userId,
           league.slug,
           notification.data.weekNumber,
-          notification.data.previousResult,
+          notification.data.previousResult ?? false,
           notification.data.newResult
         );
         sentCount++;

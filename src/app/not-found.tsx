@@ -11,9 +11,7 @@ export default function NotFound() {
         <AlertCircle className="h-4 w-4" />
         <AlertTitle>Page Not Found</AlertTitle>
         <AlertDescription className="flex flex-col gap-3">
-          <span>
-            The page you are looking for does not exist. Please check the URL and try again.
-          </span>
+          <span>The page you are looking for does not exist. Please check the URL and try again.</span>
           <div className="flex gap-2">
             <Button variant="outline" size="sm" asChild className="w-fit">
               <Link href="/">

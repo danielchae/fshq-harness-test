@@ -2,19 +2,19 @@
 // Prisma database queries for league transaction history
 
 import { prisma } from '@/lib/db';
-import type { Transaction as PrismaTransaction, Team, TransactionType as PrismaTransactionType } from '@prisma/client';
 
 import type {
+  DropTransaction,
+  FreeAgentTransaction,
   GetTransactionsInput,
+  TradeTransaction,
   Transaction,
   TransactionsResponse,
-  TransactionType,
   TransactionTeam,
+  TransactionType,
   WaiverTransaction,
-  FreeAgentTransaction,
-  DropTransaction,
-  TradeTransaction,
 } from '@/types/transactions';
+import type { Transaction as PrismaTransaction, TransactionType as PrismaTransactionType, Team } from '@prisma/client';
 
 const DEFAULT_LIMIT = 10;
 
@@ -51,9 +51,7 @@ function mapPrismaTypeToFrontend(type: PrismaTransactionType): TransactionType {
 }
 
 // Transform Prisma transaction to frontend Transaction type
-function transformTransaction(
-  dbTransaction: PrismaTransaction & { team: Team }
-): Transaction {
+function transformTransaction(dbTransaction: PrismaTransaction & { team: Team }): Transaction {
   const frontendType = mapPrismaTypeToFrontend(dbTransaction.type);
   const baseTeam: TransactionTeam = {
     id: dbTransaction.team.id,
@@ -195,9 +193,7 @@ export async function getTransactions(input: GetTransactionsInput): Promise<Tran
   const transformedTransactions: Transaction[] = paginatedTransactions.map(transformTransaction);
 
   // Determine next cursor
-  const nextCursor = hasMore
-    ? paginatedTransactions[paginatedTransactions.length - 1]?.id || null
-    : null;
+  const nextCursor = hasMore ? paginatedTransactions[paginatedTransactions.length - 1]?.id || null : null;
 
   return {
     transactions: transformedTransactions,

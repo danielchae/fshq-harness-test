@@ -146,11 +146,7 @@ export function BracketView({ leagueSlug, initialSeason }: BracketViewProps) {
           </TabsContent>
 
           <TabsContent value="consolation" data-testid="consolation-bracket" data-bracket="consolation">
-            <BracketDisplay
-              bracket={consolationBracket}
-              currentWeek={data.currentWeek}
-              isConsolation
-            />
+            <BracketDisplay bracket={consolationBracket} currentWeek={data.currentWeek} isConsolation />
           </TabsContent>
         </Tabs>
       ) : (

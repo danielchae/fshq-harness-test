@@ -193,11 +193,7 @@ export function detectNotableTransaction(
 /**
  * Checks if a moment already exists for a matchup-based event
  */
-export async function matchupMomentExists(
-  leagueId: string,
-  matchupId: string,
-  momentType: string
-): Promise<boolean> {
+export async function matchupMomentExists(leagueId: string, matchupId: string, momentType: string): Promise<boolean> {
   const existing = await withRetry(() =>
     prisma.moment.findFirst({
       where: {
@@ -258,17 +254,20 @@ export async function createMatchupMoment(
     }
 
     // Determine winner and loser names
-    const winnerName = matchup.winnerId === matchup.homeTeamId
-      ? (matchup.homeTeamName || 'Home Team')
-      : (matchup.awayTeamName || 'Away Team');
-    const loserName = matchup.winnerId === matchup.homeTeamId
-      ? (matchup.awayTeamName || 'Away Team')
-      : (matchup.homeTeamName || 'Home Team');
+    const winnerName =
+      matchup.winnerId === matchup.homeTeamId
+        ? matchup.homeTeamName || 'Home Team'
+        : matchup.awayTeamName || 'Away Team';
+    const loserName =
+      matchup.winnerId === matchup.homeTeamId
+        ? matchup.awayTeamName || 'Away Team'
+        : matchup.homeTeamName || 'Home Team';
 
     // Generate content based on event type
-    const content = matchup.eventType === 'blowout_game'
-      ? blowoutTemplate(winnerName, loserName, matchup.margin)
-      : nailBiterTemplate(winnerName, loserName, matchup.margin);
+    const content =
+      matchup.eventType === 'blowout_game'
+        ? blowoutTemplate(winnerName, loserName, matchup.margin)
+        : nailBiterTemplate(winnerName, loserName, matchup.margin);
 
     // Create the moment
     const moment = await withRetry(() =>
@@ -387,7 +386,9 @@ export async function createTransactionMoment(
       })
     );
 
-    console.log(`[GenerateMoments] Created ${transaction.eventType} moment for transaction ${transaction.transactionId}`);
+    console.log(
+      `[GenerateMoments] Created ${transaction.eventType} moment for transaction ${transaction.transactionId}`
+    );
 
     return {
       success: true,
@@ -444,10 +445,7 @@ export async function getSystemUserId(): Promise<string> {
   const systemUser = await withRetry(() =>
     prisma.user.findFirst({
       where: {
-        OR: [
-          { email: 'system@samus.app' },
-          { name: 'SAMUS System' },
-        ],
+        OR: [{ email: 'system@samus.app' }, { name: 'SAMUS System' }],
       },
       select: { id: true },
     })
@@ -475,9 +473,7 @@ export async function getSystemUserId(): Promise<string> {
 /**
  * Processes all completed matchups for notable events
  */
-export async function processMatchupsForMoments(
-  systemUserId: string
-): Promise<{
+export async function processMatchupsForMoments(systemUserId: string): Promise<{
   checked: number;
   blowouts: number;
   closeGames: number;
@@ -593,9 +589,7 @@ export async function processMatchupsForMoments(
 /**
  * Processes notable transactions for moment generation
  */
-export async function processTransactionsForMoments(
-  systemUserId: string
-): Promise<{
+export async function processTransactionsForMoments(systemUserId: string): Promise<{
   checked: number;
   created: number;
   results: MomentGenerationResult[];
@@ -610,11 +604,7 @@ export async function processTransactionsForMoments(
     const transactions = await withRetry(() =>
       prisma.transaction.findMany({
         where: {
-          OR: [
-            { isNotable: true },
-            { type: 'trade' },
-            { faabAmount: { gte: 50 } },
-          ],
+          OR: [{ isNotable: true }, { type: 'trade' }, { faabAmount: { gte: 50 } }],
           createdAt: { gte: recentCutoff },
         },
         select: {
@@ -804,10 +794,7 @@ export async function onMatchupSyncComplete(leagueId: string, weekNumber: number
  * Hook to run after transaction sync completes
  * Generates moments for any notable transactions
  */
-export async function onTransactionSyncComplete(
-  leagueId: string,
-  transactionIds: string[]
-): Promise<void> {
+export async function onTransactionSyncComplete(leagueId: string, transactionIds: string[]): Promise<void> {
   console.log(`[GenerateMoments] Processing ${transactionIds.length} transactions for league ${leagueId}`);
 
   try {

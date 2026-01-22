@@ -8,9 +8,11 @@
  * - Updates database with new/changed data only
  */
 
-import { prisma, withRetry } from '@/lib/db';
-import type { SleeperLeague, SleeperRoster, SleeperLeagueUser } from '@/types/sleeper';
 import { createHash } from 'crypto';
+
+import { prisma, withRetry } from '@/lib/db';
+
+import type { SleeperLeague, SleeperLeagueUser, SleeperRoster } from '@/types/sleeper';
 
 // Sleeper API base URL
 const SLEEPER_API_BASE = 'https://api.sleeper.app/v1';
@@ -150,10 +152,7 @@ async function fetchSleeperLeagueUsers(leagueId: string): Promise<SleeperLeagueU
 /**
  * Fetch matchups for a specific week from Sleeper API
  */
-export async function fetchSleeperMatchups(
-  leagueId: string,
-  week: number
-): Promise<SleeperMatchup[]> {
+export async function fetchSleeperMatchups(leagueId: string, week: number): Promise<SleeperMatchup[]> {
   try {
     const response = await fetch(`${SLEEPER_API_BASE}/league/${leagueId}/matchups/${week}`);
     if (!response.ok) {
@@ -172,10 +171,7 @@ export async function fetchSleeperMatchups(
 /**
  * Fetch transactions for a league from Sleeper API
  */
-export async function fetchSleeperTransactions(
-  leagueId: string,
-  week?: number
-): Promise<SleeperTransaction[]> {
+export async function fetchSleeperTransactions(leagueId: string, week?: number): Promise<SleeperTransaction[]> {
   try {
     const url = week
       ? `${SLEEPER_API_BASE}/league/${leagueId}/transactions/${week}`
@@ -197,7 +193,7 @@ export async function fetchSleeperTransactions(
 /**
  * Fetch all matchups for all weeks
  */
-async function fetchAllMatchups(leagueId: string, maxWeek: number = 18): Promise<Map<number, SleeperMatchup[]>> {
+async function fetchAllMatchups(leagueId: string, maxWeek = 18): Promise<Map<number, SleeperMatchup[]>> {
   const matchupsByWeek = new Map<number, SleeperMatchup[]>();
 
   // Fetch matchups for all weeks in parallel
@@ -219,7 +215,7 @@ async function fetchAllMatchups(leagueId: string, maxWeek: number = 18): Promise
 /**
  * Fetch all transactions for all weeks
  */
-async function fetchAllTransactions(leagueId: string, maxWeek: number = 18): Promise<SleeperTransaction[]> {
+async function fetchAllTransactions(leagueId: string, maxWeek = 18): Promise<SleeperTransaction[]> {
   // Fetch transactions for all weeks in parallel
   const fetchPromises = Array.from({ length: maxWeek }, (_, i) => i + 1).map((week) =>
     fetchSleeperTransactions(leagueId, week)
@@ -249,8 +245,7 @@ async function syncTeams(
 
   for (const roster of rosters) {
     const ownerUser = roster.owner_id ? userMap.get(roster.owner_id) : null;
-    const teamName =
-      ownerUser?.metadata?.team_name || ownerUser?.display_name || `Team ${roster.roster_id}`;
+    const teamName = ownerUser?.metadata?.team_name || ownerUser?.display_name || `Team ${roster.roster_id}`;
     const pointsScored = roster.settings
       ? (roster.settings.fpts || 0) + (roster.settings.fpts_decimal || 0) / 100
       : null;
@@ -270,9 +265,7 @@ async function syncTeams(
         sleeperUsername: ownerUser?.display_name || null,
         externalRosterId: String(roster.roster_id),
         platformTeamId: String(roster.roster_id),
-        avatarUrl: ownerUser?.avatar
-          ? `https://sleepercdn.com/avatars/${ownerUser.avatar}`
-          : null,
+        avatarUrl: ownerUser?.avatar ? `https://sleepercdn.com/avatars/${ownerUser.avatar}` : null,
         wins: roster.settings?.wins || 0,
         losses: roster.settings?.losses || 0,
         ties: roster.settings?.ties || 0,

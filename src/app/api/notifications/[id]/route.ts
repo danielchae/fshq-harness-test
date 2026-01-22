@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 
-import { markAsRead } from '@/lib/notifications';
 import { auth } from '@/lib/auth';
+import { markAsRead } from '@/lib/notifications';
 
 interface RouteParams {
   params: Promise<{ id: string }>;

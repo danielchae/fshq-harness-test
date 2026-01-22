@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useState } from 'react';
 
+import { NFL_TOTAL_WEEKS } from '@/lib/nfl-week';
+
 import type { PickemMatchup, PickemsResponse, WeeklyScore } from '@/types/pickems';
 
 interface UsePickemsOptions {
@@ -125,7 +127,7 @@ export function usePickems({ leagueSlug, weekNumber }: UsePickemsOptions): UsePi
   return {
     matchups: data?.matchups || [],
     currentWeek: data?.currentWeek || 1,
-    totalWeeks: data?.totalWeeks || 17,
+    totalWeeks: data?.totalWeeks || NFL_TOTAL_WEEKS,
     lockTimeGlobal: data?.lockTimeGlobal,
     selections,
     isLoading,

@@ -104,10 +104,7 @@ export function BracketTeamSlot({
         {/* Team Name and Record */}
         <div className="flex flex-col min-w-0">
           <span
-            className={cn(
-              'text-xs font-medium truncate',
-              matchupComplete && isWinner ? 'text-green-700' : ''
-            )}
+            className={cn('text-xs font-medium truncate', matchupComplete && isWinner ? 'text-green-700' : '')}
             data-testid="team-name"
           >
             {team.name}
@@ -121,10 +118,7 @@ export function BracketTeamSlot({
         {showTrophy && <Trophy className="h-4 w-4 text-amber-500" data-icon="trophy" />}
         {showScore && score !== undefined && (
           <span
-            className={cn(
-              'text-sm font-semibold tabular-nums',
-              matchupComplete && isWinner ? 'text-green-700' : ''
-            )}
+            className={cn('text-sm font-semibold tabular-nums', matchupComplete && isWinner ? 'text-green-700' : '')}
             data-testid="team-score"
           >
             {score.toFixed(1)}

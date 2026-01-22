@@ -26,9 +26,10 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
+import { leagueRoute } from '@/types/routes';
 
 import type { UserRole } from '@/lib/auth/get-user-role';
-import { leagueRoute, type LeagueSubRoute } from '@/types/routes';
+import type { LeagueSubRoute } from '@/types/routes';
 
 interface NavItem {
   label: string;
@@ -302,7 +303,9 @@ export function MobileNavigationDrawer({
                         data-testid="nav-item"
                         className={cn(
                           'flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors',
-                          isActive(item.subRoute) ? 'bg-accent text-accent-foreground font-medium' : 'hover:bg-accent/50'
+                          isActive(item.subRoute)
+                            ? 'bg-accent text-accent-foreground font-medium'
+                            : 'hover:bg-accent/50'
                         )}
                       >
                         <item.icon className="h-5 w-5" data-testid="nav-icon" />

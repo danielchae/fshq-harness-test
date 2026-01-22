@@ -5,6 +5,7 @@ import { unstable_cache } from 'next/cache';
 
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/db';
+import { getCurrentNFLWeek } from '@/lib/nfl-week';
 
 import type {
   LeaderboardEntry,
@@ -14,7 +15,6 @@ import type {
 } from '@/types/leaderboard';
 
 // Constants
-const DEFAULT_CURRENT_WEEK = 10;
 const DEFAULT_CURRENT_SEASON = 2025;
 
 export interface GetLeaderboardInput {
@@ -22,13 +22,6 @@ export interface GetLeaderboardInput {
   scope?: LeaderboardScope;
   roleFilter?: LeaderboardRoleFilter;
   weekNumber?: number; // Only for weekly scope
-}
-
-/**
- * Get the current week (can be enhanced to calculate dynamically from NFL state)
- */
-function getCurrentWeek(): number {
-  return DEFAULT_CURRENT_WEEK;
 }
 
 /**
@@ -357,6 +350,9 @@ async function fetchLeaderboard(
   weekNumber: number | undefined,
   currentUserId: string | undefined
 ): Promise<LeaderboardResponse> {
+  // Get current week from NFL state
+  const currentWeek = await getCurrentNFLWeek();
+
   // Get league by slug
   const league = await prisma.league.findUnique({
     where: { slug: leagueSlug },
@@ -369,14 +365,12 @@ async function fetchLeaderboard(
       standings: [],
       scope,
       roleFilter,
-      currentWeek: getCurrentWeek(),
-      weekNumber: scope === 'weekly' ? weekNumber || getCurrentWeek() : undefined,
+      currentWeek,
+      weekNumber: scope === 'weekly' ? weekNumber || currentWeek : undefined,
       seasonYear: DEFAULT_CURRENT_SEASON,
       leagueAverage: 0,
     };
   }
-
-  const currentWeek = getCurrentWeek();
   const seasonYear = league.season || DEFAULT_CURRENT_SEASON;
 
   let standings: LeaderboardEntry[];

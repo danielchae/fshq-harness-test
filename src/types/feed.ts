@@ -61,4 +61,6 @@ export interface GetFeedInput {
   limit?: number;
   sort?: FeedSortOption;
   type?: MomentType;
+  /** If true, bypass cache and fetch fresh data */
+  noCache?: boolean;
 }

@@ -5,6 +5,7 @@ import { revalidatePath, revalidateTag } from 'next/cache';
 
 import { checkLeagueMembership, requireLeagueAccess, RLSError } from '@/lib/auth/rls-policies';
 import { prisma } from '@/lib/db';
+import { getCurrentNFLWeek } from '@/lib/nfl-week';
 
 import type { Comment } from '@/types/feed';
 
@@ -151,7 +152,7 @@ export async function createComment(input: CreateCommentInput): Promise<CreateCo
 
     // Revalidate the moment detail page cache
     revalidatePath(`/leagues/${moment.league.slug}/moments/${momentId}`);
-    revalidateTag(`feed-${moment.league.slug}`);
+    revalidateTag(`feed-${moment.league.slug}`, 'max');
 
     return { success: true, comment };
   } catch (error) {
@@ -171,8 +172,8 @@ export async function createComment(input: CreateCommentInput): Promise<CreateCo
  * This is called asynchronously to not block the main response.
  */
 async function updateEngagementMetrics(leagueId: string): Promise<void> {
-  // Get current week number (simplified - in production this would come from NFL state)
-  const currentWeek = Math.ceil((Date.now() - new Date('2025-09-01').getTime()) / (7 * 24 * 60 * 60 * 1000));
+  // Get current week number from NFL state
+  const currentWeek = await getCurrentNFLWeek();
 
   try {
     await prisma.engagementMetrics.upsert({

@@ -47,7 +47,7 @@ function getUserReactionTypes(
 /**
  * Type for Prisma Moment with included relations
  */
-type PrismaMomentWithRelations = {
+interface PrismaMomentWithRelations {
   id: string;
   type: MomentType;
   content: string | null;
@@ -58,7 +58,7 @@ type PrismaMomentWithRelations = {
   author: { id: string; name: string | null; image: string | null };
   reactions: { reactionType: string; userId: string }[];
   _count: { comments: number };
-};
+}
 
 /**
  * Maps a Prisma Moment with included data to the Moment type contract
@@ -119,11 +119,7 @@ async function fetchFeedFromDb(
   // Pinned moments always come first, then sort by specified criteria
   const orderBy =
     sort === 'recent'
-      ? [
-          { isPinned: 'desc' as const },
-          { lastActivityAt: 'desc' as const },
-          { createdAt: 'desc' as const },
-        ]
+      ? [{ isPinned: 'desc' as const }, { lastActivityAt: 'desc' as const }, { createdAt: 'desc' as const }]
       : [{ isPinned: 'desc' as const }, { createdAt: 'desc' as const }];
 
   // Fetch moments with author, reactions, and comment count
@@ -181,7 +177,7 @@ async function fetchFeedFromDb(
  * @returns FeedResponse with moments and pagination cursor
  */
 export async function getFeed(input: GetFeedInput): Promise<FeedResponse> {
-  const { leagueSlug, cursor, sort = 'chronological', type } = input;
+  const { leagueSlug, cursor, sort = 'chronological', type, noCache = false } = input;
   const limit = input.limit ?? DEFAULT_LIMIT;
 
   // Get current user session
@@ -193,6 +189,18 @@ export async function getFeed(input: GetFeedInput): Promise<FeedResponse> {
   if (currentUserId) {
     const userRole = await getUserRoleBySlug(currentUserId, leagueSlug);
     showHidden = hasRolePermission(userRole, 'commissioner');
+  }
+
+  // If noCache is requested, fetch directly without caching
+  if (noCache) {
+    return fetchFeedFromDb(leagueSlug, {
+      cursor,
+      limit,
+      type,
+      sort,
+      showHidden,
+      currentUserId,
+    });
   }
 
   const cacheKey = [

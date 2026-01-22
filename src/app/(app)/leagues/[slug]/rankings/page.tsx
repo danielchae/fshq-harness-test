@@ -13,7 +13,7 @@ export default async function RankingsPage({ params }: RankingsPageProps) {
   return (
     <div className="space-y-6">
       <PageHeader icon={BarChart3} title="Power Rankings" description="Commissioner-curated weekly power rankings" />
-      <PowerRankingsDisplay leagueSlug={slug} initialWeek={3} />
+      <PowerRankingsDisplay leagueSlug={slug} />
     </div>
   );
 }

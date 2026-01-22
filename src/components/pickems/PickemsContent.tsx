@@ -130,7 +130,11 @@ export function PickemsContent({ leagueSlug }: PickemsContentProps) {
   if (hasSubmittedPicks === false && matchups.length === 0) {
     return (
       <div className="space-y-6">
-        <PageHeader icon={Target} title={`Pick'ems - Week ${currentWeek}`} description="Predict matchup winners to climb the leaderboard" />
+        <PageHeader
+          icon={Target}
+          title={`Pick'ems - Week ${currentWeek}`}
+          description="Predict matchup winners to climb the leaderboard"
+        />
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
             <Inbox className="h-12 w-12 text-muted-foreground" />

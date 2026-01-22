@@ -1,19 +1,13 @@
 'use client';
 
-import { useEffect } from 'react';
-import { AlertCircle, RefreshCw, Home } from 'lucide-react';
+import { AlertCircle, Home, RefreshCw } from 'lucide-react';
 import Link from 'next/link';
+import { useEffect } from 'react';
 
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 
-export default function GlobalError({
-  error,
-  reset,
-}: {
-  error: Error & { digest?: string };
-  reset: () => void;
-}) {
+export default function GlobalError({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
   useEffect(() => {
     // Log the error to an error reporting service
     console.error('Global error:', error);
@@ -25,14 +19,8 @@ export default function GlobalError({
         <AlertCircle className="h-4 w-4" />
         <AlertTitle>Something went wrong</AlertTitle>
         <AlertDescription className="flex flex-col gap-3">
-          <span>
-            An unexpected error occurred. Please try again or return to the home page.
-          </span>
-          {error.digest && (
-            <span className="text-xs text-muted-foreground">
-              Error ID: {error.digest}
-            </span>
-          )}
+          <span>An unexpected error occurred. Please try again or return to the home page.</span>
+          {error.digest && <span className="text-xs text-muted-foreground">Error ID: {error.digest}</span>}
           <div className="flex gap-2">
             <Button variant="outline" size="sm" onClick={reset} className="w-fit">
               <RefreshCw className="h-4 w-4 mr-2" />

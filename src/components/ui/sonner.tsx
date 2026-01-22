@@ -12,7 +12,6 @@ if (typeof window !== 'undefined') {
 }
 
 const Toaster = ({ ...props }: ToasterProps) => {
-
   // Add data-testid and data-type to toast elements for E2E testing
   useEffect(() => {
     const addToastAttributes = (toastElement: Element) => {
@@ -111,18 +110,6 @@ const Toaster = ({ ...props }: ToasterProps) => {
           '--normal-text': 'var(--popover-foreground)',
           '--normal-border': 'var(--border)',
           '--border-radius': 'var(--radius)',
-          '--success-bg': 'rgb(34, 197, 94)',
-          '--success-text': 'rgb(255, 255, 255)',
-          '--success-border': 'rgb(22, 163, 74)',
-          '--error-bg': 'rgb(239, 68, 68)',
-          '--error-text': 'rgb(255, 255, 255)',
-          '--error-border': 'rgb(220, 38, 38)',
-          '--warning-bg': 'rgb(234, 179, 8)',
-          '--warning-text': 'rgb(0, 0, 0)',
-          '--warning-border': 'rgb(202, 138, 4)',
-          '--info-bg': 'rgb(59, 130, 246)',
-          '--info-text': 'rgb(255, 255, 255)',
-          '--info-border': 'rgb(37, 99, 235)',
         } as React.CSSProperties
       }
       {...props}

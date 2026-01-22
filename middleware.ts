@@ -7,21 +7,23 @@ import type { NextRequest } from 'next/server';
  * This middleware handles:
  * 1. Authentication checks for protected routes
  * 2. Redirects unauthenticated users to sign-in
+ * 3. Allows public league access for unauthenticated visitors
  *
  * Route-level role authorization is handled by individual pages/components
  * since middleware runs on the Edge runtime with limited access to cookies.
  */
 
-// Routes that require authentication
+// Routes that ALWAYS require authentication (even for public leagues)
 const PROTECTED_ROUTES = [
   '/leagues/*/desk',
   '/leagues/*/settings',
   '/leagues/*/moderation',
   '/dashboard',
   '/profile',
+  '/connect-league',
 ];
 
-// Routes that are always public
+// Routes that are always public (no auth check needed)
 const PUBLIC_ROUTES = [
   '/sign-in',
   '/sign-up',
@@ -30,6 +32,13 @@ const PUBLIC_ROUTES = [
   '/_next',
   '/favicon.ico',
   '/images',
+];
+
+// League routes that can be accessed by public visitors (if league is public)
+// These routes allow unauthenticated access - the page/API will check league visibility
+const PUBLIC_LEAGUE_ROUTES = [
+  '/leagues/*', // Base league page and all subpages (except protected ones above)
+  '/api/leagues/*', // API routes for league data (API will check league visibility)
 ];
 
 /**
@@ -60,6 +69,14 @@ function isProtectedRoute(path: string): boolean {
 }
 
 /**
+ * Check if this is a league route that could be publicly accessible.
+ * Public league visibility is checked at the page/API level.
+ */
+function isPotentiallyPublicLeagueRoute(path: string): boolean {
+  return PUBLIC_LEAGUE_ROUTES.some((pattern) => matchesPattern(path, pattern));
+}
+
+/**
  * Check if the user is authenticated based on cookies.
  */
 function isAuthenticated(request: NextRequest): boolean {
@@ -87,12 +104,13 @@ function isAuthenticated(request: NextRequest): boolean {
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Skip public routes
+  // Skip always-public routes (auth pages, static files, etc.)
   if (isPublicRoute(pathname)) {
     return NextResponse.next();
   }
 
-  // Check protected routes
+  // Check strictly protected routes first (desk, settings, moderation)
+  // These always require authentication regardless of league visibility
   if (isProtectedRoute(pathname)) {
     if (!isAuthenticated(request)) {
       // Redirect to sign-in with callback URL
@@ -100,6 +118,20 @@ export function middleware(request: NextRequest) {
       signInUrl.searchParams.set('callbackUrl', pathname);
       return NextResponse.redirect(signInUrl);
     }
+    return NextResponse.next();
+  }
+
+  // For league routes that could be public, allow through
+  // The page/layout will check league visibility and handle appropriately
+  if (isPotentiallyPublicLeagueRoute(pathname)) {
+    return NextResponse.next();
+  }
+
+  // For all other routes, require authentication
+  if (!isAuthenticated(request)) {
+    const signInUrl = new URL('/sign-in', request.url);
+    signInUrl.searchParams.set('callbackUrl', pathname);
+    return NextResponse.redirect(signInUrl);
   }
 
   return NextResponse.next();

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 
-import { getNotifications, getUnreadCount, markAllAsRead } from '@/lib/notifications';
 import { auth } from '@/lib/auth';
+import { getNotifications, getUnreadCount, markAllAsRead } from '@/lib/notifications';
 
 /**
  * GET /api/notifications

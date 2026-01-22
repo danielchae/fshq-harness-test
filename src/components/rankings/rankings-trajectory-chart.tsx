@@ -144,7 +144,7 @@ export function RankingsTrajectoryChart({ leagueSlug }: RankingsTrajectoryChartP
   }
 
   // Check for empty/insufficient history
-  if (!historyData || historyData.history.length === 0 || historyData.totalWeeks < 2) {
+  if (!historyData || historyData.history.length === 0) {
     return (
       <Card>
         <CardHeader>
@@ -156,7 +156,35 @@ export function RankingsTrajectoryChart({ leagueSlug }: RankingsTrajectoryChartP
         <CardContent>
           <div className="flex flex-col items-center justify-center h-[200px] text-center">
             <LineChart className="h-12 w-12 text-muted-foreground mb-2" />
-            <p className="text-muted-foreground">Trajectory available after Week 2</p>
+            <p className="text-muted-foreground">No published rankings yet</p>
+            <p className="text-sm text-muted-foreground mt-1">
+              Trajectory will appear once the commissioner publishes rankings
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Need at least 2 weeks of data to show trajectory
+  if (historyData.totalWeeks < 2) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <TrendingUp className="h-5 w-5" />
+            Rankings Trajectory
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col items-center justify-center h-[200px] text-center">
+            <LineChart className="h-12 w-12 text-muted-foreground mb-2" />
+            <p className="text-muted-foreground">
+              Only Week {historyData.totalWeeks} rankings published
+            </p>
+            <p className="text-sm text-muted-foreground mt-1">
+              Trajectory requires at least 2 weeks of published rankings
+            </p>
           </div>
         </CardContent>
       </Card>

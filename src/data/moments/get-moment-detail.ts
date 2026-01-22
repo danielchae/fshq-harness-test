@@ -18,7 +18,7 @@ export interface GetMomentDetailInput {
  * Returns top-level comments with nested replies.
  */
 function buildCommentTree(
-  comments: Array<{
+  comments: {
     id: string;
     content: string;
     authorId: string;
@@ -31,7 +31,7 @@ function buildCommentTree(
       avatarUrl: string | null;
       image: string | null;
     };
-  }>,
+  }[],
   currentUserId?: string
 ): Comment[] {
   // Create a map of all comments
@@ -59,9 +59,7 @@ function buildCommentTree(
 /**
  * Aggregates reactions into a Record<string, number> format.
  */
-function aggregateReactions(
-  reactions: Array<{ reactionType: string }>
-): Record<string, number> {
+function aggregateReactions(reactions: { reactionType: string }[]): Record<string, number> {
   const counts: Record<string, number> = {};
 
   for (const r of reactions) {
@@ -74,14 +72,9 @@ function aggregateReactions(
 /**
  * Gets user's reactions for a moment.
  */
-function getUserReactions(
-  reactions: Array<{ userId: string; reactionType: string }>,
-  userId?: string
-): string[] {
+function getUserReactions(reactions: { userId: string; reactionType: string }[], userId?: string): string[] {
   if (!userId) return [];
-  return reactions
-    .filter(r => r.userId === userId)
-    .map(r => r.reactionType);
+  return reactions.filter((r) => r.userId === userId).map((r) => r.reactionType);
 }
 
 /**

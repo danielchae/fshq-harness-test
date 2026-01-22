@@ -176,10 +176,7 @@ export async function gradePicksForMatchup(matchupId: string): Promise<GradeMatc
  * @param weekNumber - The week number to grade
  * @returns GradePicksResult with grading statistics
  */
-export async function gradePicksForLeagueWeek(
-  leagueId: string,
-  weekNumber: number
-): Promise<GradePicksResult> {
+export async function gradePicksForLeagueWeek(leagueId: string, weekNumber: number): Promise<GradePicksResult> {
   try {
     // Find all completed matchups for this league/week with winners
     const matchups = await withRetry(() =>
@@ -298,9 +295,7 @@ export async function gradeAllPendingPicks(): Promise<GradeAllResult> {
       }
     }
 
-    console.log(
-      `[GradePicks] Graded ${totalPicksGraded} picks: ${totalCorrect} correct, ${totalIncorrect} incorrect`
-    );
+    console.log(`[GradePicks] Graded ${totalPicksGraded} picks: ${totalCorrect} correct, ${totalIncorrect} incorrect`);
 
     return {
       success: errors.length === 0,

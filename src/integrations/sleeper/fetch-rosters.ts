@@ -7,8 +7,9 @@
  * - Type-safe response handling
  */
 
+import { MAX_RETRIES, SLEEPER_API_BASE } from './fetch-league';
+
 import type { SleeperRoster } from '@/types/sleeper';
-import { SLEEPER_API_BASE, MAX_RETRIES } from './fetch-league';
 
 // ============================================================================
 // Configuration
@@ -278,9 +279,7 @@ export async function fetchSleeperRosters(leagueId: string, options: FetchOption
       });
 
       if (validRosters.length !== rosters.length) {
-        console.warn(
-          `[fetchSleeperRosters] Filtered ${rosters.length - validRosters.length} invalid roster objects`
-        );
+        console.warn(`[fetchSleeperRosters] Filtered ${rosters.length - validRosters.length} invalid roster objects`);
       }
 
       // Cache the successful response

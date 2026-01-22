@@ -87,14 +87,10 @@ export async function getLeague(input: GetLeagueInput): Promise<League | null> {
   const { slug } = input;
 
   // Use unstable_cache for caching with tag-based revalidation
-  const getCachedLeague = unstable_cache(
-    async () => fetchLeagueBySlug(slug),
-    [`league-${slug}`],
-    {
-      tags: [`league-${slug}`],
-      revalidate: 300, // Revalidate every 5 minutes
-    }
-  );
+  const getCachedLeague = unstable_cache(async () => fetchLeagueBySlug(slug), [`league-${slug}`], {
+    tags: [`league-${slug}`],
+    revalidate: 300, // Revalidate every 5 minutes
+  });
 
   return getCachedLeague();
 }

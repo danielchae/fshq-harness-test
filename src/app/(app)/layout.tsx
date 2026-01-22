@@ -16,9 +16,5 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     redirect('/sign-in');
   }
 
-  return (
-    <div className="min-h-screen bg-background">
-      {children}
-    </div>
-  );
+  return <div className="min-h-screen bg-background">{children}</div>;
 }

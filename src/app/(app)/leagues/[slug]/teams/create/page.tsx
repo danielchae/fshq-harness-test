@@ -18,10 +18,10 @@ import { useTeams } from '@/hooks/use-teams';
 import { clearCache, getTeamsCacheKey } from '@/lib/cache';
 import { cn } from '@/lib/utils';
 
+import type { Route } from 'next';
+
 // Consistent description used across all states to prevent hydration mismatch
 const PAGE_DESCRIPTION = 'Find and claim your team to become its manager';
-
-import type { Route } from 'next';
 
 interface ClaimTeamPageProps {
   params: Promise<{ slug: string }>;
@@ -31,7 +31,7 @@ export default function ClaimTeamPage({ params }: ClaimTeamPageProps) {
   const { slug } = use(params);
   const router = useRouter();
   const { teams, isLoading, error, refetch } = useTeams({ leagueSlug: slug });
-  
+
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null);
   const [isClaiming, setIsClaiming] = useState(false);
@@ -40,7 +40,7 @@ export default function ClaimTeamPage({ params }: ClaimTeamPageProps) {
   const availableTeams = useMemo(() => {
     const unclaimed = teams.filter((team) => !team.claimed);
     if (!searchQuery.trim()) return unclaimed;
-    
+
     const query = searchQuery.toLowerCase();
     return unclaimed.filter(
       (team) =>
@@ -188,11 +188,7 @@ export default function ClaimTeamPage({ params }: ClaimTeamPageProps) {
         </Link>
       </div>
 
-      <PageHeader
-        icon={UserPlus}
-        title="Claim Your Team"
-        description={PAGE_DESCRIPTION}
-      />
+      <PageHeader icon={UserPlus} title="Claim Your Team" description={PAGE_DESCRIPTION} />
 
       <Card>
         <CardHeader>
@@ -252,9 +248,7 @@ export default function ClaimTeamPage({ params }: ClaimTeamPageProps) {
               ))}
             </div>
           ) : (
-            <div className="py-8 text-center text-muted-foreground">
-              No teams match your search.
-            </div>
+            <div className="py-8 text-center text-muted-foreground">No teams match your search.</div>
           )}
 
           {/* Claim Button */}

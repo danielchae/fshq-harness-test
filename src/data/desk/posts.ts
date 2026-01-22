@@ -6,9 +6,11 @@
  * can be published to the league feed.
  */
 
-import { prisma } from '@/lib/db';
+import { Prisma } from '@prisma/client';
 import { revalidatePath } from 'next/cache';
+
 import { auth } from '@/lib/auth';
+import { prisma } from '@/lib/db';
 
 // Types for posts
 export interface PostDraft {
@@ -89,7 +91,9 @@ export async function getPostDrafts(input: GetPostDraftsInput): Promise<PostDraf
  * Save a post draft
  * Stores the draft in user preferences for later publishing
  */
-export async function savePostDraft(input: SavePostDraftInput): Promise<{ success: boolean; draft?: PostDraft; error?: string }> {
+export async function savePostDraft(
+  input: SavePostDraftInput
+): Promise<{ success: boolean; draft?: PostDraft; error?: string }> {
   const session = await auth();
   const userId = session?.user?.id;
 
@@ -162,7 +166,7 @@ export async function savePostDraft(input: SavePostDraftInput): Promise<{ succes
       preferences: {
         ...prefs,
         postDrafts: [...otherDrafts, newDraft],
-      },
+      } as unknown as Prisma.InputJsonValue,
     },
   });
 
@@ -173,7 +177,9 @@ export async function savePostDraft(input: SavePostDraftInput): Promise<{ succes
  * Publish a post to the league feed
  * Creates a Moment record with type 'post'
  */
-export async function publishPost(input: PublishPostInput): Promise<{ success: boolean; momentId?: string; error?: string }> {
+export async function publishPost(
+  input: PublishPostInput
+): Promise<{ success: boolean; momentId?: string; error?: string }> {
   const session = await auth();
   const userId = session?.user?.id;
 
@@ -243,7 +249,7 @@ export async function publishPost(input: PublishPostInput): Promise<{ success: b
       preferences: {
         ...prefs,
         postDrafts: updatedDrafts,
-      },
+      } as unknown as Prisma.InputJsonValue,
     },
   });
 
@@ -283,7 +289,7 @@ export async function deletePostDraft(draftId: string): Promise<{ success: boole
       preferences: {
         ...prefs,
         postDrafts: updatedDrafts,
-      },
+      } as unknown as Prisma.InputJsonValue,
     },
   });
 

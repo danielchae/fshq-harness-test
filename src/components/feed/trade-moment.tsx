@@ -13,17 +13,20 @@ import type { Moment } from '@/types/feed';
 
 interface TradeMomentProps {
   moment: Moment;
-  onMomentHidden?: (momentId: string) => void;
+  /** Callback when moment is removed (hidden or deleted) - removes from feed list */
+  onMomentRemoved?: (momentId: string) => void;
 }
 
-export function TradeMoment({ moment, onMomentHidden }: TradeMomentProps) {
+export function TradeMoment({ moment, onMomentRemoved }: TradeMomentProps) {
   const { isAdmin } = useUser();
   const [isPinned, setIsPinned] = useState(moment.pinned ?? false);
-  const [isHidden, setIsHidden] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const { id, tradeDetails, reactions, userReactions, commentCount, createdAt, content } = moment;
 
   const handlePin = async () => {
+    if (isLoading) return;
+    setIsLoading(true);
     try {
       const response = await fetch('/api/moderation/pin', {
         method: 'POST',
@@ -36,10 +39,14 @@ export function TradeMoment({ moment, onMomentHidden }: TradeMomentProps) {
       }
     } catch (error) {
       console.error('Failed to pin moment:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleUnpin = async () => {
+    if (isLoading) return;
+    setIsLoading(true);
     try {
       const response = await fetch('/api/moderation/pin', {
         method: 'POST',
@@ -52,10 +59,14 @@ export function TradeMoment({ moment, onMomentHidden }: TradeMomentProps) {
       }
     } catch (error) {
       console.error('Failed to unpin moment:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleHide = async () => {
+    if (isLoading) return;
+    setIsLoading(true);
     try {
       const response = await fetch('/api/moderation/hide', {
         method: 'POST',
@@ -64,23 +75,36 @@ export function TradeMoment({ moment, onMomentHidden }: TradeMomentProps) {
       });
       const data = await response.json();
       if (data.success) {
-        setIsHidden(true);
-        onMomentHidden?.(id);
+        // Remove from parent's list after successful API call
+        onMomentRemoved?.(id);
       }
     } catch (error) {
       console.error('Failed to hide moment:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleDelete = async () => {
-    // For now, delete acts same as hide
-    handleHide();
+    if (isLoading) return;
+    setIsLoading(true);
+    try {
+      const response = await fetch('/api/moderation/delete', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ momentId: id }),
+      });
+      const data = await response.json();
+      if (data.success) {
+        // Remove from parent's list after successful API call
+        onMomentRemoved?.(id);
+      }
+    } catch (error) {
+      console.error('Failed to delete moment:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
-
-  // Don't render if hidden
-  if (isHidden) {
-    return null;
-  }
 
   // If no tradeDetails, render a simple trade card with content
   if (!tradeDetails) {

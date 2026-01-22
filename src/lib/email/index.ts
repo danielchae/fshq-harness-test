@@ -73,7 +73,7 @@ export async function sendEmail(input: BaseEmailInput & { html: string }): Promi
 /**
  * Base HTML template wrapper
  */
-function wrapInTemplate(content: string, preheader: string = ''): string {
+function wrapInTemplate(content: string, preheader = ''): string {
   return `
 <!DOCTYPE html>
 <html lang="en">
@@ -200,8 +200,8 @@ function wrapInTemplate(content: string, preheader: string = ''): string {
  * Generate base URL for links
  */
 function getBaseUrl(): string {
-  return process.env.NEXT_PUBLIC_APP_URL || process.env.VERCEL_URL 
-    ? `https://${process.env.VERCEL_URL}` 
+  return process.env.NEXT_PUBLIC_APP_URL || process.env.VERCEL_URL
+    ? `https://${process.env.VERCEL_URL}`
     : 'https://fshq.gg';
 }
 
@@ -222,7 +222,7 @@ export interface PickReminderEmailInput {
 export async function sendPickReminderEmail(input: PickReminderEmailInput): Promise<EmailResult> {
   const baseUrl = getBaseUrl();
   const link = `${baseUrl}/leagues/${input.leagueSlug}/pickems`;
-  
+
   const content = `
     <h1>🎯 Don't Forget Your Picks!</h1>
     <p>Hey ${input.userName},</p>
@@ -235,11 +235,14 @@ export async function sendPickReminderEmail(input: PickReminderEmailInput): Prom
     </p>
     <p style="font-size: 14px; color: #6b7280;">Progress: ${input.totalMatchups - input.unpickedCount} of ${input.totalMatchups} picks made</p>
   `;
-  
+
   return sendEmail({
     to: input.to,
     subject: `⏰ ${input.unpickedCount} Unpicked Matchup${input.unpickedCount > 1 ? 's' : ''} - Week ${input.weekNumber} | FSHQ`,
-    html: wrapInTemplate(content, `Don't forget! You have ${input.unpickedCount} picks to make for Week ${input.weekNumber}.`),
+    html: wrapInTemplate(
+      content,
+      `Don't forget! You have ${input.unpickedCount} picks to make for Week ${input.weekNumber}.`
+    ),
   });
 }
 
@@ -258,16 +261,16 @@ export async function sendStatCorrectionEmail(input: StatCorrectionEmailInput): 
   const baseUrl = getBaseUrl();
   const link = `${baseUrl}/leagues/${input.leagueSlug}/pickems`;
   const resultChanged = input.previousResult !== input.newResult;
-  
+
   let resultText: string;
   if (resultChanged) {
-    resultText = input.newResult 
+    resultText = input.newResult
       ? '🎉 Good news! One of your picks is now <strong>correct</strong>!'
       : '😔 Unfortunately, one of your picks is now <strong>incorrect</strong>.';
   } else {
     resultText = 'Your pick results remain unchanged.';
   }
-  
+
   const content = `
     <h1>📊 Stat Correction Applied</h1>
     <p>Hey ${input.userName},</p>
@@ -280,7 +283,7 @@ export async function sendStatCorrectionEmail(input: StatCorrectionEmailInput): 
       <a href="${link}" class="button">View Pick Results</a>
     </p>
   `;
-  
+
   return sendEmail({
     to: input.to,
     subject: `📊 Stat Correction - Week ${input.weekNumber} | FSHQ`,
@@ -299,7 +302,7 @@ export interface PowerRankingsPublishedEmailInput {
 export async function sendPowerRankingsPublishedEmail(input: PowerRankingsPublishedEmailInput): Promise<EmailResult> {
   const baseUrl = getBaseUrl();
   const link = `${baseUrl}/leagues/${input.leagueSlug}/rankings`;
-  
+
   const content = `
     <h1>📈 Power Rankings Published!</h1>
     <p>Hey ${input.userName},</p>
@@ -309,7 +312,7 @@ export async function sendPowerRankingsPublishedEmail(input: PowerRankingsPublis
       <a href="${link}" class="button">View Power Rankings</a>
     </p>
   `;
-  
+
   return sendEmail({
     to: input.to,
     subject: `📈 Week ${input.weekNumber} Power Rankings Published | ${input.leagueName}`,
@@ -332,12 +335,12 @@ export interface MatchupResultEmailInput {
 export async function sendMatchupResultEmail(input: MatchupResultEmailInput): Promise<EmailResult> {
   const baseUrl = getBaseUrl();
   const link = `${baseUrl}/leagues/${input.leagueSlug}/matchups`;
-  
+
   const title = input.won ? '🎉 Victory!' : '📊 Matchup Complete';
   const message = input.won
     ? `Congratulations! You defeated <strong>${input.opponentName}</strong>!`
     : `Your Week ${input.weekNumber} matchup against <strong>${input.opponentName}</strong> has ended.`;
-  
+
   const content = `
     <h1>${title}</h1>
     <p>Hey ${input.userName},</p>
@@ -353,11 +356,14 @@ export async function sendMatchupResultEmail(input: MatchupResultEmailInput): Pr
       <a href="${link}" class="button">View Full Results</a>
     </p>
   `;
-  
+
   return sendEmail({
     to: input.to,
     subject: `${input.won ? '🎉' : '📊'} Week ${input.weekNumber} Result: ${input.yourScore.toFixed(1)} - ${input.opponentScore.toFixed(1)} | FSHQ`,
-    html: wrapInTemplate(content, `Week ${input.weekNumber} matchup complete: ${input.yourScore.toFixed(1)} - ${input.opponentScore.toFixed(1)}`),
+    html: wrapInTemplate(
+      content,
+      `Week ${input.weekNumber} matchup complete: ${input.yourScore.toFixed(1)} - ${input.opponentScore.toFixed(1)}`
+    ),
   });
 }
 
@@ -374,7 +380,7 @@ export interface CommentReplyEmailInput {
 export async function sendCommentReplyEmail(input: CommentReplyEmailInput): Promise<EmailResult> {
   const baseUrl = getBaseUrl();
   const link = `${baseUrl}/leagues/${input.leagueSlug}/moment/${input.momentId}`;
-  
+
   const content = `
     <h1>💬 New Reply to Your Comment</h1>
     <p>Hey ${input.userName},</p>
@@ -386,7 +392,7 @@ export async function sendCommentReplyEmail(input: CommentReplyEmailInput): Prom
       <a href="${link}" class="button">View Conversation</a>
     </p>
   `;
-  
+
   return sendEmail({
     to: input.to,
     subject: `💬 ${input.replierName} replied to your comment | FSHQ`,
@@ -404,7 +410,7 @@ export interface MembershipApprovedEmailInput {
 export async function sendMembershipApprovedEmail(input: MembershipApprovedEmailInput): Promise<EmailResult> {
   const baseUrl = getBaseUrl();
   const link = `${baseUrl}/leagues/${input.leagueSlug}/feed`;
-  
+
   const content = `
     <h1>🎊 Welcome to ${input.leagueName}!</h1>
     <p>Hey ${input.userName},</p>
@@ -421,7 +427,7 @@ export async function sendMembershipApprovedEmail(input: MembershipApprovedEmail
       <a href="${link}" class="button">Enter the League</a>
     </p>
   `;
-  
+
   return sendEmail({
     to: input.to,
     subject: `🎊 You're In! Welcome to ${input.leagueName} | FSHQ`,
@@ -440,7 +446,7 @@ export interface TeamClaimedEmailInput {
 export async function sendTeamClaimedEmail(input: TeamClaimedEmailInput): Promise<EmailResult> {
   const baseUrl = getBaseUrl();
   const link = `${baseUrl}/leagues/${input.leagueSlug}/teams`;
-  
+
   const content = `
     <h1>🏆 Team Claimed Successfully!</h1>
     <p>Hey ${input.userName},</p>
@@ -455,7 +461,7 @@ export async function sendTeamClaimedEmail(input: TeamClaimedEmailInput): Promis
       <a href="${link}" class="button">View Your Team</a>
     </p>
   `;
-  
+
   return sendEmail({
     to: input.to,
     subject: `🏆 You claimed ${input.teamName}! | ${input.leagueName}`,
@@ -466,7 +472,7 @@ export async function sendTeamClaimedEmail(input: TeamClaimedEmailInput): Promis
 export interface WeeklyDigestEmailInput {
   to: string;
   userName: string;
-  leagues: Array<{
+  leagues: {
     name: string;
     slug: string;
     weekNumber: number;
@@ -474,13 +480,15 @@ export interface WeeklyDigestEmailInput {
     leagueRank: number;
     totalMembers: number;
     highlights: string[];
-  }>;
+  }[];
 }
 
 export async function sendWeeklyDigestEmail(input: WeeklyDigestEmailInput): Promise<EmailResult> {
   const baseUrl = getBaseUrl();
-  
-  const leagueBlocks = input.leagues.map(league => `
+
+  const leagueBlocks = input.leagues
+    .map(
+      (league) => `
     <div style="margin-bottom: 24px; padding-bottom: 24px; border-bottom: 1px solid #e5e7eb;">
       <h2 style="font-size: 16px; margin: 0 0 16px 0;">${league.name}</h2>
       <div style="display: flex; gap: 16px; margin-bottom: 16px;">
@@ -493,17 +501,23 @@ export async function sendWeeklyDigestEmail(input: WeeklyDigestEmailInput): Prom
           <div style="font-size: 12px; color: #6b7280;">of ${league.totalMembers} members</div>
         </div>
       </div>
-      ${league.highlights.length > 0 ? `
+      ${
+        league.highlights.length > 0
+          ? `
         <ul style="margin: 0; padding-left: 20px;">
-          ${league.highlights.map(h => `<li style="color: #4b5563;">${h}</li>`).join('')}
+          ${league.highlights.map((h) => `<li style="color: #4b5563;">${h}</li>`).join('')}
         </ul>
-      ` : ''}
+      `
+          : ''
+      }
       <p style="text-align: center; margin-top: 16px;">
         <a href="${baseUrl}/leagues/${league.slug}" style="color: #2563eb; text-decoration: none;">View League →</a>
       </p>
     </div>
-  `).join('');
-  
+  `
+    )
+    .join('');
+
   const content = `
     <h1>📬 Your Weekly FSHQ Digest</h1>
     <p>Hey ${input.userName},</p>
@@ -513,7 +527,7 @@ export async function sendWeeklyDigestEmail(input: WeeklyDigestEmailInput): Prom
       <a href="${baseUrl}/dashboard" class="button">View All Leagues</a>
     </p>
   `;
-  
+
   return sendEmail({
     to: input.to,
     subject: `📬 Your Weekly FSHQ Digest`,

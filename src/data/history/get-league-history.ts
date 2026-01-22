@@ -3,17 +3,18 @@
  *
  * Fetches historical season data and all-time records for a league.
  * Implements Prisma queries against SeasonHistory and related models.
- * 
+ *
  * If no local history exists for a Sleeper league, fetches from Sleeper API
  * by following the previous_league_id chain.
  *
  * @module src/data/history/get-league-history
  */
 
+import { Prisma } from '@prisma/client';
 import { unstable_cache } from 'next/cache';
 
-import { prisma } from '@/lib/db';
 import { fetchLeagueHistory as fetchSleeperHistory } from '@/integrations/sleeper/fetch-league-history';
+import { prisma } from '@/lib/db';
 
 import type {
   AllTimeRecord,
@@ -336,7 +337,7 @@ async function fetchLeagueHistoryFromDb(leagueSlug: string): Promise<LeagueHisto
                   : null,
               regularSeasonWinner: season.champion?.name ?? null,
               seasonSummary: `${season.name} - ${season.year} Season`,
-              dynastyContinuityData: season.isDynasty ? { sleeperLeagueId: season.leagueId } : null,
+              dynastyContinuityData: season.isDynasty ? { sleeperLeagueId: season.leagueId } : Prisma.JsonNull,
             },
             update: {
               champion: season.champion?.name ?? 'Unknown',
@@ -354,7 +355,7 @@ async function fetchLeagueHistoryFromDb(leagueSlug: string): Promise<LeagueHisto
                   : null,
               regularSeasonWinner: season.champion?.name ?? null,
               seasonSummary: `${season.name} - ${season.year} Season`,
-              dynastyContinuityData: season.isDynasty ? { sleeperLeagueId: season.leagueId } : null,
+              dynastyContinuityData: season.isDynasty ? { sleeperLeagueId: season.leagueId } : Prisma.JsonNull,
             },
           });
           didUpdate = true;

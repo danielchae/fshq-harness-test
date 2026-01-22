@@ -3,8 +3,6 @@ import { unstable_cache } from 'next/cache';
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 
-import type { Prisma } from '@prisma/client';
-
 import type {
   NotificationPreferences,
   NotificationPreferencesUpdateInput,
@@ -13,6 +11,7 @@ import type {
   UserProfileData,
   UserStats,
 } from '@/types/profile';
+import type { Prisma } from '@prisma/client';
 
 /**
  * Default notification preferences for new users
@@ -118,26 +117,20 @@ async function fetchUserStats(userId: string): Promise<UserStats> {
   const allTimeCorrectPicks = allTimeStats.reduce((sum, s) => sum + s.correctPicks, 0);
   const allTimeIncorrectPicks = allTimeTotalPicks - allTimeCorrectPicks;
   // Count unique seasons played (max across leagues since user participates in multiple leagues per season)
-  const maxSeasonsPlayed = allTimeStats.length > 0
-    ? Math.max(...allTimeStats.map(s => s.seasonsPlayed))
-    : 0;
+  const maxSeasonsPlayed = allTimeStats.length > 0 ? Math.max(...allTimeStats.map((s) => s.seasonsPlayed)) : 0;
 
   return {
     seasonRecord: {
       wins: seasonCorrectPicks,
       losses: seasonIncorrectPicks,
       ties: 0, // Pick'ems don't have ties
-      percentage: seasonTotalPicks > 0
-        ? Math.round((seasonCorrectPicks / seasonTotalPicks) * 1000) / 1000
-        : 0,
+      percentage: seasonTotalPicks > 0 ? Math.round((seasonCorrectPicks / seasonTotalPicks) * 1000) / 1000 : 0,
     },
     allTimeRecord: {
       wins: allTimeCorrectPicks,
       losses: allTimeIncorrectPicks,
       ties: 0, // Pick'ems don't have ties
-      percentage: allTimeTotalPicks > 0
-        ? Math.round((allTimeCorrectPicks / allTimeTotalPicks) * 1000) / 1000
-        : 0,
+      percentage: allTimeTotalPicks > 0 ? Math.round((allTimeCorrectPicks / allTimeTotalPicks) * 1000) / 1000 : 0,
       seasons: maxSeasonsPlayed,
     },
   };
@@ -174,42 +167,30 @@ async function fetchNotificationPreferences(userId: string): Promise<Notificatio
  * Uses unstable_cache with tag: profile-{userId}
  */
 const getCachedUserProfile = (userId: string) =>
-  unstable_cache(
-    async () => fetchUserProfile(userId),
-    [`profile-${userId}`],
-    {
-      tags: [`profile-${userId}`],
-      revalidate: 300, // Cache for 5 minutes
-    }
-  );
+  unstable_cache(async () => fetchUserProfile(userId), [`profile-${userId}`], {
+    tags: [`profile-${userId}`],
+    revalidate: 300, // Cache for 5 minutes
+  });
 
 /**
  * Cached user stats fetcher
  * Uses unstable_cache with tag: profile-stats-{userId}
  */
 const getCachedUserStats = (userId: string) =>
-  unstable_cache(
-    async () => fetchUserStats(userId),
-    [`profile-stats-${userId}`],
-    {
-      tags: [`profile-${userId}`, `profile-stats-${userId}`],
-      revalidate: 300, // Cache for 5 minutes
-    }
-  );
+  unstable_cache(async () => fetchUserStats(userId), [`profile-stats-${userId}`], {
+    tags: [`profile-${userId}`, `profile-stats-${userId}`],
+    revalidate: 300, // Cache for 5 minutes
+  });
 
 /**
  * Cached notification preferences fetcher
  * Uses unstable_cache with tag: profile-{userId}
  */
 const getCachedNotificationPreferences = (userId: string) =>
-  unstable_cache(
-    async () => fetchNotificationPreferences(userId),
-    [`profile-notifications-${userId}`],
-    {
-      tags: [`profile-${userId}`],
-      revalidate: 300, // Cache for 5 minutes
-    }
-  );
+  unstable_cache(async () => fetchNotificationPreferences(userId), [`profile-notifications-${userId}`], {
+    tags: [`profile-${userId}`],
+    revalidate: 300, // Cache for 5 minutes
+  });
 
 /**
  * Get user profile data for the current authenticated user
