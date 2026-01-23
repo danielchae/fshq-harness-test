@@ -200,7 +200,8 @@ export async function unhideMoment(input: UnhideMomentInput): Promise<UnhideMome
     revalidatePath(`/leagues/${moment.league.slug}`);
     revalidatePath(`/leagues/${moment.league.slug}/feed`);
     revalidatePath(`/leagues/${moment.league.slug}/moderation`);
-    revalidateTag(`feed-${moment.league.slug}`);
+    // Immediate invalidation - moderation actions should take effect right away
+    revalidateTag(`feed-${moment.league.slug}`, { expire: 0 });
 
     return { success: true };
   } catch (error) {
@@ -268,7 +269,8 @@ export async function deleteHiddenMoment(input: DeleteHiddenMomentInput): Promis
     revalidatePath(`/leagues/${moment.league.slug}`);
     revalidatePath(`/leagues/${moment.league.slug}/feed`);
     revalidatePath(`/leagues/${moment.league.slug}/moderation`);
-    revalidateTag(`feed-${moment.league.slug}`);
+    // Immediate invalidation - moderation actions should take effect right away
+    revalidateTag(`feed-${moment.league.slug}`, { expire: 0 });
 
     return { success: true };
   } catch (error) {

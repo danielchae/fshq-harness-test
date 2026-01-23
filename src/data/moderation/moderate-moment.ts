@@ -97,7 +97,8 @@ export async function pinMoment(input: PinMomentInput): Promise<ModerationResult
     // Revalidate feed caches (paths for server components, tag for client-side fetches)
     revalidatePath(`/leagues/${moment.league.slug}`);
     revalidatePath(`/leagues/${moment.league.slug}/feed`);
-    revalidateTag(`feed-${moment.league.slug}`);
+    // Immediate invalidation - moderation actions should take effect right away
+    revalidateTag(`feed-${moment.league.slug}`, { expire: 0 });
 
     return { success: true, pinned: pin };
   } catch (error) {
@@ -174,7 +175,8 @@ export async function hideMoment(input: HideMomentInput): Promise<ModerationResu
     revalidatePath(`/leagues/${moment.league.slug}`);
     revalidatePath(`/leagues/${moment.league.slug}/feed`);
     revalidatePath(`/leagues/${moment.league.slug}/moderation`);
-    revalidateTag(`feed-${moment.league.slug}`);
+    // Immediate invalidation - moderation actions should take effect right away
+    revalidateTag(`feed-${moment.league.slug}`, { expire: 0 });
 
     return { success: true, hidden: true };
   } catch (error) {
@@ -255,7 +257,8 @@ export async function deleteMoment(input: DeleteMomentInput): Promise<Moderation
     revalidatePath(`/leagues/${moment.league.slug}`);
     revalidatePath(`/leagues/${moment.league.slug}/feed`);
     revalidatePath(`/leagues/${moment.league.slug}/moderation`);
-    revalidateTag(`feed-${moment.league.slug}`);
+    // Immediate invalidation - moderation actions should take effect right away
+    revalidateTag(`feed-${moment.league.slug}`, { expire: 0 });
 
     return { success: true, deleted: true };
   } catch (error) {

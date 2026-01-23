@@ -309,7 +309,11 @@ async function syncMatchups(
     where: { leagueId: leagueDbId },
     select: { id: true, externalRosterId: true },
   });
-  const teamMap = new Map(teams.map((t) => [t.externalRosterId, t.id]));
+  const teamMap = new Map<string, string>(
+    teams
+      .filter((t) => t.externalRosterId !== null)
+      .map((t) => [t.externalRosterId as string, t.id])
+  );
 
   for (const [week, matchups] of matchupsByWeek) {
     // Group matchups by matchup_id to pair teams
@@ -567,7 +571,11 @@ async function syncTransactions(
     where: { leagueId: leagueDbId },
     select: { id: true, externalRosterId: true, name: true },
   });
-  const teamMap = new Map(teams.map((t) => [t.externalRosterId, t.id]));
+  const teamMap = new Map<string, string>(
+    teams
+      .filter((t) => t.externalRosterId !== null)
+      .map((t) => [t.externalRosterId as string, t.id])
+  );
   const teamNameMap = new Map(teams.map((t) => [t.id, t.name]));
 
   let transactionsUpdated = 0;

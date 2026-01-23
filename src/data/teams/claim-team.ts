@@ -106,7 +106,7 @@ export async function claimTeam(input: ClaimTeamInput): Promise<ClaimTeamResult>
   });
 
   // Invalidate the server-side teams cache so the list refreshes
-  revalidateTag(`teams-${leagueSlug}`);
+  revalidateTag(`teams-${leagueSlug}`, 'max');
 
   // Transform to Team type expected by frontend
   const transformedTeam: Team = {

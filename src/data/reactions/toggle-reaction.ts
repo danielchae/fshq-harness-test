@@ -130,7 +130,7 @@ export async function toggleReaction(input: ToggleReactionInput): Promise<Toggle
 
     // 7. Invalidate feed cache since lastActivityAt affects "recent" sort order
     if (moment.league?.slug) {
-      revalidateTag(`feed-${moment.league.slug}`);
+      revalidateTag(`feed-${moment.league.slug}`, 'max');
     }
 
     // 8. Update engagement metrics asynchronously (don't block the response)

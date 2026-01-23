@@ -99,7 +99,7 @@ export async function deleteComment(input: DeleteCommentInput): Promise<DeleteCo
 
     // 6. Revalidate the moment detail page cache
     revalidatePath(`/leagues/${comment.moment.league.slug}/moments/${comment.momentId}`);
-    revalidateTag(`feed-${comment.moment.league.slug}`);
+    revalidateTag(`feed-${comment.moment.league.slug}`, 'max');
 
     return { success: true };
   } catch (error) {

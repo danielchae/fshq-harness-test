@@ -99,7 +99,7 @@ export async function createMoment(input: CreateMomentInput): Promise<CreateMome
 
     // Revalidate the league feed cache for real-time updates
     // Use revalidateTag to invalidate unstable_cache entries (critical for cache consistency)
-    revalidateTag(`feed-${leagueSlug}`);
+    revalidateTag(`feed-${leagueSlug}`, 'max');
     // Also revalidate paths for any page-level caching
     revalidatePath(`/leagues/${leagueSlug}`);
     revalidatePath(`/leagues/${leagueSlug}/feed`);
