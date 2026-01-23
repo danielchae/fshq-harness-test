@@ -12,6 +12,9 @@ import { createHash } from 'crypto';
 
 import { prisma, withRetry } from '@/lib/db';
 
+import { fetchSleeperPlayers, getPlayerById } from '@/integrations/sleeper/fetch-players';
+
+import type { SleeperPlayersResponse } from '@/types/sleeper';
 import type { SleeperLeague, SleeperLeagueUser, SleeperRoster } from '@/types/sleeper';
 
 // Sleeper API base URL
@@ -386,21 +389,186 @@ async function syncMatchups(
 }
 
 /**
+ * Look up player name from Sleeper player database
+ * Returns the full name if found, otherwise returns the player ID as fallback
+ */
+function getPlayerName(players: SleeperPlayersResponse | null, playerId: string): string {
+  if (!players) {
+    return playerId; // Fallback to ID if players database not available
+  }
+
+  const player = getPlayerById(players, playerId);
+  if (player?.full_name) {
+    return player.full_name;
+  }
+  // Try first + last name as fallback
+  if (player?.first_name && player?.last_name) {
+    return `${player.first_name} ${player.last_name}`;
+  }
+  return playerId; // Fallback to ID if player not found
+}
+
+/**
+ * Build trade details for storage in notes field
+ * Organizes assets by team for proper display
+ */
+function buildTradeDetails(
+  tx: SleeperTransaction,
+  players: SleeperPlayersResponse | null,
+  teamMap: Map<string, string>
+): {
+  teams: Array<{
+    rosterId: number;
+    teamId: string;
+    playersIn: string[];
+    playersOut: string[];
+    draftPicksIn: string[];
+    draftPicksOut: string[];
+    faabIn: number;
+    faabOut: number;
+  }>;
+} {
+  // Build a map of what each roster received and gave away
+  const rosterAssets = new Map<
+    number,
+    {
+      playersIn: string[];
+      playersOut: string[];
+      draftPicksIn: string[];
+      draftPicksOut: string[];
+      faabIn: number;
+      faabOut: number;
+    }
+  >();
+
+  // Initialize for all rosters involved
+  for (const rosterId of tx.roster_ids) {
+    rosterAssets.set(rosterId, {
+      playersIn: [],
+      playersOut: [],
+      draftPicksIn: [],
+      draftPicksOut: [],
+      faabIn: 0,
+      faabOut: 0,
+    });
+  }
+
+  // Process player adds (who received which players)
+  if (tx.adds) {
+    for (const [playerId, rosterId] of Object.entries(tx.adds)) {
+      const assets = rosterAssets.get(rosterId);
+      if (assets) {
+        assets.playersIn.push(getPlayerName(players, playerId));
+      }
+    }
+  }
+
+  // Process player drops (who gave away which players)
+  if (tx.drops) {
+    for (const [playerId, rosterId] of Object.entries(tx.drops)) {
+      const assets = rosterAssets.get(rosterId);
+      if (assets) {
+        assets.playersOut.push(getPlayerName(players, playerId));
+      }
+    }
+  }
+
+  // Process draft picks
+  if (tx.draft_picks && Array.isArray(tx.draft_picks)) {
+    for (const pick of tx.draft_picks) {
+      const draftPick = pick as {
+        season?: string;
+        round?: number;
+        roster_id?: number;
+        previous_owner_id?: number;
+      };
+      if (draftPick.season && draftPick.round !== undefined) {
+        const pickLabel = `${draftPick.season} Round ${draftPick.round} Pick`;
+
+        // The roster_id is who now owns the pick (received it)
+        if (draftPick.roster_id !== undefined) {
+          const receiverAssets = rosterAssets.get(draftPick.roster_id);
+          if (receiverAssets) {
+            receiverAssets.draftPicksIn.push(pickLabel);
+          }
+        }
+
+        // The previous_owner_id is who gave away the pick
+        if (draftPick.previous_owner_id !== undefined) {
+          const giverAssets = rosterAssets.get(draftPick.previous_owner_id);
+          if (giverAssets) {
+            giverAssets.draftPicksOut.push(pickLabel);
+          }
+        }
+      }
+    }
+  }
+
+  // Process FAAB/waiver budget transfers
+  if (tx.waiver_budget && Array.isArray(tx.waiver_budget)) {
+    for (const budget of tx.waiver_budget) {
+      const transfer = budget as { sender?: number; receiver?: number; amount?: number };
+      if (transfer.amount && transfer.amount > 0) {
+        if (transfer.sender !== undefined) {
+          const senderAssets = rosterAssets.get(transfer.sender);
+          if (senderAssets) {
+            senderAssets.faabOut += transfer.amount;
+          }
+        }
+        if (transfer.receiver !== undefined) {
+          const receiverAssets = rosterAssets.get(transfer.receiver);
+          if (receiverAssets) {
+            receiverAssets.faabIn += transfer.amount;
+          }
+        }
+      }
+    }
+  }
+
+  // Convert to array format with team IDs
+  const teams: Array<{
+    rosterId: number;
+    teamId: string;
+    playersIn: string[];
+    playersOut: string[];
+    draftPicksIn: string[];
+    draftPicksOut: string[];
+    faabIn: number;
+    faabOut: number;
+  }> = [];
+
+  for (const [rosterId, assets] of rosterAssets) {
+    const teamId = teamMap.get(String(rosterId));
+    if (teamId) {
+      teams.push({
+        rosterId,
+        teamId,
+        ...assets,
+      });
+    }
+  }
+
+  return { teams };
+}
+
+/**
  * Sync transactions from Sleeper API
  */
 async function syncTransactions(
   leagueDbId: string,
   transactions: SleeperTransaction[],
+  players: SleeperPlayersResponse | null,
   week?: number
 ): Promise<number> {
   if (transactions.length === 0) return 0;
 
-  // Get existing teams for roster mapping
+  // Get existing teams for roster mapping (include name for trade details)
   const teams = await prisma.team.findMany({
     where: { leagueId: leagueDbId },
-    select: { id: true, externalRosterId: true },
+    select: { id: true, externalRosterId: true, name: true },
   });
   const teamMap = new Map(teams.map((t) => [t.externalRosterId, t.id]));
+  const teamNameMap = new Map(teams.map((t) => [t.id, t.name]));
 
   let transactionsUpdated = 0;
 
@@ -412,27 +580,92 @@ async function syncTransactions(
     const teamId = teamMap.get(String(primaryRosterId));
     if (!teamId) continue;
 
-    // Determine transaction type
+    // Determine transaction type and get player name
     let type: 'trade' | 'add' | 'drop' | 'waiver';
     let playerName = 'Unknown Player';
+    let tradePartnerTeamId: string | null = null;
+    let notes: string | null = null;
 
     if (tx.type === 'trade') {
       type = 'trade';
-      playerName = 'Trade';
+
+      // Build detailed trade information
+      const tradeDetails = buildTradeDetails(tx, players, teamMap);
+
+      // Get trade partner team ID (second roster in the trade)
+      if (tx.roster_ids.length >= 2) {
+        const partnerRosterId = tx.roster_ids[1];
+        tradePartnerTeamId = teamMap.get(String(partnerRosterId)) || null;
+      }
+
+      // Find a representative player name for the trade
+      if (tx.adds) {
+        const playerId = Object.keys(tx.adds)[0];
+        if (playerId) {
+          playerName = getPlayerName(players, playerId);
+        } else {
+          playerName = 'Trade';
+        }
+      } else if (tx.drops) {
+        const playerId = Object.keys(tx.drops)[0];
+        if (playerId) {
+          playerName = getPlayerName(players, playerId);
+        } else {
+          playerName = 'Trade';
+        }
+      } else {
+        playerName = 'Trade';
+      }
+
+      // Store detailed trade info including team names
+      const teamsWithNames = tradeDetails.teams.map((team) => ({
+        ...team,
+        teamName: teamNameMap.get(team.teamId) || 'Unknown Team',
+      }));
+
+      notes = JSON.stringify({
+        transactionId: tx.transaction_id,
+        adds: tx.adds,
+        drops: tx.drops,
+        tradeDetails: {
+          teams: teamsWithNames,
+        },
+      });
     } else if (tx.type === 'waiver') {
       type = 'waiver';
       if (tx.adds) {
         const playerId = Object.keys(tx.adds)[0];
-        playerName = `Waiver: ${playerId}`;
+        if (playerId) {
+          playerName = getPlayerName(players, playerId);
+        }
       }
+      notes = JSON.stringify({
+        transactionId: tx.transaction_id,
+        adds: tx.adds,
+        drops: tx.drops,
+      });
     } else if (tx.adds && Object.keys(tx.adds).length > 0) {
       type = 'add';
       const playerId = Object.keys(tx.adds)[0];
-      playerName = `Added: ${playerId}`;
+      if (playerId) {
+        playerName = getPlayerName(players, playerId);
+      }
+      notes = JSON.stringify({
+        transactionId: tx.transaction_id,
+        adds: tx.adds,
+        drops: tx.drops,
+      });
     } else if (tx.drops && Object.keys(tx.drops).length > 0) {
       type = 'drop';
       const playerId = Object.keys(tx.drops)[0];
-      playerName = `Dropped: ${playerId}`;
+      if (playerId) {
+        playerName = getPlayerName(players, playerId);
+      }
+      notes = JSON.stringify({
+        transactionId: tx.transaction_id,
+        adds: tx.adds,
+        drops: tx.drops,
+      });
     } else {
       continue; // Skip unknown transaction types
     }
@@ -458,11 +691,18 @@ async function syncTransactions(
           playerName,
           timestamp: new Date(tx.created),
           faabAmount: tx.settings?.waiver_bid,
-          notes: JSON.stringify({
-            transactionId: tx.transaction_id,
-            adds: tx.adds,
-            drops: tx.drops,
-          }),
+          tradePartnerTeamId,
+          notes,
+        },
+      });
+      transactionsUpdated++;
+    } else if (type === 'trade' && !existingTx.tradePartnerTeamId && tradePartnerTeamId) {
+      // Update existing trades that are missing trade details
+      await prisma.transaction.update({
+        where: { id: existingTx.id },
+        data: {
+          tradePartnerTeamId,
+          notes,
         },
       });
       transactionsUpdated++;
@@ -518,12 +758,13 @@ export async function syncSleeperLeague(platformLeagueId: string): Promise<SyncJ
 
   try {
     // Fetch all data from Sleeper API in parallel
-    const [sleeperLeague, rosters, users, matchupsByWeek, transactions] = await Promise.all([
+    const [sleeperLeague, rosters, users, matchupsByWeek, transactions, players] = await Promise.all([
       fetchSleeperLeague(platformLeagueId),
       fetchSleeperRosters(platformLeagueId),
       fetchSleeperLeagueUsers(platformLeagueId),
       fetchAllMatchups(platformLeagueId),
       fetchAllTransactions(platformLeagueId),
+      fetchSleeperPlayers(), // Fetch player database for name lookups
     ]);
 
     if (!sleeperLeague) {
@@ -582,8 +823,8 @@ export async function syncSleeperLeague(platformLeagueId: string): Promise<SyncJ
       // Sync matchups
       const matchupsUpdated = await syncMatchups(league.id, matchupsByWeek, league.season);
 
-      // Sync transactions
-      const transactionsUpdated = await syncTransactions(league.id, transactions);
+      // Sync transactions (pass players database for name lookups)
+      const transactionsUpdated = await syncTransactions(league.id, transactions, players);
 
       // Update league with new checksum and sync timestamp
       await prisma.league.update({

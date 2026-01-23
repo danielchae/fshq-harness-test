@@ -94,27 +94,45 @@ function TradeCard({ transaction }: { transaction: Transaction & { type: 'trade'
               {team.name}
             </span>
           </div>
-          <div className="ml-10 space-y-1 text-sm">
+          <div className="ml-10 space-y-2 text-sm">
             {team.playersOut && team.playersOut.length > 0 && (
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <Minus className="h-3 w-3 text-red-500" />
-                <span>Traded away:</span>
-                {team.playersOut.map((player) => (
-                  <span key={player} className="font-medium text-foreground" data-testid="player-name" data-player>
-                    {player}
-                  </span>
-                ))}
+              <div className="space-y-1">
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Minus className="h-3 w-3 text-red-500 flex-shrink-0" />
+                  <span>Traded away:</span>
+                </div>
+                <div className="ml-5 space-y-0.5">
+                  {team.playersOut.map((asset, assetIdx) => (
+                    <div
+                      key={`${asset}-${assetIdx}`}
+                      className="font-medium text-foreground"
+                      data-testid="player-name"
+                      data-player
+                    >
+                      {asset}
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
             {team.playersIn && team.playersIn.length > 0 && (
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <Plus className="h-3 w-3 text-green-500" />
-                <span>Received:</span>
-                {team.playersIn.map((player) => (
-                  <span key={player} className="font-medium text-foreground" data-testid="player-name" data-player>
-                    {player}
-                  </span>
-                ))}
+              <div className="space-y-1">
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Plus className="h-3 w-3 text-green-500 flex-shrink-0" />
+                  <span>Received:</span>
+                </div>
+                <div className="ml-5 space-y-0.5">
+                  {team.playersIn.map((asset, assetIdx) => (
+                    <div
+                      key={`${asset}-${assetIdx}`}
+                      className="font-medium text-foreground"
+                      data-testid="player-name"
+                      data-player
+                    >
+                      {asset}
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
           </div>
