@@ -25,6 +25,7 @@ const PROTECTED_ROUTES = [
 
 // Routes that are always public (no auth check needed)
 const PUBLIC_ROUTES = [
+  '/', // Landing page is always public
   '/sign-in',
   '/sign-up',
   '/forgot-password',

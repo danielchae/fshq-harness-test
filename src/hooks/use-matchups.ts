@@ -2,9 +2,9 @@
 
 import { useCallback, useEffect, useState } from 'react';
 
-import { getCurrentNFLWeekSync, NFL_TOTAL_WEEKS } from '@/lib/nfl-week';
+import { NFL_TOTAL_WEEKS } from '@/lib/nfl-week';
 
-import type { DisplayMatchup, MatchupsResponse } from '@/types/matchups';
+import type { DisplayMatchup, MatchupsResponse, MatchupsSeasonState } from '@/types/matchups';
 
 interface UseMatchupsOptions {
   leagueSlug: string;
@@ -20,60 +20,68 @@ interface UseMatchupsReturn {
   totalWeeks: number;
   setSelectedWeek: (week: number) => void;
   retry: () => void;
+  // Season state
+  seasonState?: MatchupsSeasonState;
+  availableWeeks: number[];
 }
 
 export function useMatchups({ leagueSlug, initialWeek }: UseMatchupsOptions): UseMatchupsReturn {
-  // Use calculated current week as fallback if no initial week provided
-  const defaultWeek = initialWeek ?? getCurrentNFLWeekSync();
-
-  const [matchups, setMatchups] = useState<DisplayMatchup[]>([]);
+  const [data, setData] = useState<MatchupsResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [currentWeek, setCurrentWeek] = useState(defaultWeek);
-  const [selectedWeek, setSelectedWeek] = useState(defaultWeek);
-  const [totalWeeks, setTotalWeeks] = useState(NFL_TOTAL_WEEKS);
+  // Track user-selected week (undefined means use server default)
+  const [selectedWeekOverride, setSelectedWeekOverride] = useState<number | undefined>(initialWeek);
 
-  const fetchMatchups = useCallback(async () => {
+  const fetchMatchups = useCallback(async (weekToFetch?: number) => {
     setIsLoading(true);
     setError(null);
 
     try {
-      const response = await fetch(
-        `/api/matchups?leagueSlug=${encodeURIComponent(leagueSlug)}&weekNumber=${selectedWeek}`
-      );
+      const url = weekToFetch !== undefined
+        ? `/api/matchups?leagueSlug=${encodeURIComponent(leagueSlug)}&weekNumber=${weekToFetch}`
+        : `/api/matchups?leagueSlug=${encodeURIComponent(leagueSlug)}`;
+
+      const response = await fetch(url);
 
       if (!response.ok) {
         throw new Error('Failed to load matchups');
       }
 
-      const data: MatchupsResponse = await response.json();
-      setMatchups(data.matchups);
-      setCurrentWeek(data.currentWeek);
-      setTotalWeeks(data.totalWeeks);
+      const result: MatchupsResponse = await response.json();
+      setData(result);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unable to load matchups');
-      setMatchups([]);
+      setData(null);
     } finally {
       setIsLoading(false);
     }
-  }, [leagueSlug, selectedWeek]);
+  }, [leagueSlug]);
 
   useEffect(() => {
-    fetchMatchups();
-  }, [fetchMatchups]);
+    fetchMatchups(selectedWeekOverride);
+  }, [fetchMatchups, selectedWeekOverride]);
+
+  const setSelectedWeek = useCallback((week: number) => {
+    setSelectedWeekOverride(week);
+  }, []);
 
   const retry = useCallback(() => {
-    fetchMatchups();
-  }, [fetchMatchups]);
+    fetchMatchups(selectedWeekOverride);
+  }, [fetchMatchups, selectedWeekOverride]);
+
+  const availableWeeks = data?.seasonState?.availableWeeks || [];
+  const selectedWeek = selectedWeekOverride ?? data?.currentWeek ?? 1;
 
   return {
-    matchups,
+    matchups: data?.matchups || [],
     isLoading,
     error,
-    currentWeek,
+    currentWeek: data?.currentWeek || 1,
     selectedWeek,
-    totalWeeks,
+    totalWeeks: data?.totalWeeks || NFL_TOTAL_WEEKS,
     setSelectedWeek,
     retry,
+    seasonState: data?.seasonState,
+    availableWeeks,
   };
 }

@@ -3,6 +3,7 @@ import { Prisma } from '@prisma/client';
 import { fetchLeagueHistory } from '@/integrations/sleeper/fetch-league-history';
 import { syncSleeperLeague } from '@/jobs/sync-sleeper-league';
 import { prisma } from '@/lib/db';
+import { joinLeague } from '@/data/leagues/join-league';
 
 import type { SleeperLeague, SleeperLeagueUser, SleeperRoster } from '@/types/sleeper';
 import type { SyncProgressResponse, SyncResult } from '@/types/sync';
@@ -281,6 +282,7 @@ export async function syncLeague(input: SyncLeagueInput): Promise<SyncResult> {
     });
 
     if (existingLeague) {
+      // Sync latest data from Sleeper
       const syncResult = await syncSleeperLeague(sleeperLeagueId);
       if (syncResult.success) {
         console.log(
@@ -290,10 +292,35 @@ export async function syncLeague(input: SyncLeagueInput): Promise<SyncResult> {
         console.error(`Sync failed for existing league ${sleeperLeagueId}:`, syncResult.error);
       }
 
+      // If user is authenticated, add them to the league
+      if (userId) {
+        const joinResult = await joinLeague({
+          leagueSlug: existingLeague.slug,
+          userId,
+        });
+
+        if (joinResult.success) {
+          const statusMessage = joinResult.status === 'joined'
+            ? `You've joined ${existingLeague.name}!`
+            : joinResult.status === 'pending'
+            ? `Your request to join ${existingLeague.name} has been submitted for approval.`
+            : joinResult.status === 'already_member'
+            ? `You're already a member of ${existingLeague.name}.`
+            : joinResult.message;
+
+          return {
+            success: true,
+            leagueSlug: existingLeague.slug,
+            message: statusMessage,
+            membershipStatus: joinResult.status,
+          };
+        }
+      }
+
       return {
         success: true,
         leagueSlug: existingLeague.slug,
-        message: 'League already synced',
+        message: 'League already exists. Sign in to join.',
       };
     }
 

@@ -1,5 +1,6 @@
 // Types for pick'ems feature
-// MOCK: Backend will replace with actual database types
+
+import type { SeasonStatus } from '@/lib/nfl-week';
 
 export interface PickemTeam {
   id: string;
@@ -57,6 +58,26 @@ export interface WeeklyScore {
   percentage: number;
 }
 
+/**
+ * Season state information for the pickems page
+ */
+export interface PickemsSeasonState {
+  /** Current season status */
+  status: SeasonStatus;
+  /** Whether the fantasy season is complete (no more picks allowed) */
+  isSeasonComplete: boolean;
+  /** Whether picks can be made for the current week */
+  canMakePicks: boolean;
+  /** Human-readable status message for display */
+  statusMessage: string;
+  /** The last week that has matchup data in this league */
+  lastActiveWeek: number;
+  /** The championship week for this league */
+  championshipWeek: number;
+  /** Available weeks to browse (weeks with matchup data) */
+  availableWeeks: number[];
+}
+
 export interface PickemsResponse {
   matchups: PickemMatchup[];
   currentWeek: number;
@@ -67,6 +88,8 @@ export interface PickemsResponse {
   weeklyScore?: WeeklyScore; // Summary of weekly results
   hasSubmittedPicks?: boolean; // Whether user submitted picks for this week
   isWeekComplete?: boolean; // Whether all matchups have final scores
+  // Season state (new)
+  seasonState?: PickemsSeasonState; // Full season state information
 }
 
 export interface SavePicksRequest {

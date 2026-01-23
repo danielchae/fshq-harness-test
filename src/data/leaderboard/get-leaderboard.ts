@@ -5,17 +5,46 @@ import { unstable_cache } from 'next/cache';
 
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/db';
-import { getCurrentNFLWeek } from '@/lib/nfl-week';
+import { DEFAULT_CHAMPIONSHIP_WEEK, getNFLSeasonState } from '@/lib/nfl-week';
 
 import type {
   LeaderboardEntry,
   LeaderboardResponse,
   LeaderboardRoleFilter,
   LeaderboardScope,
+  LeaderboardSeasonState,
 } from '@/types/leaderboard';
 
 // Constants
 const DEFAULT_CURRENT_SEASON = 2025;
+
+/**
+ * Get available weeks with pick'em data for this league
+ */
+async function getLeaguePickemWeeks(
+  leagueId: string,
+  season: number
+): Promise<{ availableWeeks: number[]; lastActiveWeek: number; championshipWeek: number }> {
+  const weeksWithStats = await prisma.weeklyStats.findMany({
+    where: {
+      leagueId,
+      season,
+    },
+    select: {
+      weekNumber: true,
+    },
+    distinct: ['weekNumber'],
+    orderBy: {
+      weekNumber: 'asc',
+    },
+  });
+
+  const availableWeeks = weeksWithStats.map((w) => w.weekNumber);
+  const lastActiveWeek = availableWeeks.length > 0 ? Math.max(...availableWeeks) : 1;
+  const championshipWeek = Math.min(lastActiveWeek, DEFAULT_CHAMPIONSHIP_WEEK);
+
+  return { availableWeeks, lastActiveWeek, championshipWeek };
+}
 
 export interface GetLeaderboardInput {
   leagueSlug: string;
@@ -350,8 +379,8 @@ async function fetchLeaderboard(
   weekNumber: number | undefined,
   currentUserId: string | undefined
 ): Promise<LeaderboardResponse> {
-  // Get current week from NFL state
-  const currentWeek = await getCurrentNFLWeek();
+  // Get NFL season state
+  const nflState = await getNFLSeasonState();
 
   // Get league by slug
   const league = await prisma.league.findUnique({
@@ -365,13 +394,38 @@ async function fetchLeaderboard(
       standings: [],
       scope,
       roleFilter,
-      currentWeek,
-      weekNumber: scope === 'weekly' ? weekNumber || currentWeek : undefined,
+      currentWeek: nflState.week,
+      weekNumber: scope === 'weekly' ? weekNumber || nflState.week : undefined,
       seasonYear: DEFAULT_CURRENT_SEASON,
       leagueAverage: 0,
     };
   }
   const seasonYear = league.season || DEFAULT_CURRENT_SEASON;
+
+  // Get league's week info
+  const leagueWeekInfo = await getLeaguePickemWeeks(league.id, seasonYear);
+
+  // Determine the effective week for weekly scope
+  let effectiveWeek: number;
+  if (weekNumber !== undefined) {
+    effectiveWeek = weekNumber;
+  } else if (nflState.isFantasySeasonComplete) {
+    effectiveWeek = leagueWeekInfo.lastActiveWeek;
+  } else {
+    effectiveWeek = Math.min(nflState.week, leagueWeekInfo.lastActiveWeek || nflState.week);
+  }
+
+  // Build season state
+  const seasonState: LeaderboardSeasonState = {
+    status: nflState.status,
+    isSeasonComplete: nflState.isFantasySeasonComplete,
+    statusMessage: nflState.isFantasySeasonComplete
+      ? 'Season Complete - Final Standings'
+      : nflState.statusMessage,
+    lastActiveWeek: leagueWeekInfo.lastActiveWeek,
+    championshipWeek: leagueWeekInfo.championshipWeek,
+    availableWeeks: leagueWeekInfo.availableWeeks,
+  };
 
   let standings: LeaderboardEntry[];
 
@@ -380,7 +434,7 @@ async function fetchLeaderboard(
       standings = await fetchWeeklyLeaderboard(
         league.id,
         seasonYear,
-        weekNumber || currentWeek,
+        effectiveWeek,
         currentUserId,
         roleFilter
       );
@@ -400,10 +454,11 @@ async function fetchLeaderboard(
     standings,
     scope,
     roleFilter,
-    currentWeek,
-    weekNumber: scope === 'weekly' ? weekNumber || currentWeek : undefined,
+    currentWeek: effectiveWeek,
+    weekNumber: scope === 'weekly' ? effectiveWeek : undefined,
     seasonYear,
     leagueAverage,
+    seasonState,
   };
 }
 

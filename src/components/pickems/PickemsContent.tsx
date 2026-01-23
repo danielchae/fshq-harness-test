@@ -1,13 +1,15 @@
 'use client';
 
-import { AlertCircle, Inbox, Loader2, RefreshCw, Target, X } from 'lucide-react';
+import { AlertCircle, Calendar, ChevronLeft, ChevronRight, Inbox, Loader2, RefreshCw, Target, Trophy, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
 import { PageHeader } from '@/components/layout/page-header';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { usePickems } from '@/hooks/use-pickems';
 import { LockCountdown } from './LockCountdown';
 import { MatchupPickCard } from './MatchupPickCard';
@@ -34,6 +36,10 @@ export function PickemsContent({ leagueSlug }: PickemsContentProps) {
     weeklyScore,
     hasSubmittedPicks,
     isWeekComplete,
+    seasonState,
+    selectedWeek,
+    setSelectedWeek,
+    availableWeeks,
   } = usePickems({ leagueSlug });
 
   // Global API error state for displaying errors from direct API calls
@@ -99,6 +105,75 @@ export function PickemsContent({ leagueSlug }: PickemsContentProps) {
     setApiError(null);
   };
 
+  // Week navigation component
+  const WeekNavigation = () => {
+    if (availableWeeks.length === 0) return null;
+
+    const canGoPrev = selectedWeek > Math.min(...availableWeeks);
+    const canGoNext = selectedWeek < Math.max(...availableWeeks);
+
+    return (
+      <div className="flex items-center gap-2">
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={() => canGoPrev && setSelectedWeek(selectedWeek - 1)}
+          disabled={!canGoPrev}
+          className="h-8 w-8"
+        >
+          <ChevronLeft className="h-4 w-4" />
+        </Button>
+        <Select value={String(selectedWeek)} onValueChange={(v) => setSelectedWeek(parseInt(v, 10))}>
+          <SelectTrigger className="w-[120px] h-8">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {availableWeeks.map((week) => (
+              <SelectItem key={week} value={String(week)}>
+                Week {week}
+                {week === seasonState?.championshipWeek && ' (Finals)'}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={() => canGoNext && setSelectedWeek(selectedWeek + 1)}
+          disabled={!canGoNext}
+          className="h-8 w-8"
+        >
+          <ChevronRight className="h-4 w-4" />
+        </Button>
+      </div>
+    );
+  };
+
+  // Season status badge
+  const SeasonStatusBadge = () => {
+    if (!seasonState) return null;
+
+    if (seasonState.isSeasonComplete) {
+      return (
+        <Badge variant="secondary" className="gap-1">
+          <Trophy className="h-3 w-3" />
+          Season Complete
+        </Badge>
+      );
+    }
+
+    if (seasonState.status === 'preseason') {
+      return (
+        <Badge variant="outline" className="gap-1">
+          <Calendar className="h-3 w-3" />
+          Preseason
+        </Badge>
+      );
+    }
+
+    return null;
+  };
+
   // Loading state
   if (isLoading) {
     return (
@@ -126,44 +201,65 @@ export function PickemsContent({ leagueSlug }: PickemsContentProps) {
     );
   }
 
-  // No picks submitted for completed week
+  // No picks submitted for this week (but week has no matchups)
   if (hasSubmittedPicks === false && matchups.length === 0) {
     return (
       <div className="space-y-6">
         <PageHeader
           icon={Target}
-          title={`Pick'ems - Week ${currentWeek}`}
-          description="Predict matchup winners to climb the leaderboard"
-        />
+          title="Pick'ems"
+          description={seasonState?.statusMessage || `Week ${currentWeek}`}
+        >
+          <SeasonStatusBadge />
+          <WeekNavigation />
+        </PageHeader>
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
             <Inbox className="h-12 w-12 text-muted-foreground" />
-            <p className="mt-4 text-lg font-medium">No picks submitted for this week</p>
-            <p className="text-muted-foreground">You didn&apos;t submit any picks for this week</p>
+            <p className="mt-4 text-lg font-medium">No matchups for Week {selectedWeek}</p>
+            <p className="text-muted-foreground">
+              {availableWeeks.length > 0
+                ? 'Use the week selector to browse other weeks'
+                : 'No matchup data available yet'}
+            </p>
           </CardContent>
         </Card>
       </div>
     );
   }
 
-  // Empty state (no matchups at all)
+  // Empty state (no matchups at all in the league)
   if (matchups.length === 0) {
     return (
-      <Card>
-        <CardContent className="flex flex-col items-center justify-center py-12">
-          <Inbox className="h-12 w-12 text-muted-foreground" />
-          <p className="mt-4 text-lg font-medium">No pick&apos;em matchups this week</p>
-          <p className="text-muted-foreground">Check back later for upcoming matchups</p>
-        </CardContent>
-      </Card>
+      <div className="space-y-6">
+        <PageHeader
+          icon={Target}
+          title="Pick'ems"
+          description={seasonState?.statusMessage || `Week ${currentWeek}`}
+        >
+          <SeasonStatusBadge />
+          {availableWeeks.length > 0 && <WeekNavigation />}
+        </PageHeader>
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center py-12">
+            <Inbox className="h-12 w-12 text-muted-foreground" />
+            <p className="mt-4 text-lg font-medium">No pick&apos;em matchups for Week {selectedWeek}</p>
+            <p className="text-muted-foreground">
+              {seasonState?.isSeasonComplete
+                ? 'The season has ended. Browse previous weeks to see your results.'
+                : 'Check back later for upcoming matchups'}
+            </p>
+          </CardContent>
+        </Card>
+      </div>
     );
   }
 
-  // Check if this is a results view (week complete with graded matchups)
-  const isResultsView = isWeekComplete || matchups.some((m) => m.isComplete && m.isCorrect !== undefined);
+  // Check if this is a results view (week complete with graded matchups, or season is complete)
+  const isResultsView = isWeekComplete || seasonState?.isSeasonComplete || matchups.some((m) => m.isComplete && m.isCorrect !== undefined);
 
   // Results view - show graded picks
-  if (isResultsView && weeklyScore) {
+  if (isResultsView) {
     return (
       <div className="space-y-6">
         {/* API Error Alert */}
@@ -181,8 +277,28 @@ export function PickemsContent({ leagueSlug }: PickemsContentProps) {
           </Alert>
         )}
 
-        {/* Results Header with weekly score */}
-        <ResultsHeader weeklyScore={weeklyScore} weekNumber={currentWeek} />
+        {/* Header with week navigation */}
+        <PageHeader
+          icon={Target}
+          title={seasonState?.isSeasonComplete ? 'Pick\'ems History' : 'Pick\'ems Results'}
+          description={`Week ${selectedWeek}${selectedWeek === seasonState?.championshipWeek ? ' Finals' : ''}`}
+        >
+          <SeasonStatusBadge />
+          <WeekNavigation />
+        </PageHeader>
+
+        {/* Results Header with weekly score (if user had picks) */}
+        {weeklyScore && <ResultsHeader weeklyScore={weeklyScore} weekNumber={selectedWeek} />}
+
+        {/* No picks for this week */}
+        {!weeklyScore && hasSubmittedPicks === false && (
+          <Card>
+            <CardContent className="flex flex-col items-center justify-center py-8">
+              <Inbox className="h-10 w-10 text-muted-foreground" />
+              <p className="mt-3 text-muted-foreground">You didn&apos;t submit picks for Week {selectedWeek}</p>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Graded pick cards */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -198,6 +314,9 @@ export function PickemsContent({ leagueSlug }: PickemsContentProps) {
   const unlockedMatchups = matchups.filter((m) => !m.isLocked);
   const pickedCount = unlockedMatchups.filter((m) => selections.has(m.id)).length;
   const totalUnlocked = unlockedMatchups.length;
+
+  // Check if picks can be made
+  const canMakePicks = seasonState?.canMakePicks !== false && totalUnlocked > 0;
 
   // Standard pick'ems submission view
   return (
@@ -218,9 +337,11 @@ export function PickemsContent({ leagueSlug }: PickemsContentProps) {
       )}
 
       {/* Header with controls */}
-      <PageHeader icon={Target} title="Pick'ems" description={`Week ${currentWeek}`}>
-        {lockTimeGlobal && <LockCountdown lockTime={lockTimeGlobal} />}
-        <PicksSummary pickedCount={pickedCount} totalMatchups={totalUnlocked} />
+      <PageHeader icon={Target} title="Pick'ems" description={`Week ${selectedWeek}`}>
+        <SeasonStatusBadge />
+        <WeekNavigation />
+        {lockTimeGlobal && canMakePicks && <LockCountdown lockTime={lockTimeGlobal} />}
+        {canMakePicks && <PicksSummary pickedCount={pickedCount} totalMatchups={totalUnlocked} />}
       </PageHeader>
 
       {/* Matchup cards */}
@@ -230,13 +351,13 @@ export function PickemsContent({ leagueSlug }: PickemsContentProps) {
             key={matchup.id}
             matchup={matchup}
             selectedTeamId={selections.get(matchup.id)}
-            onSelectTeam={selectTeam}
+            onSelectTeam={canMakePicks ? selectTeam : undefined}
           />
         ))}
       </div>
 
-      {/* Save button */}
-      {totalUnlocked > 0 && (
+      {/* Save button - only show if picks can be made */}
+      {canMakePicks && (
         <div className="flex justify-center">
           <Button
             size="lg"
@@ -256,6 +377,17 @@ export function PickemsContent({ leagueSlug }: PickemsContentProps) {
             )}
           </Button>
         </div>
+      )}
+
+      {/* Info message when picks are locked but viewing current week */}
+      {!canMakePicks && totalUnlocked === 0 && matchups.length > 0 && (
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center py-6">
+            <p className="text-muted-foreground text-center">
+              All matchups for Week {selectedWeek} are locked. Check back next week for new picks.
+            </p>
+          </CardContent>
+        </Card>
       )}
     </div>
   );

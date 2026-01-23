@@ -3,6 +3,7 @@
  *
  * Fetches league moments with reactions and comments using Prisma.
  * Implements RLS by checking user's role in league.
+ * Uses keyset pagination for stable results across sort modes.
  *
  * @module src/data/feed/get-feed
  */
@@ -19,6 +20,49 @@ import type { FeedResponse, GetFeedInput, Moment, MomentType } from '@/types/fee
  * Default page size for feed queries
  */
 const DEFAULT_LIMIT = 20;
+
+/**
+ * Cursor structure for keyset pagination
+ * Encodes all sort field values for stable pagination
+ */
+interface FeedCursor {
+  id: string;
+  createdAt: string;
+  lastActivityAt: string;
+  isPinned: boolean;
+}
+
+/**
+ * Encode cursor object to base64 string
+ */
+function encodeCursor(cursor: FeedCursor): string {
+  return Buffer.from(JSON.stringify(cursor)).toString('base64');
+}
+
+/**
+ * Decode base64 cursor string to cursor object
+ * Falls back to legacy id-only cursor for backwards compatibility
+ */
+function decodeCursor(cursorString: string): FeedCursor | null {
+  try {
+    // Try to decode as new keyset cursor
+    const decoded = Buffer.from(cursorString, 'base64').toString('utf-8');
+    const parsed = JSON.parse(decoded);
+    if (parsed.id && parsed.createdAt && parsed.lastActivityAt !== undefined) {
+      return parsed as FeedCursor;
+    }
+  } catch {
+    // Not a valid base64 JSON cursor
+  }
+
+  // Legacy fallback: treat as raw ID (for backwards compatibility during rollout)
+  // This handles old cursors that were just moment IDs
+  if (cursorString && !cursorString.includes('{')) {
+    return null; // Signal to use legacy cursor handling
+  }
+
+  return null;
+}
 
 /**
  * Aggregate reaction counts by reaction type for a moment
@@ -52,6 +96,7 @@ interface PrismaMomentWithRelations {
   type: MomentType;
   content: string | null;
   createdAt: Date;
+  lastActivityAt: Date | null;
   authorId: string;
   isPinned: boolean;
   isHidden: boolean;
@@ -82,6 +127,7 @@ function mapPrismaToMoment(prismaMoment: PrismaMomentWithRelations, currentUserI
 
 /**
  * Core feed fetching logic - fetches moments from database
+ * Uses keyset pagination for stable results regardless of sort mode
  */
 async function fetchFeedFromDb(
   leagueSlug: string,
@@ -96,12 +142,12 @@ async function fetchFeedFromDb(
 ): Promise<FeedResponse> {
   const { cursor, limit, type, sort = 'chronological', showHidden, currentUserId } = options;
 
-  // Build where clause
-  const where: {
-    league: { slug: string };
-    isHidden?: boolean;
-    type?: MomentType;
-  } = {
+  // Decode cursor if provided
+  const decodedCursor = cursor ? decodeCursor(cursor) : null;
+
+  // Build base where clause
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const where: any = {
     league: { slug: leagueSlug },
   };
 
@@ -119,18 +165,100 @@ async function fetchFeedFromDb(
   // Pinned moments always come first, then sort by specified criteria
   const orderBy =
     sort === 'recent'
-      ? [{ isPinned: 'desc' as const }, { lastActivityAt: 'desc' as const }, { createdAt: 'desc' as const }]
-      : [{ isPinned: 'desc' as const }, { createdAt: 'desc' as const }];
+      ? [{ isPinned: 'desc' as const }, { lastActivityAt: 'desc' as const }, { createdAt: 'desc' as const }, { id: 'desc' as const }]
+      : [{ isPinned: 'desc' as const }, { createdAt: 'desc' as const }, { id: 'desc' as const }];
+
+  // Apply keyset pagination if we have a decoded cursor
+  // This ensures stable pagination even when data changes between requests
+  if (decodedCursor) {
+    const cursorDate = new Date(decodedCursor.createdAt);
+    const cursorActivityDate = new Date(decodedCursor.lastActivityAt);
+
+    if (sort === 'recent') {
+      // Keyset condition for recent sort: (isPinned, lastActivityAt, createdAt, id) < cursor values
+      where.OR = [
+        // Lower priority pinned status
+        { isPinned: false, ...(decodedCursor.isPinned ? {} : { AND: [{ id: { not: decodedCursor.id } }] }) },
+        // Same pinned status, earlier lastActivityAt
+        ...(decodedCursor.isPinned
+          ? []
+          : [
+              {
+                isPinned: decodedCursor.isPinned,
+                lastActivityAt: { lt: cursorActivityDate },
+              },
+              // Same pinned and lastActivityAt, earlier createdAt
+              {
+                isPinned: decodedCursor.isPinned,
+                lastActivityAt: cursorActivityDate,
+                createdAt: { lt: cursorDate },
+              },
+              // Same pinned, lastActivityAt, and createdAt, lower id
+              {
+                isPinned: decodedCursor.isPinned,
+                lastActivityAt: cursorActivityDate,
+                createdAt: cursorDate,
+                id: { lt: decodedCursor.id },
+              },
+            ]),
+      ];
+
+      // Simplify: if cursor was pinned, we want unpinned items OR pinned items after cursor
+      if (decodedCursor.isPinned) {
+        where.OR = [
+          { isPinned: false },
+          {
+            isPinned: true,
+            lastActivityAt: { lt: cursorActivityDate },
+          },
+          {
+            isPinned: true,
+            lastActivityAt: cursorActivityDate,
+            createdAt: { lt: cursorDate },
+          },
+          {
+            isPinned: true,
+            lastActivityAt: cursorActivityDate,
+            createdAt: cursorDate,
+            id: { lt: decodedCursor.id },
+          },
+        ];
+      }
+    } else {
+      // Keyset condition for chronological sort: (isPinned, createdAt, id) < cursor values
+      if (decodedCursor.isPinned) {
+        where.OR = [
+          { isPinned: false },
+          {
+            isPinned: true,
+            createdAt: { lt: cursorDate },
+          },
+          {
+            isPinned: true,
+            createdAt: cursorDate,
+            id: { lt: decodedCursor.id },
+          },
+        ];
+      } else {
+        where.AND = [
+          { isPinned: false },
+          {
+            OR: [{ createdAt: { lt: cursorDate } }, { createdAt: cursorDate, id: { lt: decodedCursor.id } }],
+          },
+        ];
+      }
+    }
+  } else if (cursor) {
+    // Legacy fallback: use simple cursor pagination for old-format cursors
+    // This maintains backwards compatibility during rollout
+    where.id = { lt: cursor };
+  }
 
   // Fetch moments with author, reactions, and comment count
   const moments = await prisma.moment.findMany({
     where,
     orderBy,
     take: limit + 1, // Fetch one extra to determine if there are more
-    ...(cursor && {
-      skip: 1, // Skip the cursor item
-      cursor: { id: cursor },
-    }),
     include: {
       author: {
         select: {
@@ -160,9 +288,25 @@ async function fetchFeedFromDb(
   // Map to Moment type contract
   const mappedMoments = pageMoments.map((m) => mapPrismaToMoment(m, currentUserId));
 
+  // Build next cursor using keyset pagination
+  let nextCursor: string | null = null;
+  if (hasMore && pageMoments.length > 0) {
+    const lastMoment = pageMoments[pageMoments.length - 1];
+    // We need the raw Prisma moment for the cursor, not the mapped one
+    const lastPrismaMoment = moments[pageMoments.length - 1];
+    if (lastMoment && lastPrismaMoment) {
+      nextCursor = encodeCursor({
+        id: lastMoment.id,
+        createdAt: lastPrismaMoment.createdAt.toISOString(),
+        lastActivityAt: lastPrismaMoment.lastActivityAt?.toISOString() ?? lastPrismaMoment.createdAt.toISOString(),
+        isPinned: lastPrismaMoment.isPinned,
+      });
+    }
+  }
+
   return {
     moments: mappedMoments,
-    nextCursor: hasMore ? pageMoments[pageMoments.length - 1]?.id : null,
+    nextCursor,
   };
 }
 
@@ -228,7 +372,9 @@ export async function getFeed(input: GetFeedInput): Promise<FeedResponse> {
     cacheKey,
     {
       tags: [`feed-${leagueSlug}`],
-      revalidate: 60, // Cache for 60 seconds
+      // Short TTL as safety net in case revalidateTag() doesn't propagate
+      // Primary invalidation is via revalidateTag() on moderation actions
+      revalidate: 10,
     }
   );
 

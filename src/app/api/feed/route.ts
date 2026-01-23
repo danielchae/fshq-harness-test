@@ -21,7 +21,14 @@ export async function GET(request: Request) {
 
   try {
     const data = await getFeed({ leagueSlug, cursor, limit, sort, type, noCache });
-    return NextResponse.json(data);
+    // Set cache headers to prevent browser caching while allowing server-side caching
+    // This ensures fresh data after moderation actions while still benefiting from unstable_cache
+    return NextResponse.json(data, {
+      headers: {
+        'Cache-Control': 'no-store, must-revalidate',
+        'Pragma': 'no-cache',
+      },
+    });
   } catch {
     return NextResponse.json({ error: 'Failed to fetch feed' }, { status: 500 });
   }

@@ -112,20 +112,32 @@ export function BracketView({ leagueSlug, initialSeason }: BracketViewProps) {
 
       {/* Champion Banner (if playoffs complete) */}
       {bracket.champion && (
-        <Card className="bg-gradient-to-r from-amber-50 to-yellow-50 border-amber-200">
-          <CardContent className="flex items-center justify-center gap-4 py-4">
-            <Trophy className="h-8 w-8 text-amber-500" data-icon="trophy" />
-            <div className="flex items-center gap-3">
-              <Avatar className="h-10 w-10">
-                <AvatarImage src={bracket.champion.avatarUrl} alt={`${bracket.champion.name} logo`} />
-                <AvatarFallback>{bracket.champion.name.charAt(0)}</AvatarFallback>
-              </Avatar>
-              <div>
-                <p className="font-bold text-lg">{bracket.champion.name}</p>
-                <p className="text-sm text-muted-foreground">{bracket.season} League Champion</p>
+        <Card className="bg-gradient-to-r from-amber-50 to-yellow-50 dark:from-amber-950 dark:to-yellow-950 border-amber-200 dark:border-amber-800">
+          <CardContent className="flex flex-col items-center justify-center gap-4 py-6">
+            <div className="flex items-center gap-4">
+              <Trophy className="h-10 w-10 text-amber-500" data-icon="trophy" />
+              <div className="text-center">
+                <Badge variant="secondary" className="mb-2">
+                  {bracket.season} Season Champion
+                </Badge>
+                <div className="flex items-center justify-center gap-3">
+                  <Avatar className="h-12 w-12 ring-2 ring-amber-400">
+                    <AvatarImage src={bracket.champion.avatarUrl} alt={`${bracket.champion.name} logo`} />
+                    <AvatarFallback>{bracket.champion.name.charAt(0)}</AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <p className="font-bold text-xl text-amber-800 dark:text-amber-200">{bracket.champion.name}</p>
+                    <p className="text-sm text-amber-600 dark:text-amber-400">
+                      {bracket.champion.record && `${bracket.champion.record.wins}-${bracket.champion.record.losses}`}
+                    </p>
+                  </div>
+                </div>
               </div>
+              <Trophy className="h-10 w-10 text-amber-500" data-icon="trophy" />
             </div>
-            <Trophy className="h-8 w-8 text-amber-500" data-icon="trophy" />
+            <p className="text-sm text-amber-700 dark:text-amber-300 text-center">
+              Congratulations on an amazing season! View the full playoff bracket below.
+            </p>
           </CardContent>
         </Card>
       )}

@@ -300,16 +300,13 @@ async function fetchLeagueHistoryFromDb(leagueSlug: string): Promise<LeagueHisto
   });
 
   if (leagueWithPlatform?.platform === 'sleeper' && leagueWithPlatform.platformLeagueId) {
-    const existingYears = new Set(seasonHistories.map((season) => season.year));
     const sleeperHistory = await fetchSleeperHistory(leagueWithPlatform.platformLeagueId);
 
     if (sleeperHistory.success && sleeperHistory.seasons.length > 0) {
       let didUpdate = false;
 
       for (const season of sleeperHistory.seasons) {
-        if (existingYears.has(season.year)) {
-          continue;
-        }
+        // Always upsert to ensure we have the latest bracket-based standings
 
         try {
           await prisma.seasonHistory.upsert({

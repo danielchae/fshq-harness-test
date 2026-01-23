@@ -4,15 +4,43 @@
 import { unstable_cache } from 'next/cache';
 
 import { prisma } from '@/lib/db';
-import { getCurrentNFLWeek, NFL_TOTAL_WEEKS } from '@/lib/nfl-week';
+import { DEFAULT_CHAMPIONSHIP_WEEK, getNFLSeasonState, NFL_TOTAL_WEEKS } from '@/lib/nfl-week';
 
-import type { DisplayMatchup, MatchupsResponse, MatchupTeamDisplay } from '@/types/matchups';
+import type { DisplayMatchup, MatchupsResponse, MatchupsSeasonState, MatchupTeamDisplay } from '@/types/matchups';
 import type { Decimal } from '@prisma/client/runtime/client';
 
 export interface GetMatchupsInput {
   leagueSlug: string;
   weekNumber?: number;
   includePredictions?: boolean; // Include commissioner predictions
+}
+
+/**
+ * Get the league's available weeks and last active week
+ */
+async function getLeagueMatchupWeeks(
+  leagueId: string,
+  season: number
+): Promise<{ availableWeeks: number[]; lastActiveWeek: number; championshipWeek: number }> {
+  const weeksWithMatchups = await prisma.matchup.findMany({
+    where: {
+      leagueId,
+      season,
+    },
+    select: {
+      weekNumber: true,
+    },
+    distinct: ['weekNumber'],
+    orderBy: {
+      weekNumber: 'asc',
+    },
+  });
+
+  const availableWeeks = weeksWithMatchups.map((w) => w.weekNumber);
+  const lastActiveWeek = availableWeeks.length > 0 ? Math.max(...availableWeeks) : 1;
+  const championshipWeek = Math.min(lastActiveWeek, DEFAULT_CHAMPIONSHIP_WEEK);
+
+  return { availableWeeks, lastActiveWeek, championshipWeek };
 }
 
 /**
@@ -157,13 +185,58 @@ async function fetchMatchupsFromDb(
  * Queries matchups for the specified week with team data.
  * Includes scores (projected or actual) based on completion status.
  * Optionally includes commissioner predictions if the user has permission.
+ * 
+ * Smart week selection:
+ * - During regular season: shows NFL current week
+ * - During postseason/offseason: shows league's last active week
  *
  * @param input - Matchups query parameters
  * @returns MatchupsResponse with bracket data
  */
 export async function getMatchups(input: GetMatchupsInput): Promise<MatchupsResponse> {
-  const currentNFLWeek = await getCurrentNFLWeek();
-  const { leagueSlug, weekNumber = currentNFLWeek, includePredictions = true } = input;
+  const nflState = await getNFLSeasonState();
+  const { leagueSlug, includePredictions = true } = input;
+
+  // Get league to determine season
+  const league = await prisma.league.findUnique({
+    where: { slug: leagueSlug },
+    select: { id: true, season: true },
+  });
+
+  if (!league) {
+    return {
+      matchups: [],
+      currentWeek: nflState.week,
+      totalWeeks: NFL_TOTAL_WEEKS,
+    };
+  }
+
+  const season = league.season || new Date().getFullYear();
+
+  // Get league's week info for smart defaults
+  const leagueWeekInfo = await getLeagueMatchupWeeks(league.id, season);
+
+  // Determine which week to show
+  let weekNumber: number;
+  if (input.weekNumber !== undefined) {
+    weekNumber = input.weekNumber;
+  } else if (nflState.isFantasySeasonComplete) {
+    weekNumber = leagueWeekInfo.lastActiveWeek;
+  } else {
+    weekNumber = Math.min(nflState.week, leagueWeekInfo.lastActiveWeek || nflState.week);
+  }
+
+  // Build season state
+  const seasonState: MatchupsSeasonState = {
+    status: nflState.status,
+    isSeasonComplete: nflState.isFantasySeasonComplete,
+    statusMessage: nflState.isFantasySeasonComplete
+      ? `Season Complete - Viewing Week ${weekNumber}`
+      : nflState.statusMessage,
+    lastActiveWeek: leagueWeekInfo.lastActiveWeek,
+    championshipWeek: leagueWeekInfo.championshipWeek,
+    availableWeeks: leagueWeekInfo.availableWeeks,
+  };
 
   const cacheKey = ['matchups', leagueSlug, String(weekNumber), includePredictions ? 'predictions' : 'base'];
   const getCachedMatchups = unstable_cache(
@@ -180,14 +253,18 @@ export async function getMatchups(input: GetMatchupsInput): Promise<MatchupsResp
   const result = await getCachedMatchups();
 
   if (result) {
-    return result;
+    return {
+      ...result,
+      currentWeek: weekNumber,
+      seasonState,
+    };
   }
 
   // Fallback: return empty response if league not found
-  // This allows the frontend to handle the empty state gracefully
   return {
     matchups: [],
     currentWeek: weekNumber,
     totalWeeks: NFL_TOTAL_WEEKS,
+    seasonState,
   };
 }

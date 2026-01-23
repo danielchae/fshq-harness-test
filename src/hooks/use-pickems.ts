@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { NFL_TOTAL_WEEKS } from '@/lib/nfl-week';
 
-import type { PickemMatchup, PickemsResponse, WeeklyScore } from '@/types/pickems';
+import type { PickemMatchup, PickemsResponse, PickemsSeasonState, WeeklyScore } from '@/types/pickems';
 
 interface UsePickemsOptions {
   leagueSlug: string;
@@ -27,22 +27,29 @@ interface UsePickemsReturn {
   weeklyScore?: WeeklyScore;
   hasSubmittedPicks?: boolean;
   isWeekComplete?: boolean;
+  // Season state fields (new)
+  seasonState?: PickemsSeasonState;
+  selectedWeek: number;
+  setSelectedWeek: (week: number) => void;
+  availableWeeks: number[];
 }
 
-export function usePickems({ leagueSlug, weekNumber }: UsePickemsOptions): UsePickemsReturn {
+export function usePickems({ leagueSlug, weekNumber: initialWeekNumber }: UsePickemsOptions): UsePickemsReturn {
   const [data, setData] = useState<PickemsResponse | null>(null);
   const [selections, setSelections] = useState<Map<string, string>>(new Map());
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Track user-selected week for navigation (undefined means use server default)
+  const [selectedWeek, setSelectedWeekState] = useState<number | undefined>(initialWeekNumber);
 
-  const fetchPickems = useCallback(async () => {
+  const fetchPickems = useCallback(async (weekToFetch?: number) => {
     setIsLoading(true);
     setError(null);
 
     try {
-      const url = weekNumber
-        ? `/api/leagues/${leagueSlug}/pickems?week=${weekNumber}`
+      const url = weekToFetch !== undefined
+        ? `/api/leagues/${leagueSlug}/pickems?week=${weekToFetch}`
         : `/api/leagues/${leagueSlug}/pickems`;
 
       const response = await fetch(url);
@@ -67,11 +74,17 @@ export function usePickems({ leagueSlug, weekNumber }: UsePickemsOptions): UsePi
     } finally {
       setIsLoading(false);
     }
-  }, [leagueSlug, weekNumber]);
+  }, [leagueSlug]);
 
+  // Fetch when component mounts or when selected week changes
   useEffect(() => {
-    fetchPickems();
-  }, [fetchPickems]);
+    fetchPickems(selectedWeek);
+  }, [fetchPickems, selectedWeek]);
+
+  // Function to change the selected week
+  const setSelectedWeek = useCallback((week: number) => {
+    setSelectedWeekState(week);
+  }, []);
 
   const selectTeam = useCallback((matchupId: string, teamId: string) => {
     setSelections((prev) => {
@@ -87,6 +100,14 @@ export function usePickems({ leagueSlug, weekNumber }: UsePickemsOptions): UsePi
   }, []);
 
   const savePicks = useCallback(async () => {
+    // Check if picks are allowed
+    if (data?.seasonState?.isSeasonComplete) {
+      return {
+        success: false,
+        message: 'The fantasy season has ended. Picks are no longer accepted.',
+      };
+    }
+
     setIsSaving(true);
 
     try {
@@ -100,19 +121,20 @@ export function usePickems({ leagueSlug, weekNumber }: UsePickemsOptions): UsePi
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           picks,
-          weekNumber: weekNumber || data?.currentWeek,
+          weekNumber: selectedWeek || data?.currentWeek,
         }),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to save picks');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to save picks');
       }
 
       const result = await response.json();
 
       return {
-        success: result.success,
-        message: result.message || `${result.savedCount}/${result.totalMatchups} picks saved`,
+        success: true,
+        message: result.message || `${result.picks?.length || 0} picks saved`,
       };
     } catch (err) {
       return {
@@ -122,7 +144,10 @@ export function usePickems({ leagueSlug, weekNumber }: UsePickemsOptions): UsePi
     } finally {
       setIsSaving(false);
     }
-  }, [selections, leagueSlug, weekNumber, data?.currentWeek]);
+  }, [selections, leagueSlug, selectedWeek, data?.currentWeek, data?.seasonState?.isSeasonComplete]);
+
+  // Calculate available weeks for navigation
+  const availableWeeks = data?.seasonState?.availableWeeks || [];
 
   return {
     matchups: data?.matchups || [],
@@ -135,10 +160,15 @@ export function usePickems({ leagueSlug, weekNumber }: UsePickemsOptions): UsePi
     selectTeam,
     savePicks,
     isSaving,
-    refetch: fetchPickems,
+    refetch: () => fetchPickems(selectedWeek),
     // Grading fields
     weeklyScore: data?.weeklyScore,
     hasSubmittedPicks: data?.hasSubmittedPicks,
     isWeekComplete: data?.isWeekComplete,
+    // Season state fields
+    seasonState: data?.seasonState,
+    selectedWeek: selectedWeek ?? data?.currentWeek ?? 1,
+    setSelectedWeek,
+    availableWeeks,
   };
 }

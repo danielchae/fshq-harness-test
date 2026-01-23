@@ -160,11 +160,11 @@ export async function updateLeagueSettings(input: UpdateLeagueSettingsInput): Pr
     });
 
     // Invalidate the league cache since visibility changed
-    revalidateTag(`league-${slug}`, 'max');
+    revalidateTag(`league-${slug}`);
   }
 
   // Invalidate settings cache
-  revalidateTag(`settings-${slug}`, 'max');
+  revalidateTag(`settings-${slug}`);
 
   // Fetch the updated league for the response
   const updatedLeague = await prisma.league.findUnique({

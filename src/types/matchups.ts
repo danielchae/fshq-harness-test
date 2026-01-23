@@ -1,5 +1,6 @@
 // Types for matchups display
-// MOCK: Backend will replace with actual database types
+
+import type { SeasonStatus } from '@/lib/nfl-week';
 
 export interface MatchupTeamDisplay {
   id: string;
@@ -25,8 +26,28 @@ export interface DisplayMatchup {
   weekNumber: number;
 }
 
+/**
+ * Season state for matchups page
+ */
+export interface MatchupsSeasonState {
+  /** Current season status */
+  status: SeasonStatus;
+  /** Whether the fantasy season is complete */
+  isSeasonComplete: boolean;
+  /** Status message for display */
+  statusMessage: string;
+  /** Last week with matchup data */
+  lastActiveWeek: number;
+  /** Championship week for this league */
+  championshipWeek: number;
+  /** Available weeks to browse */
+  availableWeeks: number[];
+}
+
 export interface MatchupsResponse {
   matchups: DisplayMatchup[];
   currentWeek: number;
   totalWeeks: number;
+  /** Season state information */
+  seasonState?: MatchupsSeasonState;
 }

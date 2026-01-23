@@ -1,6 +1,6 @@
 'use client';
 
-import { AlertCircle, RefreshCw } from 'lucide-react';
+import { AlertCircle, CalendarDays, RefreshCw } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -14,7 +14,18 @@ interface MatchupsDisplayProps {
 }
 
 export function MatchupsDisplay({ leagueSlug, initialWeek }: MatchupsDisplayProps) {
-  const { matchups, isLoading, error, currentWeek, selectedWeek, totalWeeks, setSelectedWeek, retry } = useMatchups({
+  const {
+    matchups,
+    isLoading,
+    error,
+    currentWeek,
+    selectedWeek,
+    totalWeeks,
+    setSelectedWeek,
+    retry,
+    seasonState,
+    availableWeeks,
+  } = useMatchups({
     leagueSlug,
     initialWeek,
   });
@@ -34,6 +45,9 @@ export function MatchupsDisplay({ leagueSlug, initialWeek }: MatchupsDisplayProp
         currentWeek={currentWeek}
         selectedWeek={selectedWeek}
         onWeekSelect={setSelectedWeek}
+        availableWeeks={availableWeeks.length > 0 ? availableWeeks : undefined}
+        championshipWeek={seasonState?.championshipWeek}
+        isSeasonComplete={seasonState?.isSeasonComplete}
       />
 
       {/* Loading State */}
@@ -62,9 +76,16 @@ export function MatchupsDisplay({ leagueSlug, initialWeek }: MatchupsDisplayProp
 
       {/* Empty State */}
       {!isLoading && !error && matchups.length === 0 && (
-        <div className="flex flex-col items-center justify-center gap-2 p-8 text-center border rounded-lg border-dashed">
-          <p className="text-lg font-medium text-muted-foreground">No matchups this week</p>
-          <p className="text-sm text-muted-foreground">This may be a bye week. Try selecting a different week.</p>
+        <div className="flex flex-col items-center justify-center gap-4 p-8 text-center border rounded-lg border-dashed">
+          <CalendarDays className="h-12 w-12 text-muted-foreground/50" />
+          <div>
+            <p className="text-lg font-medium text-muted-foreground">No matchups for Week {selectedWeek}</p>
+            <p className="text-sm text-muted-foreground">
+              {availableWeeks.length > 0
+                ? 'Select a different week to view matchups.'
+                : 'No matchup data available yet.'}
+            </p>
+          </div>
         </div>
       )}
 

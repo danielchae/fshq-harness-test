@@ -2,13 +2,12 @@
 
 import { useCallback, useEffect, useState } from 'react';
 
-import { getCurrentNFLWeekSync } from '@/lib/nfl-week';
-
 import type {
   LeaderboardEntry,
   LeaderboardResponse,
   LeaderboardRoleFilter,
   LeaderboardScope,
+  LeaderboardSeasonState,
 } from '@/types/leaderboard';
 
 interface UseLeaderboardOptions {
@@ -32,6 +31,9 @@ interface UseLeaderboardReturn {
   setScope: (scope: LeaderboardScope) => void;
   setRoleFilter: (roleFilter: LeaderboardRoleFilter) => void;
   setWeekNumber: (weekNumber: number) => void;
+  // Season state
+  seasonState?: LeaderboardSeasonState;
+  availableWeeks: number[];
 }
 
 export function useLeaderboard({
@@ -79,11 +81,13 @@ export function useLeaderboard({
     fetchLeaderboard();
   }, [fetchLeaderboard]);
 
+  const availableWeeks = data?.seasonState?.availableWeeks || [];
+
   return {
     standings: data?.standings || [],
     scope,
     roleFilter,
-    currentWeek: data?.currentWeek || getCurrentNFLWeekSync(),
+    currentWeek: data?.currentWeek || 1,
     weekNumber: data?.weekNumber,
     seasonYear: data?.seasonYear,
     leagueAverage: data?.leagueAverage || 0,
@@ -93,5 +97,7 @@ export function useLeaderboard({
     setScope,
     setRoleFilter,
     setWeekNumber,
+    seasonState: data?.seasonState,
+    availableWeeks,
   };
 }

@@ -15,7 +15,7 @@ import type { PickemMatchup, PickemTeam } from '@/types/pickems';
 interface MatchupPickCardProps {
   matchup: PickemMatchup;
   selectedTeamId?: string;
-  onSelectTeam: (matchupId: string, teamId: string) => void;
+  onSelectTeam?: (matchupId: string, teamId: string) => void;
 }
 
 function TeamButton({
@@ -70,10 +70,14 @@ function TeamButton({
 
 export function MatchupPickCard({ matchup, selectedTeamId, onSelectTeam }: MatchupPickCardProps) {
   const handleSelectTeam = (teamId: string) => {
-    if (!matchup.isLocked) {
+    if (!matchup.isLocked && onSelectTeam) {
       onSelectTeam(matchup.id, teamId);
     }
   };
+
+  // If no onSelectTeam handler, treat as read-only (locked)
+  const isReadOnly = !onSelectTeam;
+  const effectivelyLocked = matchup.isLocked || isReadOnly;
 
   return (
     <Card data-testid="matchup-pick-card" data-locked={matchup.isLocked} className="relative">
@@ -91,19 +95,19 @@ export function MatchupPickCard({ matchup, selectedTeamId, onSelectTeam }: Match
           <TeamButton
             team={matchup.homeTeam}
             isSelected={selectedTeamId === matchup.homeTeam.id}
-            isLocked={matchup.isLocked}
+            isLocked={effectivelyLocked}
             onClick={() => handleSelectTeam(matchup.homeTeam.id)}
           />
 
           <div className="flex flex-col items-center gap-1">
             <span className="text-lg font-bold text-muted-foreground">VS</span>
-            {!matchup.isLocked && <span className="text-xs text-muted-foreground">Week {matchup.weekNumber}</span>}
+            {!effectivelyLocked && <span className="text-xs text-muted-foreground">Week {matchup.weekNumber}</span>}
           </div>
 
           <TeamButton
             team={matchup.awayTeam}
             isSelected={selectedTeamId === matchup.awayTeam.id}
-            isLocked={matchup.isLocked}
+            isLocked={effectivelyLocked}
             onClick={() => handleSelectTeam(matchup.awayTeam.id)}
           />
         </div>

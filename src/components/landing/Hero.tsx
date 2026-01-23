@@ -1,31 +1,15 @@
 'use client';
 
-import { ArrowRight } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { ArrowRight, LogIn, Plus } from 'lucide-react';
+import Link from 'next/link';
 
 import { Button } from '@/components/ui/button';
-
-import type { Route } from 'next';
 
 interface HeroProps {
   isAuthenticated: boolean;
 }
 
 export function Hero({ isAuthenticated }: HeroProps) {
-  const router = useRouter();
-
-  const handleConnectLeague = () => {
-    if (isAuthenticated) {
-      router.push('/connect-league' as Route);
-    } else {
-      router.push('/sign-in' as Route);
-    }
-  };
-
-  const handleGoToLeagues = () => {
-    router.push('/dashboard' as Route);
-  };
-
   return (
     <section
       data-testid="hero-section"
@@ -42,22 +26,32 @@ export function Hero({ isAuthenticated }: HeroProps) {
       <div className="mt-10 flex flex-col gap-3 sm:flex-row">
         {isAuthenticated ? (
           <>
-            <Button size="lg" onClick={handleGoToLeagues}>
-              Go to My Leagues
-              <ArrowRight className="ml-1 h-4 w-4" />
+            <Button size="lg" asChild>
+              <Link href="/dashboard">
+                Go to My Leagues
+                <ArrowRight className="ml-1 h-4 w-4" />
+              </Link>
             </Button>
-            <Button size="lg" variant="outline" onClick={handleConnectLeague}>
-              Connect New League
+            <Button size="lg" variant="outline" asChild>
+              <Link href="/connect-league">
+                <Plus className="mr-1 h-4 w-4" />
+                Connect New League
+              </Link>
             </Button>
           </>
         ) : (
           <>
-            <Button size="lg" onClick={handleConnectLeague}>
-              Get Started
-              <ArrowRight className="ml-1 h-4 w-4" />
+            <Button size="lg" asChild>
+              <Link href="/sign-up">
+                Get Started Free
+                <ArrowRight className="ml-1 h-4 w-4" />
+              </Link>
             </Button>
-            <Button size="lg" variant="outline" onClick={() => router.push('/sign-in' as Route)}>
-              Sign In
+            <Button size="lg" variant="outline" asChild>
+              <Link href="/sign-in">
+                <LogIn className="mr-1 h-4 w-4" />
+                Sign In
+              </Link>
             </Button>
           </>
         )}

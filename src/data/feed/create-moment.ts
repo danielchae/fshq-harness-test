@@ -1,7 +1,7 @@
 // Create moment data layer
 // Replaced with Prisma implementation (task-23)
 
-import { revalidatePath } from 'next/cache';
+import { revalidatePath, revalidateTag } from 'next/cache';
 
 import { getAccessibleLeagueBySlug, RLSError } from '@/lib/auth/rls-policies';
 import { prisma } from '@/lib/db';
@@ -98,6 +98,9 @@ export async function createMoment(input: CreateMomentInput): Promise<CreateMome
     });
 
     // Revalidate the league feed cache for real-time updates
+    // Use revalidateTag to invalidate unstable_cache entries (critical for cache consistency)
+    revalidateTag(`feed-${leagueSlug}`);
+    // Also revalidate paths for any page-level caching
     revalidatePath(`/leagues/${leagueSlug}`);
     revalidatePath(`/leagues/${leagueSlug}/feed`);
 

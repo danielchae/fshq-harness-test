@@ -1,6 +1,8 @@
 // Toggle Reaction Data Layer
 // Replaced with Prisma implementation (task-25)
 
+import { revalidateTag } from 'next/cache';
+
 import { requireLeagueAccess, RLSError } from '@/lib/auth/rls-policies';
 import { prisma } from '@/lib/db';
 import { getCurrentNFLWeek } from '@/lib/nfl-week';
@@ -59,6 +61,9 @@ export async function toggleReaction(input: ToggleReactionInput): Promise<Toggle
       select: {
         id: true,
         leagueId: true,
+        league: {
+          select: { slug: true },
+        },
       },
     });
 
@@ -123,7 +128,12 @@ export async function toggleReaction(input: ToggleReactionInput): Promise<Toggle
       },
     });
 
-    // 7. Update engagement metrics asynchronously (don't block the response)
+    // 7. Invalidate feed cache since lastActivityAt affects "recent" sort order
+    if (moment.league?.slug) {
+      revalidateTag(`feed-${moment.league.slug}`);
+    }
+
+    // 8. Update engagement metrics asynchronously (don't block the response)
     updateEngagementMetrics(moment.leagueId, action).catch((err) => {
       console.error('[toggleReaction] Failed to update engagement metrics:', err);
     });

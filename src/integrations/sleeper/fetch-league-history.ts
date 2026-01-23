@@ -156,6 +156,47 @@ async function fetchRosters(leagueId: string): Promise<SleeperRoster[]> {
 }
 
 /**
+ * Bracket matchup from Sleeper API
+ */
+interface BracketMatchup {
+  /** Matchup number */
+  m: number;
+  /** Round number */
+  r: number;
+  /** Winner roster_id */
+  w: number;
+  /** Loser roster_id */
+  l: number;
+  /** Team 1 roster_id */
+  t1: number;
+  /** Team 2 roster_id */
+  t2: number;
+  /** Placement (1 = championship, 3 = 3rd place, 5 = 5th place, etc.) */
+  p?: number;
+}
+
+/**
+ * Fetch winners bracket for a league
+ * Returns playoff bracket data with matchup results
+ */
+async function fetchWinnersBracket(leagueId: string): Promise<BracketMatchup[]> {
+  try {
+    const response = await fetchWithTimeout(`${SLEEPER_API_BASE}/league/${leagueId}/winners_bracket`);
+
+    if (!response.ok) {
+      console.error(`[fetchLeagueHistory] API error fetching bracket for ${leagueId}: ${response.status}`);
+      return [];
+    }
+
+    const data = await response.json();
+    return (data as BracketMatchup[]) || [];
+  } catch (error) {
+    console.error(`[fetchLeagueHistory] Error fetching bracket for ${leagueId}:`, error);
+    return [];
+  }
+}
+
+/**
  * Fetch league users to get display names
  */
 async function fetchLeagueUsers(leagueId: string): Promise<Map<string, string>> {
@@ -183,13 +224,42 @@ async function fetchLeagueUsers(leagueId: string): Promise<Map<string, string>> 
 }
 
 /**
- * Determine champion and runner-up from rosters
- * For completed seasons, the champion is typically the one with most wins
- * or determined by playoff bracket results
+ * Helper to build roster info object
+ */
+function buildRosterInfo(
+  roster: SleeperRoster,
+  getName: (roster: SleeperRoster) => string
+): {
+  name: string;
+  rosterId: number;
+  ownerId?: string;
+  wins: number;
+  losses: number;
+  pointsFor: number;
+} {
+  return {
+    name: getName(roster),
+    rosterId: roster.roster_id,
+    ownerId: roster.owner_id ?? undefined,
+    wins: roster.settings?.wins ?? 0,
+    losses: roster.settings?.losses ?? 0,
+    pointsFor: (roster.settings?.fpts ?? 0) + (roster.settings?.fpts_decimal ?? 0) / 100,
+  };
+}
+
+/**
+ * Determine champion and runner-up from playoff bracket results
+ * Falls back to regular season wins if bracket data is unavailable
+ *
+ * The bracket data contains matchups with:
+ * - p: placement (1 = championship, 3 = 3rd place game)
+ * - w: winner roster_id
+ * - l: loser roster_id
  */
 function determineStandings(
   rosters: SleeperRoster[],
-  userMap: Map<string, string>
+  userMap: Map<string, string>,
+  bracket: BracketMatchup[]
 ): {
   champion?: LeagueHistorySeason['champion'];
   runnerUp?: LeagueHistorySeason['runnerUp'];
@@ -199,7 +269,50 @@ function determineStandings(
     return {};
   }
 
-  // Sort rosters by wins (descending), then by points (descending)
+  const getName = (roster: SleeperRoster): string => {
+    if (roster.owner_id && userMap.has(roster.owner_id)) {
+      return userMap.get(roster.owner_id)!;
+    }
+    return `Team ${roster.roster_id}`;
+  };
+
+  // Create a map of roster_id to roster for quick lookup
+  const rosterMap = new Map<number, SleeperRoster>();
+  for (const roster of rosters) {
+    rosterMap.set(roster.roster_id, roster);
+  }
+
+  // Try to get placements from bracket data
+  // p: 1 = championship game, p: 3 = 3rd place game
+  const championshipGame = bracket.find((m) => m.p === 1);
+  const thirdPlaceGame = bracket.find((m) => m.p === 3);
+
+  if (championshipGame && championshipGame.w && championshipGame.l) {
+    // We have bracket data - use actual playoff results
+    const championRoster = rosterMap.get(championshipGame.w);
+    const runnerUpRoster = rosterMap.get(championshipGame.l);
+    const thirdPlaceRoster = thirdPlaceGame?.w ? rosterMap.get(thirdPlaceGame.w) : undefined;
+
+    console.log(
+      `[determineStandings] Using bracket data: Champion roster ${championshipGame.w}, Runner-up roster ${championshipGame.l}`
+    );
+
+    return {
+      champion: championRoster ? buildRosterInfo(championRoster, getName) : undefined,
+      runnerUp: runnerUpRoster ? buildRosterInfo(runnerUpRoster, getName) : undefined,
+      thirdPlace: thirdPlaceRoster
+        ? {
+            name: getName(thirdPlaceRoster),
+            rosterId: thirdPlaceRoster.roster_id,
+            ownerId: thirdPlaceRoster.owner_id ?? undefined,
+          }
+        : undefined,
+    };
+  }
+
+  // Fallback: Sort rosters by wins (descending), then by points (descending)
+  console.log(`[determineStandings] No bracket data available, falling back to regular season standings`);
+
   const sortedRosters = [...rosters].sort((a, b) => {
     const winsA = a.settings?.wins ?? 0;
     const winsB = b.settings?.wins ?? 0;
@@ -214,38 +327,13 @@ function determineStandings(
     return ptsB - ptsA;
   });
 
-  const getName = (roster: SleeperRoster): string => {
-    if (roster.owner_id && userMap.has(roster.owner_id)) {
-      return userMap.get(roster.owner_id)!;
-    }
-    return `Team ${roster.roster_id}`;
-  };
-
   const champion = sortedRosters[0];
   const runnerUp = sortedRosters[1];
   const thirdPlace = sortedRosters[2];
 
   return {
-    champion: champion
-      ? {
-          name: getName(champion),
-          rosterId: champion.roster_id,
-          ownerId: champion.owner_id ?? undefined,
-          wins: champion.settings?.wins ?? 0,
-          losses: champion.settings?.losses ?? 0,
-          pointsFor: (champion.settings?.fpts ?? 0) + (champion.settings?.fpts_decimal ?? 0) / 100,
-        }
-      : undefined,
-    runnerUp: runnerUp
-      ? {
-          name: getName(runnerUp),
-          rosterId: runnerUp.roster_id,
-          ownerId: runnerUp.owner_id ?? undefined,
-          wins: runnerUp.settings?.wins ?? 0,
-          losses: runnerUp.settings?.losses ?? 0,
-          pointsFor: (runnerUp.settings?.fpts ?? 0) + (runnerUp.settings?.fpts_decimal ?? 0) / 100,
-        }
-      : undefined,
+    champion: champion ? buildRosterInfo(champion, getName) : undefined,
+    runnerUp: runnerUp ? buildRosterInfo(runnerUp, getName) : undefined,
     thirdPlace: thirdPlace
       ? {
           name: getName(thirdPlace),
@@ -315,11 +403,15 @@ export async function fetchLeagueHistory(leagueId: string): Promise<FetchLeagueH
 
     // Only include completed seasons in history (skip current in-progress seasons)
     if (league.status === 'complete') {
-      // Fetch rosters and users for standings
-      const [rosters, userMap] = await Promise.all([fetchRosters(currentId), fetchLeagueUsers(currentId)]);
+      // Fetch rosters, users, and bracket data for standings
+      const [rosters, userMap, bracket] = await Promise.all([
+        fetchRosters(currentId),
+        fetchLeagueUsers(currentId),
+        fetchWinnersBracket(currentId),
+      ]);
 
-      // Determine standings
-      const standings = determineStandings(rosters, userMap);
+      // Determine standings from playoff bracket (with fallback to regular season)
+      const standings = determineStandings(rosters, userMap, bracket);
 
       const year = parseInt(league.season, 10);
       const isDynasty = league.settings?.type === 2;

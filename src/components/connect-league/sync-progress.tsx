@@ -217,39 +217,91 @@ export function SyncProgress({ league, onComplete, onContinue }: SyncProgressPro
 
       {/* Success state */}
       {syncState === 'success' && result && (
-        <Card className="border-green-500/50 bg-gradient-to-br from-green-500/10 via-background to-emerald-500/10 overflow-hidden">
+        <Card
+          className={`overflow-hidden ${
+            result.membershipStatus === 'pending'
+              ? 'border-yellow-500/50 bg-gradient-to-br from-yellow-500/10 via-background to-amber-500/10'
+              : 'border-green-500/50 bg-gradient-to-br from-green-500/10 via-background to-emerald-500/10'
+          }`}
+        >
           <CardContent className="pt-8 pb-6 text-center space-y-6">
-            {/* Success icon with glow effect */}
+            {/* Icon with glow effect */}
             <div className="relative mx-auto w-fit">
-              <div className="absolute inset-0 bg-green-500/20 rounded-full blur-xl scale-150" />
-              <div className="relative flex items-center justify-center size-20 rounded-full bg-green-500/20 ring-4 ring-green-500/30">
-                <CheckCircle className="size-10 text-green-500" />
+              <div
+                className={`absolute inset-0 rounded-full blur-xl scale-150 ${
+                  result.membershipStatus === 'pending' ? 'bg-yellow-500/20' : 'bg-green-500/20'
+                }`}
+              />
+              <div
+                className={`relative flex items-center justify-center size-20 rounded-full ring-4 ${
+                  result.membershipStatus === 'pending'
+                    ? 'bg-yellow-500/20 ring-yellow-500/30'
+                    : 'bg-green-500/20 ring-green-500/30'
+                }`}
+              >
+                {result.membershipStatus === 'pending' ? (
+                  <AlertTriangle className="size-10 text-yellow-500" />
+                ) : (
+                  <CheckCircle className="size-10 text-green-500" />
+                )}
               </div>
             </div>
 
             {/* Success message */}
             <div className="space-y-2">
-              <h3 className="text-2xl font-bold tracking-tight">You&apos;re All Set!</h3>
+              <h3 className="text-2xl font-bold tracking-tight">
+                {result.membershipStatus === 'pending' ? 'Request Submitted!' : "You're All Set!"}
+              </h3>
               <p className="text-muted-foreground">
-                <span className="font-semibold text-foreground">{league.name}</span> has been connected successfully.
+                {result.membershipStatus === 'pending' ? (
+                  <>
+                    Your request to join <span className="font-semibold text-foreground">{league.name}</span> has been
+                    sent to the commissioner.
+                  </>
+                ) : (
+                  <>
+                    <span className="font-semibold text-foreground">{league.name}</span> has been connected successfully.
+                  </>
+                )}
               </p>
             </div>
 
-            {/* Stats summary */}
+            {/* Status message */}
             {result.message && (
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-muted/50 text-sm text-muted-foreground">
-                <span className="size-2 rounded-full bg-green-500 animate-pulse" />
+              <div
+                className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm ${
+                  result.membershipStatus === 'pending'
+                    ? 'bg-yellow-500/10 text-yellow-700'
+                    : 'bg-muted/50 text-muted-foreground'
+                }`}
+              >
+                <span
+                  className={`size-2 rounded-full animate-pulse ${
+                    result.membershipStatus === 'pending' ? 'bg-yellow-500' : 'bg-green-500'
+                  }`}
+                />
                 {result.message}
               </div>
             )}
 
             {/* CTA Button */}
-            <Button onClick={handleGoToLeague} size="lg" className="w-full max-w-xs mx-auto gap-2">
-              Enter Your League
-              <svg className="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-              </svg>
-            </Button>
+            {result.membershipStatus === 'pending' ? (
+              <div className="space-y-3">
+                <p className="text-sm text-muted-foreground">
+                  You&apos;ll receive a notification when your request is approved.
+                </p>
+                <Button variant="outline" onClick={() => onComplete?.()} size="lg" className="w-full max-w-xs mx-auto">
+                  Go to Dashboard
+                </Button>
+              </div>
+            ) : (
+              <Button onClick={handleGoToLeague} size="lg" className="w-full max-w-xs mx-auto gap-2">
+                Enter Your League
+                <svg className="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                </svg>
+              </Button>
+            )}
           </CardContent>
         </Card>
       )}

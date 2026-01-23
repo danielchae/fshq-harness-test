@@ -95,7 +95,7 @@ export async function updateComment(input: UpdateCommentInput): Promise<UpdateCo
 
     // 5. Revalidate the moment detail page cache
     revalidatePath(`/leagues/${comment.moment.league.slug}/moments/${updatedComment.momentId}`);
-    revalidateTag(`feed-${comment.moment.league.slug}`, 'max');
+    revalidateTag(`feed-${comment.moment.league.slug}`);
 
     return {
       success: true,

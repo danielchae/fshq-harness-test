@@ -5,12 +5,13 @@ import { unstable_cache } from 'next/cache';
 import { auth } from '@/lib/auth';
 import { getAccessibleLeagueBySlug } from '@/lib/auth/rls-policies';
 import { prisma } from '@/lib/db';
-import { getCurrentNFLWeek, NFL_TOTAL_WEEKS } from '@/lib/nfl-week';
+import { DEFAULT_CHAMPIONSHIP_WEEK, getNFLSeasonState, NFL_TOTAL_WEEKS } from '@/lib/nfl-week';
 
 import type {
   PickDistribution,
   PickemMatchup,
   PickemsResponse,
+  PickemsSeasonState,
   PickemTeam,
   RevealedPick,
   UserPick,
@@ -127,15 +128,54 @@ async function getRevealedPicks(
 }
 
 /**
+ * Get the league's available weeks and last active week
+ */
+async function getLeagueWeekInfo(
+  leagueId: string,
+  season: number
+): Promise<{ availableWeeks: number[]; lastActiveWeek: number; championshipWeek: number }> {
+  // Get all distinct week numbers that have matchups for this league
+  const weeksWithMatchups = await prisma.matchup.findMany({
+    where: {
+      leagueId,
+      season,
+    },
+    select: {
+      weekNumber: true,
+    },
+    distinct: ['weekNumber'],
+    orderBy: {
+      weekNumber: 'asc',
+    },
+  });
+
+  const availableWeeks = weeksWithMatchups.map((w) => w.weekNumber);
+
+  // Determine last active week (highest week with matchups)
+  const lastActiveWeek = availableWeeks.length > 0 ? Math.max(...availableWeeks) : 1;
+
+  // Championship week is typically the last week or DEFAULT_CHAMPIONSHIP_WEEK
+  const championshipWeek = Math.min(lastActiveWeek, DEFAULT_CHAMPIONSHIP_WEEK);
+
+  return { availableWeeks, lastActiveWeek, championshipWeek };
+}
+
+/**
  * Get Pick'ems - Prisma Implementation
  *
  * Queries matchups with user's picks for the specified week.
  * Reveals results after games complete.
  * Shows weekly score and league average.
+ * 
+ * Smart week selection:
+ * - During regular season: shows NFL current week
+ * - During postseason/offseason: shows league's last active week
+ * - Allows browsing historical weeks
  */
 export async function getPickems(input: GetPickemsInput): Promise<PickemsResponse> {
-  const currentWeek = await getCurrentNFLWeek();
-  const { leagueSlug, weekNumber = currentWeek } = input;
+  // Get NFL season state for smart defaults
+  const nflState = await getNFLSeasonState();
+  const { leagueSlug } = input;
 
   // Get authenticated user from session
   const session = await auth();
@@ -163,7 +203,7 @@ export async function getPickems(input: GetPickemsInput): Promise<PickemsRespons
     // Return empty response if league not found
     return {
       matchups: [],
-      currentWeek,
+      currentWeek: nflState.week,
       totalWeeks: NFL_TOTAL_WEEKS,
       picks: [],
       hasSubmittedPicks: false,
@@ -172,6 +212,36 @@ export async function getPickems(input: GetPickemsInput): Promise<PickemsRespons
   }
 
   const season = league.season || new Date().getFullYear();
+
+  // Get league's week info for smart defaults
+  const leagueWeekInfo = await getLeagueWeekInfo(league.id, season);
+
+  // Determine which week to show
+  let weekNumber: number;
+  if (input.weekNumber !== undefined) {
+    // User explicitly requested a specific week
+    weekNumber = input.weekNumber;
+  } else if (nflState.isFantasySeasonComplete) {
+    // Season is over - show the last week with data (championship results)
+    weekNumber = leagueWeekInfo.lastActiveWeek;
+  } else {
+    // Regular season - show current NFL week
+    // But cap it at the last week that has matchups
+    weekNumber = Math.min(nflState.week, leagueWeekInfo.lastActiveWeek || nflState.week);
+  }
+
+  // Build season state for the response
+  const seasonState: PickemsSeasonState = {
+    status: nflState.status,
+    isSeasonComplete: nflState.isFantasySeasonComplete,
+    canMakePicks: nflState.isPicksEnabled && weekNumber <= leagueWeekInfo.championshipWeek,
+    statusMessage: nflState.isFantasySeasonComplete
+      ? `Season Complete - Viewing Week ${weekNumber} Results`
+      : nflState.statusMessage,
+    lastActiveWeek: leagueWeekInfo.lastActiveWeek,
+    championshipWeek: leagueWeekInfo.championshipWeek,
+    availableWeeks: leagueWeekInfo.availableWeeks,
+  };
 
   // Fetch matchups for this league and week
   const matchups = await prisma.matchup.findMany({
@@ -192,7 +262,7 @@ export async function getPickems(input: GetPickemsInput): Promise<PickemsRespons
 
   // Check if the week is complete (all matchups are complete)
   const isWeekComplete = matchups.length > 0 && matchups.every((m) => m.isComplete);
-  const isPastWeek = weekNumber < currentWeek;
+  const isPastWeek = weekNumber < nflState.week || nflState.isFantasySeasonComplete;
 
   // Get user's picks for this week
   let userPicks: {
@@ -308,13 +378,14 @@ export async function getPickems(input: GetPickemsInput): Promise<PickemsRespons
 
   return {
     matchups: pickemMatchups,
-    currentWeek,
+    currentWeek: weekNumber,
     totalWeeks: NFL_TOTAL_WEEKS,
     picks,
     lockTimeGlobal,
     weeklyScore,
     hasSubmittedPicks,
     isWeekComplete,
+    seasonState,
   };
 }
 
@@ -351,8 +422,17 @@ export interface SavePicksInput {
  * and upserts PickemEntry records for each matchup.
  */
 export async function savePicks(input: SavePicksInput): Promise<SavePicksResult> {
-  const currentWeekDefault = await getCurrentNFLWeek();
-  const { leagueSlug, weekNumber = currentWeekDefault, season = new Date().getFullYear(), picks } = input;
+  const nflState = await getNFLSeasonState();
+  const { leagueSlug, weekNumber = nflState.week, season = new Date().getFullYear(), picks } = input;
+
+  // Check if fantasy season is complete
+  if (nflState.isFantasySeasonComplete) {
+    return {
+      picks: [],
+      lockedError: true,
+      errors: ['The fantasy season has ended. Picks are no longer accepted.'],
+    };
+  }
 
   // Get authenticated user from session
   const session = await auth();

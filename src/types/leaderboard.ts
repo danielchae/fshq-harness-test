@@ -1,5 +1,7 @@
 // Leaderboard types for pick'ems standings
 
+import type { SeasonStatus } from '@/lib/nfl-week';
+
 export type LeaderboardScope = 'weekly' | 'season' | 'all-time';
 export type LeaderboardRoleFilter = 'all' | 'manager' | 'fan';
 
@@ -18,6 +20,24 @@ export interface LeaderboardEntry {
   isCurrentUser?: boolean;
 }
 
+/**
+ * Season state for leaderboard
+ */
+export interface LeaderboardSeasonState {
+  /** Current season status */
+  status: SeasonStatus;
+  /** Whether the fantasy season is complete */
+  isSeasonComplete: boolean;
+  /** Status message for display */
+  statusMessage: string;
+  /** Last week with pick'em data */
+  lastActiveWeek: number;
+  /** Championship week */
+  championshipWeek: number;
+  /** Available weeks for weekly view */
+  availableWeeks: number[];
+}
+
 export interface LeaderboardResponse {
   standings: LeaderboardEntry[];
   scope: LeaderboardScope;
@@ -26,6 +46,8 @@ export interface LeaderboardResponse {
   weekNumber?: number; // for weekly scope
   seasonYear?: number;
   leagueAverage: number; // average accuracy percentage
+  /** Season state information */
+  seasonState?: LeaderboardSeasonState;
 }
 
 // User stats for personal performance display

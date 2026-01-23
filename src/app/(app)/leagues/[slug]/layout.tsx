@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation';
 import { LeagueHeader } from '@/components/layout/league-header';
 import { LeagueSidebar } from '@/components/layout/league-sidebar';
 import { PublicAccessBanner } from '@/components/layout/public-access-banner';
+import { RequestAccessCard } from '@/components/league/request-access-card';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import { getLeague } from '@/data/leagues/get-league';
 import { auth } from '@/lib/auth';
@@ -58,14 +59,16 @@ export default async function LeagueLayout({ children, params }: LeagueLayoutPro
   // Determine if user has member access
   const isMember = !!userRole;
 
-  // If league is private and user is not a member, handle appropriately
+  // If league is private and user is not a member, show request access card
   if (!publicAccess.isPublic && !isMember) {
-    if (!isAuthenticated) {
-      // Redirect to sign-in for private leagues when not authenticated
-      redirect(`/sign-in?callbackUrl=/leagues/${slug}`);
-    }
-    // User is authenticated but not a member of this private league
-    notFound();
+    return (
+      <RequestAccessCard
+        leagueSlug={league.slug}
+        leagueName={league.name}
+        leagueAvatarUrl={league.avatarUrl}
+        isAuthenticated={isAuthenticated}
+      />
+    );
   }
 
   // Determine if this is a public visitor (viewing a public league without being a member)

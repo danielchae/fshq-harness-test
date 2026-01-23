@@ -7,11 +7,41 @@
 
 import { fetchSleeperNFLState } from '@/integrations/sleeper/fetch-nfl-state';
 
+import type { SleeperSeasonType } from '@/types/sleeper';
+
 /** Total weeks in the NFL regular season */
 export const NFL_TOTAL_WEEKS = 18;
 
+/** Default fantasy championship week (most leagues end here) */
+export const DEFAULT_CHAMPIONSHIP_WEEK = 17;
+
 /** Default week to use when all else fails */
 const FALLBACK_WEEK = 1;
+
+/**
+ * Season status for determining app behavior
+ */
+export type SeasonStatus = 'preseason' | 'regular' | 'postseason' | 'offseason';
+
+/**
+ * Extended NFL state with computed properties for app logic
+ */
+export interface NFLSeasonState {
+  /** Current NFL week (for regular season) or last regular season week */
+  week: number;
+  /** NFL season year (e.g., 2025) */
+  season: number;
+  /** Raw season type from Sleeper API */
+  seasonType: SleeperSeasonType;
+  /** Computed season status for app logic */
+  status: SeasonStatus;
+  /** Whether the fantasy regular season is likely complete */
+  isFantasySeasonComplete: boolean;
+  /** Whether picks can currently be made (regular season, games not started) */
+  isPicksEnabled: boolean;
+  /** Human-readable status message */
+  statusMessage: string;
+}
 
 /**
  * Calculate the current NFL week based on date
@@ -47,44 +77,101 @@ export function calculateNFLWeekFromDate(date: Date = new Date()): number {
 }
 
 /**
+ * Get the full NFL season state with computed properties
+ * This is the primary function to use for season-aware logic.
+ */
+export async function getNFLSeasonState(): Promise<NFLSeasonState> {
+  try {
+    const nflState = await fetchSleeperNFLState();
+
+    if (nflState) {
+      const season = parseInt(nflState.season, 10) || new Date().getFullYear();
+      const seasonType = nflState.season_type;
+
+      // Determine season status and week
+      let week: number;
+      let status: SeasonStatus;
+      let isFantasySeasonComplete: boolean;
+      let isPicksEnabled: boolean;
+      let statusMessage: string;
+
+      switch (seasonType) {
+        case 'pre':
+          week = 1;
+          status = 'preseason';
+          isFantasySeasonComplete = false;
+          isPicksEnabled = false;
+          statusMessage = 'Preseason - Season starts soon';
+          break;
+
+        case 'regular':
+          week = nflState.week > 0 ? nflState.week : 1;
+          status = 'regular';
+          // Fantasy is typically complete after week 17 (championship)
+          isFantasySeasonComplete = week > DEFAULT_CHAMPIONSHIP_WEEK;
+          isPicksEnabled = week <= DEFAULT_CHAMPIONSHIP_WEEK;
+          statusMessage = `Week ${week}`;
+          break;
+
+        case 'post':
+          // During NFL playoffs, fantasy regular season is complete
+          // Return the championship week as the "current" fantasy week
+          week = DEFAULT_CHAMPIONSHIP_WEEK;
+          status = 'postseason';
+          isFantasySeasonComplete = true;
+          isPicksEnabled = false;
+          statusMessage = 'Season Complete - NFL Playoffs';
+          break;
+
+        case 'off':
+        default:
+          week = 1;
+          status = 'offseason';
+          isFantasySeasonComplete = true;
+          isPicksEnabled = false;
+          statusMessage = 'Offseason';
+          break;
+      }
+
+      return {
+        week,
+        season,
+        seasonType,
+        status,
+        isFantasySeasonComplete,
+        isPicksEnabled,
+        statusMessage,
+      };
+    }
+  } catch (error) {
+    console.warn('[getNFLSeasonState] Failed to fetch from Sleeper API, using fallback calculation:', error);
+  }
+
+  // Fallback to date-based calculation
+  const week = calculateNFLWeekFromDate();
+  return {
+    week,
+    season: new Date().getFullYear(),
+    seasonType: 'regular',
+    status: 'regular',
+    isFantasySeasonComplete: false,
+    isPicksEnabled: true,
+    statusMessage: `Week ${week}`,
+  };
+}
+
+/**
  * Get the current NFL week from the Sleeper API
  * Falls back to date-based calculation if API is unavailable
  *
  * This is the primary function to use throughout the app.
  * It's cached for 1 hour via the Sleeper integration.
+ * 
+ * @deprecated Prefer getNFLSeasonState() for season-aware logic
  */
 export async function getCurrentNFLWeek(): Promise<number> {
-  try {
-    const nflState = await fetchSleeperNFLState();
-
-    if (nflState) {
-      // Use display_week for UI purposes (accounts for bye weeks, etc.)
-      // Only use it during regular season; otherwise fall back to calculation
-      if (nflState.season_type === 'regular' && nflState.week > 0) {
-        return nflState.week;
-      }
-
-      // During preseason, return week 1
-      if (nflState.season_type === 'pre') {
-        return 1;
-      }
-
-      // During postseason, return the last regular season week
-      if (nflState.season_type === 'post') {
-        return NFL_TOTAL_WEEKS;
-      }
-
-      // During offseason, calculate based on upcoming season
-      if (nflState.season_type === 'off') {
-        return 1;
-      }
-    }
-  } catch (error) {
-    console.warn('[getCurrentNFLWeek] Failed to fetch from Sleeper API, using fallback calculation:', error);
-  }
-
-  // Fallback to date-based calculation
-  return calculateNFLWeekFromDate();
+  const state = await getNFLSeasonState();
+  return state.week;
 }
 
 /**

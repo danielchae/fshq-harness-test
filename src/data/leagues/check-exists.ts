@@ -16,6 +16,10 @@ export interface CheckLeagueExistsResult {
   leagueSlug?: string;
   leagueId?: string;
   leagueName?: string;
+  /** How users can join: auto_join = instant, approval_required = commissioner approval */
+  joinRule?: 'auto_join' | 'approval_required';
+  /** Whether the league is public or private */
+  visibility?: 'public' | 'private';
 }
 
 /**
@@ -35,6 +39,8 @@ async function checkLeagueExistsInternal(
       id: true,
       slug: true,
       name: true,
+      joinRule: true,
+      visibility: true,
     },
   });
 
@@ -44,6 +50,8 @@ async function checkLeagueExistsInternal(
       leagueSlug: league.slug,
       leagueId: league.id,
       leagueName: league.name,
+      joinRule: league.joinRule === 'auto_join' ? 'auto_join' : 'approval_required',
+      visibility: league.visibility === 'public' ? 'public' : 'private',
     };
   }
 

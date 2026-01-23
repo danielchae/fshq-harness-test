@@ -11,6 +11,7 @@ import { UserStatsCard } from '@/components/leaderboard/user-stats-card';
 import { WeekSelector } from '@/components/leaderboard/week-selector';
 import { TableSkeleton } from '@/components/skeletons/table-skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -35,6 +36,8 @@ function LeaderboardContent({ slug }: { slug: string }) {
     setScope,
     setRoleFilter,
     setWeekNumber,
+    seasonState,
+    availableWeeks,
   } = useLeaderboard({ leagueSlug: slug });
 
   // When switching to weekly scope, initialize weekNumber to currentWeek if not set
@@ -49,7 +52,9 @@ function LeaderboardContent({ slug }: { slug: string }) {
       case 'weekly':
         return `Week ${weekNumber ?? currentWeek} Standings`;
       case 'season':
-        return `${seasonYear ?? 2025} Season Standings`;
+        return seasonState?.isSeasonComplete
+          ? `${seasonYear ?? 2025} Final Standings`
+          : `${seasonYear ?? 2025} Season Standings`;
       case 'all-time':
         return 'All-Time Standings';
       default:
@@ -71,11 +76,14 @@ function LeaderboardContent({ slug }: { slug: string }) {
   const filterControls = (
     <>
       <ScopeToggle value={scope} onValueChange={setScope} />
-      {scope === 'weekly' && currentWeek > 0 && (
+      {scope === 'weekly' && (availableWeeks.length > 0 || currentWeek > 0) && (
         <WeekSelector
           value={weekNumber ?? currentWeek}
           currentWeek={currentWeek}
           onValueChange={setWeekNumber}
+          availableWeeks={availableWeeks.length > 0 ? availableWeeks : undefined}
+          championshipWeek={seasonState?.championshipWeek}
+          isSeasonComplete={seasonState?.isSeasonComplete}
         />
       )}
       <RoleFilter value={roleFilter} onValueChange={setRoleFilter} />
@@ -153,6 +161,12 @@ function LeaderboardContent({ slug }: { slug: string }) {
         title={getScopeTitle()}
         description={`${getRoleDescription()} • League Avg: ${leagueAverage}%`}
       >
+        {seasonState?.isSeasonComplete && scope === 'season' && (
+          <Badge variant="secondary" className="gap-1">
+            <Trophy className="h-3 w-3" />
+            Final
+          </Badge>
+        )}
         {filterControls}
       </PageHeader>
 

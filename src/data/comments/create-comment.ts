@@ -152,7 +152,8 @@ export async function createComment(input: CreateCommentInput): Promise<CreateCo
 
     // Revalidate the moment detail page cache
     revalidatePath(`/leagues/${moment.league.slug}/moments/${momentId}`);
-    revalidateTag(`feed-${moment.league.slug}`, 'max');
+    // Invalidate feed cache since lastActivityAt affects "recent" sort order
+    revalidateTag(`feed-${moment.league.slug}`);
 
     return { success: true, comment };
   } catch (error) {

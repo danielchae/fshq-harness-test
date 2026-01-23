@@ -1,18 +1,26 @@
 'use client';
 
-import { AlertCircle, BarChart3, LineChart, RefreshCw } from 'lucide-react';
+import { AlertCircle, BarChart3, LineChart, RefreshCw, Trophy } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 
 import { RankingsTrajectoryChart } from '@/components/rankings/rankings-trajectory-chart';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { getCurrentNFLWeekSync, NFL_TOTAL_WEEKS } from '@/lib/nfl-week';
+import { DEFAULT_CHAMPIONSHIP_WEEK, NFL_TOTAL_WEEKS } from '@/lib/nfl-week';
 
 import type { PowerRankingsData, TeamRanking } from '@/data/power-rankings/get-power-rankings';
+
+interface SeasonInfo {
+  isSeasonComplete: boolean;
+  lastActiveWeek: number;
+  championshipWeek: number;
+  availableWeeks: number[];
+}
 
 interface PowerRankingsDisplayProps {
   leagueSlug: string;
@@ -20,26 +28,56 @@ interface PowerRankingsDisplayProps {
   availableWeeks?: number[];
 }
 
-export function PowerRankingsDisplay({ leagueSlug, initialWeek, availableWeeks }: PowerRankingsDisplayProps) {
-  // Use calculated current week as fallback if no initial week provided
-  const defaultWeek = initialWeek ?? getCurrentNFLWeekSync();
-
-  const [selectedWeek, setSelectedWeek] = useState(defaultWeek);
+export function PowerRankingsDisplay({ leagueSlug, initialWeek, availableWeeks: providedWeeks }: PowerRankingsDisplayProps) {
+  const [selectedWeek, setSelectedWeek] = useState<number | undefined>(initialWeek);
   const [rankings, setRankings] = useState<TeamRanking[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [publishedAt, setPublishedAt] = useState<string | undefined>();
   const [showTrajectory, setShowTrajectory] = useState(false);
+  const [seasonInfo, setSeasonInfo] = useState<SeasonInfo | null>(null);
 
-  // Default available weeks if not provided
-  const weeks = availableWeeks || Array.from({ length: NFL_TOTAL_WEEKS }, (_, i) => i + 1);
+  // Determine available weeks
+  const weeks = providedWeeks || seasonInfo?.availableWeeks || Array.from({ length: NFL_TOTAL_WEEKS }, (_, i) => i + 1);
+  const effectiveWeek = selectedWeek ?? seasonInfo?.lastActiveWeek ?? 1;
+  const championshipWeek = seasonInfo?.championshipWeek ?? DEFAULT_CHAMPIONSHIP_WEEK;
+
+  // Fetch season info first to determine available weeks and default week
+  useEffect(() => {
+    async function fetchSeasonInfo() {
+      try {
+        // Use matchups API to get season info (reuses existing endpoint)
+        const response = await fetch(`/api/matchups?leagueSlug=${encodeURIComponent(leagueSlug)}`);
+        if (response.ok) {
+          const data = await response.json();
+          if (data.seasonState) {
+            setSeasonInfo({
+              isSeasonComplete: data.seasonState.isSeasonComplete,
+              lastActiveWeek: data.seasonState.lastActiveWeek,
+              championshipWeek: data.seasonState.championshipWeek,
+              availableWeeks: data.seasonState.availableWeeks,
+            });
+            // Set default week if not already set
+            if (selectedWeek === undefined) {
+              setSelectedWeek(data.seasonState.lastActiveWeek || data.currentWeek);
+            }
+          }
+        }
+      } catch {
+        // Ignore errors, will use defaults
+      }
+    }
+    fetchSeasonInfo();
+  }, [leagueSlug, selectedWeek]);
 
   const fetchRankings = useCallback(async () => {
+    if (effectiveWeek === undefined || effectiveWeek < 1) return;
+    
     setIsLoading(true);
     setError(null);
 
     try {
-      const response = await fetch(`/api/power-rankings?leagueSlug=${leagueSlug}&weekNumber=${selectedWeek}`);
+      const response = await fetch(`/api/power-rankings?leagueSlug=${leagueSlug}&weekNumber=${effectiveWeek}`);
 
       if (!response.ok) {
         throw new Error('Failed to fetch rankings');
@@ -63,7 +101,7 @@ export function PowerRankingsDisplay({ leagueSlug, initialWeek, availableWeeks }
     } finally {
       setIsLoading(false);
     }
-  }, [leagueSlug, selectedWeek]);
+  }, [leagueSlug, effectiveWeek]);
 
   useEffect(() => {
     fetchRankings();
@@ -112,6 +150,27 @@ export function PowerRankingsDisplay({ leagueSlug, initialWeek, availableWeeks }
     );
   }
 
+  // Week selector component
+  const WeekSelectorDropdown = () => (
+    <Select value={effectiveWeek.toString()} onValueChange={handleWeekChange}>
+      <SelectTrigger data-testid="week-selector" className="w-36" aria-label="Select week">
+        <SelectValue placeholder="Select week" />
+      </SelectTrigger>
+      <SelectContent>
+        {weeks.map((week) => {
+          const isChampionship = week === championshipWeek;
+          return (
+            <SelectItem key={week} value={week.toString()}>
+              {isChampionship && <Trophy className="h-3 w-3 text-amber-500 inline mr-1" />}
+              Week {week}
+              {isChampionship && ' (Finals)'}
+            </SelectItem>
+          );
+        })}
+      </SelectContent>
+    </Select>
+  );
+
   // Error state
   if (error) {
     return (
@@ -119,20 +178,9 @@ export function PowerRankingsDisplay({ leagueSlug, initialWeek, availableWeeks }
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <BarChart3 className="h-5 w-5" />
-            <h3 className="font-semibold">Week {selectedWeek} Power Rankings</h3>
+            <h3 className="font-semibold">Week {effectiveWeek} Power Rankings</h3>
           </div>
-          <Select value={selectedWeek.toString()} onValueChange={handleWeekChange}>
-            <SelectTrigger data-testid="week-selector" className="w-32" aria-label="Select week">
-              <SelectValue placeholder="Select week" />
-            </SelectTrigger>
-            <SelectContent>
-              {weeks.map((week) => (
-                <SelectItem key={week} value={week.toString()}>
-                  Week {week}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <WeekSelectorDropdown />
         </div>
         <Card className="p-8">
           <div className="flex flex-col items-center justify-center text-center space-y-4">
@@ -158,20 +206,9 @@ export function PowerRankingsDisplay({ leagueSlug, initialWeek, availableWeeks }
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <BarChart3 className="h-5 w-5" />
-            <h3 className="font-semibold">Week {selectedWeek} Power Rankings</h3>
+            <h3 className="font-semibold">Week {effectiveWeek} Power Rankings</h3>
           </div>
-          <Select value={selectedWeek.toString()} onValueChange={handleWeekChange}>
-            <SelectTrigger data-testid="week-selector" className="w-32" aria-label="Select week">
-              <SelectValue placeholder="Select week" />
-            </SelectTrigger>
-            <SelectContent>
-              {weeks.map((week) => (
-                <SelectItem key={week} value={week.toString()}>
-                  Week {week}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <WeekSelectorDropdown />
         </div>
         <Card className="p-8">
           <div className="flex flex-col items-center justify-center text-center space-y-2">
@@ -190,7 +227,18 @@ export function PowerRankingsDisplay({ leagueSlug, initialWeek, availableWeeks }
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div className="flex items-center gap-2">
           <BarChart3 className="h-5 w-5" />
-          <h3 className="font-semibold">Week {selectedWeek} Power Rankings</h3>
+          <h3 className="font-semibold">Week {effectiveWeek} Power Rankings</h3>
+          {effectiveWeek === championshipWeek && (
+            <Badge variant="secondary" className="gap-1">
+              <Trophy className="h-3 w-3" />
+              Finals
+            </Badge>
+          )}
+          {seasonInfo?.isSeasonComplete && effectiveWeek !== championshipWeek && (
+            <Badge variant="outline" className="text-muted-foreground">
+              Historical
+            </Badge>
+          )}
           {publishedAt && (
             <span className="text-xs text-muted-foreground">
               Published {new Date(publishedAt).toLocaleDateString()}
@@ -207,18 +255,7 @@ export function PowerRankingsDisplay({ leagueSlug, initialWeek, availableWeeks }
             <LineChart className="h-4 w-4 mr-2" />
             {showTrajectory ? 'Hide Trajectory' : 'View Trajectory'}
           </Button>
-          <Select value={selectedWeek.toString()} onValueChange={handleWeekChange}>
-            <SelectTrigger data-testid="week-selector" className="w-32" aria-label="Select week">
-              <SelectValue placeholder="Select week" />
-            </SelectTrigger>
-            <SelectContent>
-              {weeks.map((week) => (
-                <SelectItem key={week} value={week.toString()}>
-                  Week {week}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <WeekSelectorDropdown />
         </div>
       </div>
 

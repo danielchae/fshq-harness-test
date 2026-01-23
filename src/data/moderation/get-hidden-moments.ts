@@ -7,7 +7,7 @@
  * @module src/data/moderation/get-hidden-moments
  */
 
-import { revalidatePath } from 'next/cache';
+import { revalidatePath, revalidateTag } from 'next/cache';
 
 import { canModerateLeague, RLSError } from '@/lib/auth/rls-policies';
 import { prisma } from '@/lib/db';
@@ -196,10 +196,11 @@ export async function unhideMoment(input: UnhideMomentInput): Promise<UnhideMome
       },
     });
 
-    // Revalidate feed caches
+    // Revalidate feed caches (paths for server components, tag for client-side fetches)
     revalidatePath(`/leagues/${moment.league.slug}`);
     revalidatePath(`/leagues/${moment.league.slug}/feed`);
     revalidatePath(`/leagues/${moment.league.slug}/moderation`);
+    revalidateTag(`feed-${moment.league.slug}`);
 
     return { success: true };
   } catch (error) {
@@ -263,10 +264,11 @@ export async function deleteHiddenMoment(input: DeleteHiddenMomentInput): Promis
       where: { id: momentId },
     });
 
-    // Revalidate feed caches
+    // Revalidate feed caches (paths for server components, tag for client-side fetches)
     revalidatePath(`/leagues/${moment.league.slug}`);
     revalidatePath(`/leagues/${moment.league.slug}/feed`);
     revalidatePath(`/leagues/${moment.league.slug}/moderation`);
+    revalidateTag(`feed-${moment.league.slug}`);
 
     return { success: true };
   } catch (error) {
