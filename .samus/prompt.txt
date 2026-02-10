@@ -1,0 +1,1 @@
+Create a new file at src/harness-test.ts with the content: export const HARNESS_TEST = true; // Added by Samus harness test
