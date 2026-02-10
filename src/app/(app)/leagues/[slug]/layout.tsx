@@ -5,6 +5,7 @@ import { LeagueHeader } from '@/components/layout/league-header';
 import { LeagueSidebar } from '@/components/layout/league-sidebar';
 import { PublicAccessBanner } from '@/components/layout/public-access-banner';
 import { RequestAccessCard } from '@/components/league/request-access-card';
+import { DancingAnimal } from '@/components/ui/dancing-animal';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import { getLeague } from '@/data/leagues/get-league';
 import { auth } from '@/lib/auth';
@@ -95,6 +96,7 @@ export default async function LeagueLayout({ children, params }: LeagueLayoutPro
         {isPublicVisitor && <PublicAccessBanner leagueSlug={slug} isAuthenticated={isAuthenticated} />}
         <main className="flex-1 p-4 lg:p-6">{children}</main>
       </SidebarInset>
+      <DancingAnimal />
     </SidebarProvider>
   );
 }
