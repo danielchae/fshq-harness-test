@@ -2,6 +2,7 @@ import { Home, Trophy } from 'lucide-react';
 import Link from 'next/link';
 
 import { UserMenu } from '@/components/connect-league/user-menu';
+import { ThemeToggle } from '@/components/theme-toggle';
 import { Button } from '@/components/ui/button';
 import { getUserLeagues } from '@/data/leagues/get-user-leagues';
 import { auth } from '@/lib/auth';
@@ -39,11 +40,14 @@ export default async function ConnectLeagueLayout({ children }: { children: Reac
             </Button>
           )}
         </div>
-        <UserMenu
-          userName={session?.user?.name || undefined}
-          userEmail={session?.user?.email || undefined}
-          userAvatarUrl={session?.user?.image || undefined}
-        />
+        <div className="flex items-center gap-1">
+          <ThemeToggle />
+          <UserMenu
+            userName={session?.user?.name || undefined}
+            userEmail={session?.user?.email || undefined}
+            userAvatarUrl={session?.user?.image || undefined}
+          />
+        </div>
       </header>
       <main className="container mx-auto flex-1 py-8 px-4">{children}</main>
     </div>

@@ -3,6 +3,7 @@
 import { Menu } from 'lucide-react';
 
 import { UserMenu } from '@/components/connect-league/user-menu';
+import { ThemeToggle } from '@/components/theme-toggle';
 import { Button } from '@/components/ui/button';
 import { useSidebar } from '@/components/ui/sidebar';
 import { LeagueSwitcher } from './league-switcher';
@@ -39,6 +40,7 @@ export function LeagueHeader({ leagueName, leagueSlug, userName, userEmail, user
         <LeagueSwitcher currentLeagueName={leagueName} currentLeagueSlug={leagueSlug} />
       </div>
 
+      <ThemeToggle />
       <UserMenu
         userName={userName}
         userEmail={userEmail}
