@@ -1,3 +1,9 @@
 {
-  "buildCommand": "pnpm install && pnpm run build"
+  "experimentalServices": {
+    "web": {
+      "routePrefix": "/",
+      "framework": "nextjs",
+      "buildCommand": "pnpm install && pnpm run build"
+    }
+  }
 }
