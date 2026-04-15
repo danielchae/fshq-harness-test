@@ -3,8 +3,7 @@
     "web": {
       "routePrefix": "/",
       "framework": "nextjs",
-      "buildCommand": "pnpm install && pnpm run build",
-      "includeFiles": ["middleware.ts"]
+      "buildCommand": "pnpm install && pnpm run build"
     }
   }
 }
