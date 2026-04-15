@@ -1,9 +1,6 @@
 {
-  "experimentalServices": {
-    "web": {
-      "routePrefix": "/",
-      "framework": "nextjs",
-      "buildCommand": "pnpm install && pnpm run build"
-    }
-  }
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "pnpm run build",
+  "installCommand": "pnpm install",
+  "framework": "nextjs"
 }
