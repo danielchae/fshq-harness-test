@@ -1,6 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "node scripts/fix-middleware-nft.mjs pre && pnpm run build && node scripts/fix-middleware-nft.mjs",
+  "buildCommand": "pnpm run build",
   "installCommand": "pnpm install",
   "framework": "nextjs"
 }
