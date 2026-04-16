@@ -4,6 +4,8 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   reactStrictMode: true,
   typedRoutes: true,
+  // Generate standalone output with proper file tracing (fixes middleware.js.nft.json on Vercel)
+  output: 'standalone',
   images: {
     remotePatterns: [
       {
