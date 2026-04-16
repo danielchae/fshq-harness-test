@@ -4,12 +4,6 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   reactStrictMode: true,
   typedRoutes: true,
-  output: 'standalone',
-  // Workaround: Turbopack in Next.js 16 doesn't generate middleware.js.nft.json
-  // Generate empty trace file post-build so Vercel deployment succeeds
-  outputFileTracingIncludes: {
-    '/middleware': ['./middleware.ts'],
-  },
   images: {
     remotePatterns: [
       {
